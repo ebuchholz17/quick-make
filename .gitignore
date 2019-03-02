@@ -1,0 +1,13 @@
+/build
+/.vs
+/ebrt.VC.db
+/ebrt.VC.VC.opendb
+/Debug
+/src/web/node_modules
+/src/web/wasm
+/src/windows/run_around_game.VC.db
+/src/windows/.vs
+/src/web/bindings/bindings.js
+/src/web/bindings/parser.out
+/src/web/bindings/WebIDLGrammar.pkl
+/src/web/bindings/bindings.cpp

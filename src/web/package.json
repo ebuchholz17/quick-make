@@ -1,0 +1,22 @@
+{
+  "name": "run-around-game-web-platform",
+  "version": "0.1.0",
+  "description": "Web platform for Run Around Game",
+  "scripts": {
+    "start": "webpack-dev-server --content-base ../../build/web --colors --progress",
+    "build": "webpack --config webpack_build.config.js"
+  },
+  "author": "Erik Buchholz",
+  "devDependencies": {
+    "copy-webpack-plugin": "^4.5.4",
+    "exports-loader": "^0.7.0",
+    "raw-loader": "^0.5.1",
+    "webpack": "^4.22.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10",
+    "write-file-webpack-plugin": "^4.4.1"
+  },
+  "dependencies": {
+    "mobile-detect": "^1.4.3"
+  }
+}
