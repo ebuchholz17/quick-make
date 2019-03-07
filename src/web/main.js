@@ -88,15 +88,11 @@ WebPlatform.prototype = {
             switch (assetToLoad.type) {
                 case this.game.ASSET_TYPE_OBJ: 
                 {
-                    this.loadOBJFile(assetToLoad.path, assetToLoad.type, assetToLoad.key1);
-                } break;
-                case this.game.ASSET_TYPE_LEVEL_OBJ: 
-                {
-                    this.loadLevelOBJFile(assetToLoad.path, assetToLoad.type, assetToLoad.key1, assetToLoad.key2);
+                    this.loadOBJFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
                 } break;
                 case this.game.ASSET_TYPE_BMP: 
                 {
-                    this.loadBMPFile(assetToLoad.path, assetToLoad.type, assetToLoad.key1);
+                    this.loadBMPFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
                 } break;
             }
         }
@@ -116,56 +112,11 @@ WebPlatform.prototype = {
 
                         this.game.ccall("parseGameAsset", 
                             "null", 
-                            ["number", "number", "number", "number", "number", "number"], 
+                            ["number", "number", "number", "number", "number"], 
                             [
                                 objFileData, 
                                 assetType,
                                 assetKey,
-                                -1,
-                                this.game.getPointer(this.gameMemory),
-                                this.game.getPointer(this.workingAssetMemory)
-                            ]
-                        );
-
-                        var loadedMesh = 
-                            this.game.wrapPointer(
-                                this.game.getPointer(this.workingAssetMemory.base), 
-                                this.game.loaded_mesh_asset
-                            );
-
-                        this.renderer.loadMesh(this.game, loadedMesh);
-                        this.onAssetLoaded();
-                    }.bind(this),
-                    function () {
-                        console.log("fetch .text() failed for " + path);
-                    }.bind(this)
-                );
-            }.bind(this),
-            function () {
-                console.log("Failed to fetch " + path);
-            }.bind(this)
-        );
-    },
-
-    loadLevelOBJFile: function (path, assetType, meshKey, levelMeshKey) {
-        fetch(path).then(
-            function (file) {
-                file.text().then(
-                    function (data) {
-                        var strLength = this.game.lengthBytesUTF8(data);
-                        var objFileData = this.game._malloc(strLength + 1);
-                        this.game.writeAsciiToMemory(data, objFileData); 
-
-                        this.workingAssetMemory.size = 0;
-
-                        this.game.ccall("parseGameAsset", 
-                            "null", 
-                            ["number", "number", "number", "number", "number", "number"], 
-                            [
-                                objFileData, 
-                                assetType,
-                                meshKey,
-                                levelMeshKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory)
                             ]
@@ -210,12 +161,11 @@ WebPlatform.prototype = {
 
                         this.game.ccall("parseGameAsset", 
                             "null", 
-                            ["number", "number", "number", "number", "number", "number"], 
+                            ["number", "number", "number", "number", "number"], 
                             [
                                 bmpFileData, 
                                 assetType,
                                 assetKey,
-                                -1,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory)
                             ]
@@ -250,12 +200,12 @@ WebPlatform.prototype = {
 
     onAssetsLoaded: function () {
         this.game._free(this.game.getPointer(this.workingAssetMemory.base));
-        this.renderCommands = this.game.wrapPointer(this.game._malloc(this.game.sizeof_render_command_list()), 
-                                                   this.game.render_command_list);
+        this.renderCommands = this.game.wrapPointer(this.game._malloc(this.game.sizeof_render_command_list()),          
+                                                    this.game.render_command_list);
         var renderCommandMemory = 1 * 1024 * 1024;
-        this.renderCommands.get_memory().set_base(this.game._malloc(renderCommandMemory));
-        this.renderCommands.get_memory().set_size(0);
-        this.renderCommands.get_memory().set_capacity(renderCommandMemory);
+        this.renderCommands.memory.base = this.game._malloc(renderCommandMemory);
+        this.renderCommands.memory.size = 0;
+        this.renderCommands.memory.capacity = renderCommandMemory;
 
         // input
         this.input = new Input();
@@ -303,7 +253,7 @@ WebPlatform.prototype = {
         this.gameInput.pointer2X = this.input.pointer2X;
         this.gameInput.pointer2Y = this.input.pointer2Y;
 
-        this.renderCommands.get_memory().set_size(0);
+        this.renderCommands.memory.size = 0;
         // zero render command memory
         var uintBuffer = new Uint8Array(this.game.buffer,
                                         this.game.getPointer(this.renderCommands.memory.base),

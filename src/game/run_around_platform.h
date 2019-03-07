@@ -15,15 +15,13 @@ struct memory_arena {
 // asset loading
 enum asset_type {
     ASSET_TYPE_OBJ,
-    ASSET_TYPE_LEVEL_OBJ,
     ASSET_TYPE_BMP
 };
 
 struct asset_to_load {
     char *path;
     asset_type type;
-    int key1;
-    int key2;
+    int key;
 };
 
 struct asset_list {

@@ -203,15 +203,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                     case ASSET_TYPE_OBJ: 
                     {
                         char *fileData = readEntireTextFile(assetToLoad->path);
-                        parseGameAsset(fileData, ASSET_TYPE_OBJ, assetToLoad->key1, -1, &gameMemory, &workingAssetMemory);
-                        free(fileData);
-
-                        loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
-                    } break;
-                    case ASSET_TYPE_LEVEL_OBJ: 
-                    {
-                        char *fileData = readEntireTextFile(assetToLoad->path);
-                        parseGameAsset(fileData, ASSET_TYPE_LEVEL_OBJ, assetToLoad->key1, assetToLoad->key2, &gameMemory, &workingAssetMemory);
+                        parseGameAsset(fileData, ASSET_TYPE_OBJ, assetToLoad->key, &gameMemory, &workingAssetMemory);
                         free(fileData);
 
                         loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
@@ -230,7 +222,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fread(fileData, fileSize, 1, bmpFile);
                         fclose(bmpFile);
 
-                        parseGameAsset(fileData, ASSET_TYPE_BMP, assetToLoad->key1, -1, &gameMemory, &workingAssetMemory);
+                        parseGameAsset(fileData, ASSET_TYPE_BMP, assetToLoad->key, &gameMemory, &workingAssetMemory);
                         free(fileData);
 
                         // load texture onto gpu

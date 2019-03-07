@@ -60,15 +60,13 @@ interface memory_arena {
 
 enum asset_type {
     "ASSET_TYPE_OBJ",
-    "ASSET_TYPE_LEVEL_OBJ",
     "ASSET_TYPE_BMP"
 };
 
 interface asset_to_load {
     attribute DOMString path;
     attribute asset_type type;
-    attribute long key1;
-    attribute long key2;
+    attribute long key;
 };
 
 interface asset_list {
