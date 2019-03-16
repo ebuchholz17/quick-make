@@ -127,6 +127,8 @@ interface render_command_set_camera {
 };
 
 interface render_command_list {
+    attribute long windowWidth;
+    attribute long windowHeight;
     [Value] attribute memory_arena memory;
 };
 

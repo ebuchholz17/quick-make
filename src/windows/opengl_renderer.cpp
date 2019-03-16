@@ -300,7 +300,7 @@ void drawLines (openGL_renderer *renderer, GLuint program, render_command_lines 
 void renderFrame (renderer_memory *memory, render_command_list *renderCommands) {
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
 
-    glViewport(0, 0, 960, 540);
+    glViewport(0, 0, renderCommands->windowWidth, renderCommands->windowHeight);
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.7f, 0.8f, 1.0f);

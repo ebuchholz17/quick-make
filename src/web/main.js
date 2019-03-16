@@ -253,6 +253,8 @@ WebPlatform.prototype = {
         this.gameInput.pointer2X = this.input.pointer2X;
         this.gameInput.pointer2Y = this.input.pointer2Y;
 
+        this.renderCommands.windowWidth = this.canvas.width;
+        this.renderCommands.windowHeight = this.canvas.height;
         this.renderCommands.memory.size = 0;
         // zero render command memory
         var uintBuffer = new Uint8Array(this.game.buffer,
@@ -293,6 +295,8 @@ WebPlatform.prototype = {
     },
 
     resize: function () {
+        this.canvas.width = this.viewport.clientWidth;
+        this.canvas.height = this.viewport.clientHeight;
         this.canvas.style.width = this.viewport.clientWidth + "px";
         this.canvas.style.height = this.viewport.clientHeight + "px";
     },

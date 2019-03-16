@@ -247,7 +247,7 @@ WebGLRenderer.prototype = {
     },
 
     renderFrame: function (game, renderCommands) {
-        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        gl.viewport(0, 0, renderCommands.windowWidth, renderCommands.windowHeight);
         gl.enable(gl.DEPTH_TEST);
         //gl.enable(gl.CULL_FACE);
         gl.clearColor(0.0, 0.7, 0.8, 1.0);

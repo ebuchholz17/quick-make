@@ -608,7 +608,9 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
 
     // TODO(ebuchholz): get screen dimensions from render commands? and use them
-    matrix4x4 projMatrix = createPerspectiveMatrix(0.1f, 1000.0f, (16.0f / 9.0f), 80.0f);
+    float gameWidth = (float)renderCommands->windowWidth;
+    float gameHeight = (float)renderCommands->windowHeight;
+    matrix4x4 projMatrix = createPerspectiveMatrix(0.1f, 1000.0f, (gameWidth / gameHeight), 80.0f);
     matrix4x4 viewMatrix = createViewMatrix(gameState->debugCamera.rotation, 
                                             gameState->debugCamera.pos.x,
                                             gameState->debugCamera.pos.y,
@@ -628,12 +630,12 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     viewMatrix = createLookAtMatrix(0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f);
 
     projMatrix = {};
-    projMatrix.m[0] = 2.0f / 960.0f;
+    projMatrix.m[0] = 2.0f / gameWidth;
     projMatrix.m[1] = 0.0f;
     projMatrix.m[2] = 0.0f;
     projMatrix.m[3] = -1.0f;
     projMatrix.m[4] = 0.0f; 
-    projMatrix.m[5] = 2.0f / 540.0f;
+    projMatrix.m[5] = 2.0f / gameHeight;
     projMatrix.m[6] = 0.0f;
     projMatrix.m[7] = -1.0f;
     projMatrix.m[8] = 0.0f;

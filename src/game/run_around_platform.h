@@ -85,6 +85,8 @@ struct render_command_set_camera {
 };
 
 struct render_command_list {
+    int windowWidth;
+    int windowHeight;
     memory_arena memory;
 };
 

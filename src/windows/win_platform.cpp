@@ -20,29 +20,34 @@ LRESULT CALLBACK windowCallback (HWND window, unsigned int message, WPARAM wPara
     LRESULT result = 0;
     // TODO(ebuchholz): Determine whether WM_DESTROY is necessary
     switch (message) {
-    case WM_CLOSE:
-        programRunning = false;
-        break;
-    default:
-        result = DefWindowProcA(window, message, wParam, lParam);
-        break;
+        case WM_CLOSE: {
+            programRunning = false;
+        } break;
+        case WM_SIZE: {
+            RECT windowRect;
+            GetWindowRect(window, &windowRect);
+            gameWidth = windowRect.right - windowRect.left;
+            gameHeight = windowRect.bottom - windowRect.top;
+        } break;
+        default: {
+            result = DefWindowProcA(window, message, wParam, lParam);
+            break;
+        }
     }
     return result;
 }
 
-static void processWindowsMessages (HWND window, game_input *input) {
+static void processWindowsMessages (HWND window, game_input *input, render_command_list *renderCommands) {
     MSG message;
     while (PeekMessage(&message, 0, 0, 0, PM_REMOVE)) {
         switch (message.message) {
-            case WM_QUIT: 
-            {
+            case WM_QUIT: {
                 programRunning = false;
             } break; 
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_KEYDOWN:
-            case WM_KEYUP: 
-            {
+            case WM_KEYUP: {
                 unsigned int keyCode = (unsigned int)message.wParam;
                 //bool wasDown = (message.lParam & (1 << 30)) != 0;
                 bool keyDown = (message.lParam & (1 << 31)) == 0;
@@ -78,27 +83,23 @@ static void processWindowsMessages (HWND window, game_input *input) {
                     input->downButton = keyDown;
                 }
             } break;
-            case WM_MOUSEMOVE:
-            {
+            case WM_MOUSEMOVE: {
                 POINT newMousePos;
                 GetCursorPos(&newMousePos);
                 ScreenToClient(window, &newMousePos);
                 input->pointerX = newMousePos.x;
                 input->pointerY = newMousePos.y;
             } break;
-            case WM_LBUTTONDOWN:
-            {
+            case WM_LBUTTONDOWN: {
                 if (!input->pointerDown) {
                     input->pointerJustDown = true;
                 }
                 input->pointerDown = true;
             } break;
-            case WM_LBUTTONUP:
-            {
+            case WM_LBUTTONUP: {
                 input->pointerDown = false;
             } break;
-            default: 
-            {
+            default: {
                 TranslateMessage(&message);
                 DispatchMessageA(&message);
             } break;
@@ -235,6 +236,8 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             render_command_list renderCommands = {};
             int memoryCapacity = 1 * 1024 * 1024;
+            renderCommands.windowWidth = gameWidth;
+            renderCommands.windowHeight = gameHeight;
             renderCommands.memory.base = malloc(memoryCapacity);
             renderCommands.memory.size = 0;
             renderCommands.memory.capacity = memoryCapacity;
@@ -245,10 +248,11 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             game_input input ={};
 
             while (programRunning) {
-
                 input.pointerJustDown = false;
-                processWindowsMessages(window, &input);
+                processWindowsMessages(window, &input, &renderCommands);
 
+                renderCommands.windowWidth = gameWidth;
+                renderCommands.windowHeight = gameHeight;
                 renderCommands.memory.size = 0;
                 memset(renderCommands.memory.base, 0, renderCommands.memory.capacity);
                 memset(gameMemory.tempMemory, 0, gameMemory.tempMemoryCapacity);
