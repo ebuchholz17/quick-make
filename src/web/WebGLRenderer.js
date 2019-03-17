@@ -4,6 +4,8 @@ var defaultVertexShaderSource = require("./shaders/defaultVertexShader.glsl");
 var defaultFragmentShaderSource = require("./shaders/defaultFragmentShader.glsl");
 var lineVertexShaderSource = require("./shaders/lineVertexShader.glsl");
 var lineFragmentShaderSource = require("./shaders/lineFragmentShader.glsl");
+var spriteVertexShaderSource = require("./shaders/spriteVertexShader.glsl");
+var spriteFragmentShaderSource = require("./shaders/spriteFragmentShader.glsl");
 
 var gl = null;
 
@@ -31,7 +33,8 @@ var ShaderProgram = function () {
 
 var ShaderTypes = {
     DEFAULT: 0,
-    LINES: 1
+    LINES: 1,
+    SPRITE: 2
 };
 
 var WebGLRenderer = function () {
@@ -42,8 +45,18 @@ var WebGLRenderer = function () {
     this.viewMatrix = null;
     this.projMatrix = null;
 
+    this.spritePositionBuffer = 0;
+    this.spriteTextureBuffer = 0;
+    this.spriteIndexBuffer = 0;
+    
+    this.spriteVertexPositions = [];
+    this.spriteTextureCoords = [];
+    this.spriteIndices = [];
+
     this.debugPositionBuffer = 0;
 };
+
+WebGLRenderer.MAX_SPRITES_PER_BATCH = 1000;
 
 WebGLRenderer.prototype = {
 
@@ -53,6 +66,29 @@ WebGLRenderer.prototype = {
         var success = gl.getExtension("OES_element_index_uint"); // TODO(ebuchholz): check
         this.compileAndLinkShader(defaultVertexShaderSource, defaultFragmentShaderSource, ShaderTypes.DEFAULT);
         this.compileAndLinkShader(lineVertexShaderSource, lineFragmentShaderSource, ShaderTypes.LINES);
+        this.compileAndLinkShader(spriteVertexShaderSource, spriteFragmentShaderSource, ShaderTypes.SPRITE);
+
+        // sprite drawing
+        this.spritePositionBuffer = gl.createBuffer();
+        this.spriteTextureBuffer = gl.createBuffer();
+        this.spriteIndexBuffer = gl.createBuffer();
+
+        // index buffer doesn't change
+        // TODO(ebuchholz): temporary memory, don't need to keep it in renderer
+        var indexIndex = 0;
+        for (var i = 0; i < WebGLRenderer.MAX_SPRITES_PER_BATCH; ++i) {
+            var vertexNum = i * 4;
+            this.spriteIndices[indexIndex++] = vertexNum;
+            this.spriteIndices[indexIndex++] = vertexNum+3;
+            this.spriteIndices[indexIndex++] = vertexNum+1;
+            this.spriteIndices[indexIndex++] = vertexNum;
+            this.spriteIndices[indexIndex++] = vertexNum+2;
+            this.spriteIndices[indexIndex++] = vertexNum+3;
+        }
+
+        var uintBuffer = Uint32Array.from(this.spriteIndices);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, uintBuffer, gl.STATIC_DRAW);
 
         this.debugPositionBuffer = gl.createBuffer();
     },
@@ -84,7 +120,7 @@ WebGLRenderer.prototype = {
         gl.linkProgram(shader.program);
 
         if (!gl.getProgramParameter(shader.program, gl.LINK_STATUS)) {
-            console.log("could not init shaders");
+            console.log(gl.getProgramInfoLog(shader.program));
             return;
         }
 
@@ -223,6 +259,57 @@ WebGLRenderer.prototype = {
         gl.drawElements(gl.TRIANGLES, mesh.numIndices, gl.UNSIGNED_INT, 0);
     },
 
+    drawSprite: function (game, program, spriteCommand, screenWidth, screenHeight) {
+        this.spriteVertexPositions[0] = spriteCommand.x;
+        this.spriteVertexPositions[1] = spriteCommand.y;
+        this.spriteVertexPositions[2] = spriteCommand.x + spriteCommand.width;
+        this.spriteVertexPositions[3] = spriteCommand.y;
+        this.spriteVertexPositions[4] = spriteCommand.x;
+        this.spriteVertexPositions[5] = spriteCommand.y + spriteCommand.height;
+        this.spriteVertexPositions[6] = spriteCommand.x + spriteCommand.width;
+        this.spriteVertexPositions[7] = spriteCommand.y + spriteCommand.height;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.spritePositionBuffer);
+        var floatBuffer = Float32Array.from(this.spriteVertexPositions);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
+
+        var positionLocation = gl.getAttribLocation(program, "position");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        this.spriteTextureCoords[0] = 0.0;
+        this.spriteTextureCoords[1] = 1.0;
+        this.spriteTextureCoords[2] = 1.0;
+        this.spriteTextureCoords[3] = 1.0;
+        this.spriteTextureCoords[4] = 0.0;
+        this.spriteTextureCoords[5] = 0.0;
+        this.spriteTextureCoords[6] = 1.0;
+        this.spriteTextureCoords[7] = 0.0;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteTextureBuffer);
+        floatBuffer = Float32Array.from(this.spriteTextureCoords);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
+
+        var texCoordLocation = gl.getAttribLocation(program, "texCoord");
+        gl.enableVertexAttribArray(texCoordLocation);
+        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndexBuffer);
+
+        var screenWidthLocation = gl.getUniformLocation(program, "screenWidth");
+        gl.uniform1f(screenWidthLocation, screenWidth);
+        var screenHeightLocation = gl.getUniformLocation(program, "screenHeight");
+        gl.uniform1f(screenHeightLocation, screenHeight);
+
+        var texture = this.textures[spriteCommand.textureKey];
+        var textureLocation = gl.getUniformLocation(program, "texture");
+        gl.uniform1i(textureLocation, 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
+
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
+    },
+
     drawLines: function (game, lineCommand, program) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.debugPositionBuffer);
 
@@ -262,7 +349,18 @@ WebGLRenderer.prototype = {
             renderCommandOffset += game.sizeof_render_command_header();
             switch (header.type) {
                 default:
+                    console.log("ERROR: invalid render command type");
                     break;
+                case game.RENDER_COMMAND_SPRITE:
+                {
+                    var program = this.shaders[ShaderTypes.SPRITE].program;
+                    gl.useProgram(program);
+
+                    var spriteCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
+                                                         game.render_command_sprite);
+                    renderCommandOffset += game.sizeof_render_command_sprite();
+                    this.drawSprite(game, program, spriteCommand, renderCommands.windowWidth, renderCommands.windowHeight);
+                } break;
                 case game.RENDER_COMMAND_MODEL:
                 {
                     var program = this.shaders[ShaderTypes.DEFAULT].program;

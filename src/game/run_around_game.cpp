@@ -389,15 +389,33 @@ static void parseBitmap (void *fileData, game_assets *assets, int key, memory_ar
     unsigned char *bitmapPixels = (unsigned char *)allocateMemorySize(workingMemory, sizeof(unsigned char) * 4 * width * height);
     loadedBitmap->pixels = (unsigned int *)bitmapPixels;
 
-    unsigned int numPixelValues = width * height * 3;
-    unsigned int numBitmapValues = 0;
-    for (unsigned int i = 0; i < numPixelValues; i += 3) {
-        bitmapPixels[numBitmapValues] = pixels[i+2];
-        bitmapPixels[numBitmapValues+1] = pixels[i+1];
-        bitmapPixels[numBitmapValues+2] = pixels[i];
-        bitmapPixels[numBitmapValues+3] = 0xff;
-        numBitmapValues += 4;
+    if (header->bitsPerPixel == 32) {
+        unsigned int numPixelValues = width * height * 4;
+        unsigned int numBitmapValues = 0;
+        for (unsigned int i = 0; i < numPixelValues; i += 4) {
+            bitmapPixels[numBitmapValues] = pixels[i+2];
+            bitmapPixels[numBitmapValues+1] = pixels[i+1];
+            bitmapPixels[numBitmapValues+2] = pixels[i];
+            bitmapPixels[numBitmapValues+3] = pixels[i+3];
+            numBitmapValues += 4;
+        }
     }
+    else if (header->bitsPerPixel == 24) {
+        unsigned int numPixelValues = width * height * 3;
+        unsigned int numBitmapValues = 0;
+        for (unsigned int i = 0; i < numPixelValues; i += 3) {
+            bitmapPixels[numBitmapValues] = pixels[i+2];
+            bitmapPixels[numBitmapValues+1] = pixels[i+1];
+            bitmapPixels[numBitmapValues+2] = pixels[i];
+            bitmapPixels[numBitmapValues+3] = 0xff;
+            numBitmapValues += 4;
+        }
+    }
+    else {
+        // won't support other ones
+        assert(0);
+    }
+
 }
 
 static void pushAsset (asset_list *assetList, char *path, asset_type type, int key) {
@@ -414,6 +432,7 @@ extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
 
     pushAsset(assetList, "assets/textures/blue.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_BLUE);
+    pushAsset(assetList, "assets/textures/atlas.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_ATLAS);
 }
 
 extern "C" void parseGameAsset (void *assetData, asset_type type, int key,
@@ -452,6 +471,21 @@ extern "C" void parseGameAsset (void *assetData, asset_type type, int key,
     }
 }
 
+static void drawSprite (float x, float y, float width, float height, texture_key textureKey, 
+                        render_command_list *renderCommands) 
+{
+    render_command_sprite *spriteCommand = 
+        (render_command_sprite *)pushRenderCommand(renderCommands,
+                                                 RENDER_COMMAND_SPRITE,
+                                                 sizeof(render_command_sprite));
+    spriteCommand->textureKey = textureKey;
+    spriteCommand->x = x;
+    spriteCommand->y = y;
+    spriteCommand->width = width;
+    spriteCommand->height = height;
+}
+
+#if 0
 static void drawModel (mesh_key meshKey, texture_key textureKey, 
                        matrix4x4 modelMatrix, render_command_list *renderCommands) {
     render_command_model *modelCommand = 
@@ -462,6 +496,7 @@ static void drawModel (mesh_key meshKey, texture_key textureKey,
     modelCommand->textureKey = textureKey;
     modelCommand->modelMatrix = modelMatrix;
 }
+#endif
 
 static render_command_lines *startLines (render_command_list *renderCommands) {
     render_command_lines *lineCommand = 
@@ -579,21 +614,6 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->gameInitialized) {
         gameState->gameInitialized = true;
-
-        debug_camera *debugCamera = &gameState->debugCamera;
-        debugCamera->pos = {};
-        debugCamera->pos.x = 3.0f;
-        debugCamera->pos.y = 3.0f;
-        debugCamera->pos.z = 3.0f;
-        debugCamera->rotation = 
-            quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 45.0f * (PI / 180.0f)) *
-            quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -33.0f * (PI / 180.0f));
-        debugCamera->lastPointerX = 0;
-        debugCamera->lastPointerY = 0;
-
-        debugCamera->lookAtTarget = Vector3(0.0f, 0.0f, 0.0f);
-        debugCamera->up = Vector3(0.0f, 1.0f, 0.0f);
-
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -601,69 +621,14 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     gameState->tempMemory.capacity = gameMemory->tempMemoryCapacity;
     gameState->tempMemory.base = (char *)gameMemory->tempMemory;
 
-    debugCameraMovement(&gameState->debugCamera, input);
-    //matrix4x4 viewMatrix = createLookAtMatrix(gameState->debugCamera.pos.x, gameState->debugCamera.pos.y,gameState->debugCamera.pos.z,
-    //                                          gameState->debugCamera.lookAtTarget.x, gameState->debugCamera.lookAtTarget.y, gameState->debugCamera.lookAtTarget.z,
-    //                                          gameState->debugCamera.up.x, gameState->debugCamera.up.y, gameState->debugCamera.up.z);
-
-
     // TODO(ebuchholz): get screen dimensions from render commands? and use them
     float gameWidth = (float)renderCommands->windowWidth;
     float gameHeight = (float)renderCommands->windowHeight;
-    matrix4x4 projMatrix = createPerspectiveMatrix(0.1f, 1000.0f, (gameWidth / gameHeight), 80.0f);
-    matrix4x4 viewMatrix = createViewMatrix(gameState->debugCamera.rotation, 
-                                            gameState->debugCamera.pos.x,
-                                            gameState->debugCamera.pos.y,
-                                            gameState->debugCamera.pos.z);
 
-    render_command_set_camera *setCameraCommand = 
-        (render_command_set_camera *)pushRenderCommand(renderCommands,
-                                                       RENDER_COMMAND_SET_CAMERA,
-                                                       sizeof(render_command_set_camera));
-    setCameraCommand->viewMatrix = viewMatrix;
-    setCameraCommand->projMatrix = projMatrix;
+    float spriteWidth = 1000.0f;
+    float spriteHeight = 1000.0f;
+    float spriteX = 10.0f;
+    float spriteY = 10.0f;
 
-    matrix4x4 modelMatrix = identityMatrix4x4();
-    drawModel(MESH_KEY_CUBE, TEXTURE_KEY_BLUE, modelMatrix, renderCommands);
-
-    // UI
-    viewMatrix = createLookAtMatrix(0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f);
-
-    projMatrix = {};
-    projMatrix.m[0] = 2.0f / gameWidth;
-    projMatrix.m[1] = 0.0f;
-    projMatrix.m[2] = 0.0f;
-    projMatrix.m[3] = -1.0f;
-    projMatrix.m[4] = 0.0f; 
-    projMatrix.m[5] = 2.0f / gameHeight;
-    projMatrix.m[6] = 0.0f;
-    projMatrix.m[7] = -1.0f;
-    projMatrix.m[8] = 0.0f;
-    projMatrix.m[9] = 0.0f;
-    projMatrix.m[10] = -2.0f / (1000.0f - 0.1f);
-    projMatrix.m[11] = -(0.1f + 1000.0f)/(1000.0f - 0.1f);
-    projMatrix.m[12] = 0.0f;
-    projMatrix.m[13] = 0.0f;
-    projMatrix.m[14] = 0.0f;
-    projMatrix.m[15] = 1.0f;
-
-    setCameraCommand = (render_command_set_camera *)pushRenderCommand(renderCommands,
-                                                                      RENDER_COMMAND_SET_CAMERA,
-                                                                      sizeof(render_command_set_camera));
-    setCameraCommand->viewMatrix = viewMatrix;
-    setCameraCommand->projMatrix = projMatrix;
-
-    //modelMatrix = translationMatrix(21.0f + 54.0f + stickX, -25.0f, -(21.0f + 54.0f) + stickY) * scaleMatrix(50.0f);
-    //drawModel(MESH_KEY_THUMBSTICK, TEXTURE_KEY_BLACK_TEXTURE, modelMatrix, renderCommands);
-
-    //matrix4x4 buttonPressedRotation = {};
-    //if (jumpPressed) {
-    //    buttonPressedRotation = rotationMatrixFromAxisAngle(Vector3(1.0, 0.0f, 0.0f), -0.5f);
-    //}
-    //else {
-    //    buttonPressedRotation = identityMatrix4x4();
-    //}
-    //modelMatrix = translationMatrix(960.0f - 85.0f, -25.0f, -65.0f) * buttonPressedRotation * scaleMatrix(55.0f);
-    //drawModel(MESH_KEY_BUTTON, TEXTURE_KEY_BLACK_TEXTURE, modelMatrix, renderCommands);
-
+    drawSprite(spriteX, spriteY, spriteWidth, spriteHeight, TEXTURE_KEY_ATLAS, renderCommands);
 }

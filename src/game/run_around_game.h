@@ -34,7 +34,8 @@ struct mesh_asset {
 };
 
 enum texture_key {
-    TEXTURE_KEY_BLUE
+    TEXTURE_KEY_BLUE,
+    TEXTURE_KEY_ATLAS
     //TEXTURE_KEY_GREEN,
     //TEXTURE_KEY_WHITE,
     //TEXTURE_KEY_FLAG,

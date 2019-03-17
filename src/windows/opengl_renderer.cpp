@@ -217,6 +217,28 @@ int initOpenGL (HWND window, renderer_memory *memory) {
                         defaultVertexShaderSource, defaultFragmentShaderSource, memory);
     createShaderProgram(renderer, SHADER_TYPE_LINES,
                         lineVertexShaderSource, lineFragmentShaderSource, memory);
+    createShaderProgram(renderer, SHADER_TYPE_SPRITE,
+                        spriteVertexShaderSource, spriteFragmentShaderSource, memory);
+
+    // sprite drawing
+    glGenBuffers(1, &renderer->spritePositionBuffer);
+    glGenBuffers(1, &renderer->spriteTextureBuffer);
+    glGenBuffers(1, &renderer->spriteIndexBuffer);
+
+    // index buffer doesn't change
+    // TODO(ebuchholz): temporary memory, don't need to keep it in renderer
+    int indexIndex = 0;
+    for (int i = 0; i < MAX_SPRITES_PER_BATCH; ++i) {
+        int vertexNum = i * 4;
+        renderer->spriteIndices[indexIndex++] = vertexNum;
+        renderer->spriteIndices[indexIndex++] = vertexNum+3;
+        renderer->spriteIndices[indexIndex++] = vertexNum+1;
+        renderer->spriteIndices[indexIndex++] = vertexNum;
+        renderer->spriteIndices[indexIndex++] = vertexNum+2;
+        renderer->spriteIndices[indexIndex++] = vertexNum+3;
+    }
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->spriteIndexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_SPRITES_PER_BATCH * 3 * 2 * sizeof(int), renderer->spriteIndices, GL_STATIC_DRAW);
 
     // For line drawing, maybe other commands that don't have a buffer ready ahead of time and supply data on demand
     glGenBuffers(1, &renderer->debugPositionBuffer);
@@ -280,6 +302,59 @@ void drawModel (openGL_renderer *renderer, GLuint program, render_command_model 
     glDrawElements(GL_TRIANGLES, mesh->numIndices, GL_UNSIGNED_INT, 0);
 }
 
+// TODO(ebuchholz): batch
+void drawSprite (openGL_renderer *renderer, GLuint program, render_command_sprite *spriteCommand, 
+                 float screenWidth, float screenHeight) 
+{
+    renderer->spriteVertexPositions[0] = spriteCommand->x;
+    renderer->spriteVertexPositions[1] = spriteCommand->y;
+    renderer->spriteVertexPositions[2] = spriteCommand->x + spriteCommand->width;
+    renderer->spriteVertexPositions[3] = spriteCommand->y;
+    renderer->spriteVertexPositions[4] = spriteCommand->x;
+    renderer->spriteVertexPositions[5] = spriteCommand->y + spriteCommand->height;
+    renderer->spriteVertexPositions[6] = spriteCommand->x + spriteCommand->width;
+    renderer->spriteVertexPositions[7] = spriteCommand->y + spriteCommand->height;
+
+    glBindBuffer(GL_ARRAY_BUFFER, renderer->spritePositionBuffer);
+    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), renderer->spriteVertexPositions, GL_DYNAMIC_DRAW);
+
+    GLint positionLocation = glGetAttribLocation(program, "position");
+    glEnableVertexAttribArray(positionLocation);
+    glVertexAttribPointer(positionLocation, 2, GL_FLOAT, FALSE, 0, 0);
+
+    renderer->spriteTextureCoords[0] = 0.0f;
+    renderer->spriteTextureCoords[1] = 1.0f;
+    renderer->spriteTextureCoords[2] = 1.0f;
+    renderer->spriteTextureCoords[3] = 1.0f;
+    renderer->spriteTextureCoords[4] = 0.0f;
+    renderer->spriteTextureCoords[5] = 0.0f;
+    renderer->spriteTextureCoords[6] = 1.0f;
+    renderer->spriteTextureCoords[7] = 0.0f;
+
+    glBindBuffer(GL_ARRAY_BUFFER, renderer->spriteTextureBuffer);
+    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), renderer->spriteTextureCoords, GL_DYNAMIC_DRAW);
+
+    GLint texCoordLocation = glGetAttribLocation(program, "texCoord");
+    glEnableVertexAttribArray(texCoordLocation);
+    glVertexAttribPointer(texCoordLocation, 2, GL_FLOAT, FALSE, 0, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->spriteIndexBuffer);
+
+    openGL_texture *texture = &renderer->textures[spriteCommand->textureKey];
+
+    GLint screenWidthLocation = glGetUniformLocation(program, "screenWidth");
+    glUniform1f(screenWidthLocation, screenWidth);
+    GLint screenHeightLocation = glGetUniformLocation(program, "screenHeight");
+    glUniform1f(screenHeightLocation, screenHeight);
+
+    glActiveTexture(GL_TEXTURE0);
+    GLuint textureLocation = glGetUniformLocation(program, "texture");
+    glUniform1i(textureLocation, 0);
+    glBindTexture(GL_TEXTURE_2D, texture->textureID);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
 void drawLines (openGL_renderer *renderer, GLuint program, render_command_lines *lineCommand) {
     glBindBuffer(GL_ARRAY_BUFFER, renderer->debugPositionBuffer);
     glBufferData(GL_ARRAY_BUFFER, lineCommand->numLines * sizeof(line), lineCommand->lines, GL_DYNAMIC_DRAW);
@@ -315,7 +390,20 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
         switch(header->type) {
             default:
                 // error
+                assert(false);
                 break;
+            case RENDER_COMMAND_SPRITE: 
+            {
+                // TODO(ebuchholz): have a way to not have to set the program for command
+                GLuint program = renderer->shaders[SHADER_TYPE_SPRITE].program;
+                glUseProgram(program);
+
+                render_command_sprite *spriteCommand = 
+                    (render_command_sprite *)((char *)renderCommands->memory.base + 
+                                            renderCommandOffset);
+                drawSprite(renderer, program, spriteCommand, (float)renderCommands->windowWidth, (float)renderCommands->windowHeight);
+                renderCommandOffset += sizeof(render_command_sprite);
+            } break;
             case RENDER_COMMAND_MODEL: 
             {
                 // TODO(ebuchholz): have a way to not have to set the program for command

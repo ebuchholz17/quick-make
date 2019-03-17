@@ -24,10 +24,10 @@ LRESULT CALLBACK windowCallback (HWND window, unsigned int message, WPARAM wPara
             programRunning = false;
         } break;
         case WM_SIZE: {
-            RECT windowRect;
-            GetWindowRect(window, &windowRect);
-            gameWidth = windowRect.right - windowRect.left;
-            gameHeight = windowRect.bottom - windowRect.top;
+            RECT clientRect;
+            GetClientRect(window, &clientRect);
+            gameWidth = clientRect.right - clientRect.left;
+            gameHeight = clientRect.bottom - clientRect.top;
         } break;
         default: {
             result = DefWindowProcA(window, message, wParam, lParam);

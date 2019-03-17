@@ -175,6 +175,7 @@ struct renderer_memory {
 enum shader_type {
     SHADER_TYPE_DEFAULT,
     SHADER_TYPE_LINES,
+    SHADER_TYPE_SPRITE,
     SHADER_TYPE_COUNT
 };
 
@@ -201,13 +202,14 @@ struct openGL_texture {
 
 #define MAX_OPENGL_MESHES 100
 #define MAX_OPENGL_TEXTURES 100
+#define MAX_SPRITES_PER_BATCH 1000
 
 struct openGL_renderer {
     HGLRC context;
     HDC deviceContext;
 
     int numShaders;
-    shader_program shaders[2];
+    shader_program shaders[SHADER_TYPE_COUNT];
 
     int numMeshes;
     openGL_mesh meshes[MAX_OPENGL_MESHES];
@@ -216,6 +218,15 @@ struct openGL_renderer {
 
     matrix4x4 viewMatrix;
     matrix4x4 projMatrix;
+
+    // one set of buffers for all sprites
+    GLuint spritePositionBuffer;
+    GLuint spriteTextureBuffer;
+    GLuint spriteIndexBuffer;
+
+    float spriteVertexPositions[MAX_SPRITES_PER_BATCH * 4 * 2];
+    float spriteTextureCoords[MAX_SPRITES_PER_BATCH * 4 * 2];
+    int spriteIndices[MAX_SPRITES_PER_BATCH * 3 * 2];
 
     GLuint debugPositionBuffer;
 };

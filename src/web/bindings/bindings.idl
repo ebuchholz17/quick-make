@@ -103,6 +103,7 @@ interface loaded_texture_asset {
 enum render_command_type {
     "RENDER_COMMAND_MODEL",
     "RENDER_COMMAND_LINES",
+    "RENDER_COMMAND_SPRITE",
     "RENDER_COMMAND_SET_CAMERA"
 };
 
@@ -119,6 +120,14 @@ interface render_command_model {
 interface render_command_lines {
     attribute line lines;
     attribute long numLines;
+};
+
+interface render_command_sprite {
+    attribute long textureKey;
+    attribute float x;
+    attribute float y;
+    attribute float width;
+    attribute float height;
 };
 
 interface render_command_set_camera {
