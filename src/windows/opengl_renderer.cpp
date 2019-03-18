@@ -359,6 +359,7 @@ void drawSprite (openGL_renderer *renderer, GLuint program, render_command_sprit
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
+// TODO(ebuchholz): use buffersubdata instead? and reserve enough for max batch size
 void flushSprites (openGL_renderer *renderer, GLuint program, int numSpritesBatched, 
                    float screenWidth, float screenHeight, int textureKey) 
 {

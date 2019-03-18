@@ -49,9 +49,9 @@ var WebGLRenderer = function () {
     this.spriteTextureBuffer = 0;
     this.spriteIndexBuffer = 0;
     
-    this.spriteVertexPositions = [];
-    this.spriteTextureCoords = [];
-    this.spriteIndices = [];
+    this.spriteVertexPositions;
+    this.spriteTextureCoords;
+    this.spriteIndices;
 
     this.debugPositionBuffer = 0;
 };
@@ -73,6 +73,10 @@ WebGLRenderer.prototype = {
         this.spriteTextureBuffer = gl.createBuffer();
         this.spriteIndexBuffer = gl.createBuffer();
 
+        this.spriteVertexPositions = new Float32Array(WebGLRenderer.MAX_SPRITES_PER_BATCH * 8);
+        this.spriteTextureCoords = new Float32Array(WebGLRenderer.MAX_SPRITES_PER_BATCH * 8);
+        this.spriteIndices = new Uint32Array(WebGLRenderer.MAX_SPRITES_PER_BATCH * 6);
+
         // index buffer doesn't change
         // TODO(ebuchholz): temporary memory, don't need to keep it in renderer
         var indexIndex = 0;
@@ -86,9 +90,8 @@ WebGLRenderer.prototype = {
             this.spriteIndices[indexIndex++] = vertexNum+3;
         }
 
-        var uintBuffer = Uint32Array.from(this.spriteIndices);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, uintBuffer, gl.STATIC_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndices, gl.STATIC_DRAW);
 
         this.debugPositionBuffer = gl.createBuffer();
 
@@ -274,8 +277,7 @@ WebGLRenderer.prototype = {
         this.spriteVertexPositions[7] = spriteCommand.y + spriteCommand.height;
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.spritePositionBuffer);
-        var floatBuffer = Float32Array.from(this.spriteVertexPositions);
-        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, this.spriteVertexPositions, gl.DYNAMIC_DRAW);
 
         var positionLocation = gl.getAttribLocation(program, "position");
         gl.enableVertexAttribArray(positionLocation);
@@ -291,8 +293,7 @@ WebGLRenderer.prototype = {
         this.spriteTextureCoords[7] = 0.0;
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteTextureBuffer);
-        floatBuffer = Float32Array.from(this.spriteTextureCoords);
-        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, this.spriteTextureCoords, gl.DYNAMIC_DRAW);
 
         var texCoordLocation = gl.getAttribLocation(program, "texCoord");
         gl.enableVertexAttribArray(texCoordLocation);
@@ -312,6 +313,84 @@ WebGLRenderer.prototype = {
         gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
 
         gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
+    },
+
+    // TODO(ebuchholz): use buffersubdata instead? and reserve enough for max batch size
+    flushSprites: function (game, program, numSpritesBatched, screenWidth, screenHeight, textureKey) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.spritePositionBuffer);
+        var floatBuffer = Float32Array.from(this.spriteVertexPositions);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
+
+        var positionLocation = gl.getAttribLocation(program, "position");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteTextureBuffer);
+        floatBuffer = Float32Array.from(this.spriteTextureCoords);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
+
+        var texCoordLocation = gl.getAttribLocation(program, "texCoord");
+        gl.enableVertexAttribArray(texCoordLocation);
+        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndexBuffer);
+
+        var screenWidthLocation = gl.getUniformLocation(program, "screenWidth");
+        gl.uniform1f(screenWidthLocation, screenWidth);
+        var screenHeightLocation = gl.getUniformLocation(program, "screenHeight");
+        gl.uniform1f(screenHeightLocation, screenHeight);
+
+        var texture = this.textures[textureKey];
+        var textureLocation = gl.getUniformLocation(program, "texture");
+        gl.uniform1i(textureLocation, 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
+
+        gl.drawElements(gl.TRIANGLES, numSpritesBatched * 6, gl.UNSIGNED_INT, 0);
+    },
+
+    drawSpriteList: function (game, program, spriteListCommand, screenWidth, screenHeight) {
+        if (spriteListCommand.numSprites > 0) {
+            var spritesPointer = game.getPointer(spriteListCommand.sprites);
+            var currentTextureKey = game.wrapPointer(spritesPointer, game.render_sprite).textureKey;
+            var numSpritesBatched = 0;
+
+            for (var i = 0; i < spriteListCommand.numSprites; ++i) {
+                var sprite = game.wrapPointer(spritesPointer + game.sizeof_render_sprite() * i, game.render_sprite);
+
+                if (sprite.textureKey !== currentTextureKey || numSpritesBatched >= WebGLRenderer.MAX_SPRITES_PER_BATCH) {
+                    this.flushSprites(game, program, numSpritesBatched, screenWidth, screenHeight, currentTextureKey);
+                    numSpritesBatched = 0;
+                    currentTextureKey = sprite.textureKey;
+                }
+
+                var numFloats = numSpritesBatched * 8;
+
+                // TODO(ebuchholz): maybe calculate these whole buffers on C side? to avoid copying, and using webidl getters/setters
+                this.spriteVertexPositions[numFloats] = sprite.v0X;
+                this.spriteVertexPositions[numFloats+1] = sprite.v0Y;
+                this.spriteVertexPositions[numFloats+2] = sprite.v1X;
+                this.spriteVertexPositions[numFloats+3] = sprite.v1Y;
+                this.spriteVertexPositions[numFloats+4] = sprite.v2X;
+                this.spriteVertexPositions[numFloats+5] = sprite.v2Y;
+                this.spriteVertexPositions[numFloats+6] = sprite.v3X;
+                this.spriteVertexPositions[numFloats+7] = sprite.v3Y;
+
+                this.spriteTextureCoords[numFloats] = sprite.t0X;
+                this.spriteTextureCoords[numFloats+1] = sprite.t0Y;
+                this.spriteTextureCoords[numFloats+2] = sprite.t1X;
+                this.spriteTextureCoords[numFloats+3] = sprite.t1Y;
+                this.spriteTextureCoords[numFloats+4] = sprite.t2X;
+                this.spriteTextureCoords[numFloats+5] = sprite.t2Y;
+                this.spriteTextureCoords[numFloats+6] = sprite.t3X;
+                this.spriteTextureCoords[numFloats+7] = sprite.t3Y;
+
+                ++numSpritesBatched;
+            }
+            if (numSpritesBatched > 0) {
+                this.flushSprites(game, program, numSpritesBatched, screenWidth, screenHeight, currentTextureKey);
+            }
+        }
     },
 
     drawLines: function (game, lineCommand, program) {
@@ -364,6 +443,18 @@ WebGLRenderer.prototype = {
                                                          game.render_command_sprite);
                     renderCommandOffset += game.sizeof_render_command_sprite();
                     this.drawSprite(game, program, spriteCommand, renderCommands.windowWidth, renderCommands.windowHeight);
+                } break;
+                case game.RENDER_COMMAND_SPRITE_LIST: 
+                {
+                    // TODO(ebuchholz): have a way to not have to set the program for command
+                    var program = this.shaders[ShaderTypes.SPRITE].program;
+                    gl.useProgram(program);
+
+                    var spriteListCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
+                                                             game.render_command_sprite_list);
+                    renderCommandOffset += game.sizeof_render_command_sprite_list();
+                    renderCommandOffset += spriteListCommand.numSprites * game.sizeof_render_sprite();
+                    this.drawSpriteList(game, program, spriteListCommand, renderCommands.windowWidth, renderCommands.windowHeight);
                 } break;
                 case game.RENDER_COMMAND_MODEL:
                 {

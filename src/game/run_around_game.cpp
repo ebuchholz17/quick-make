@@ -645,8 +645,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     float gameWidth = (float)renderCommands->windowWidth;
     float gameHeight = (float)renderCommands->windowHeight;
 
-    float spriteX = 10.0f;
-    float spriteY = 10.0f;
+    float spriteX = 40.0f;
+    float spriteY = 40.0f;
 
     for (int i = 0; i < 40; ++i) {
         for (int j = 0; j < 40; ++j) {

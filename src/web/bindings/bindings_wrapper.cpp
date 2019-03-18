@@ -71,6 +71,12 @@ int sizeof_render_command_lines () {
 int sizeof_render_command_sprite () {
     return sizeof(render_command_sprite);
 }  
+int sizeof_render_sprite () {
+    return sizeof(render_sprite);
+}  
+int sizeof_render_command_sprite_list () {
+    return sizeof(render_command_sprite_list);
+}  
 int sizeof_render_command_set_camera () {
     return sizeof(render_command_set_camera);
 }
@@ -105,6 +111,8 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_render_command_model", &sizeof_render_command_model);
     function ("sizeof_render_command_lines", &sizeof_render_command_lines);
     function ("sizeof_render_command_sprite", &sizeof_render_command_sprite);
+    function ("sizeof_render_sprite", &sizeof_render_sprite);
+    function ("sizeof_render_command_sprite_list", &sizeof_render_command_sprite_list);
     function ("sizeof_render_command_set_camera", &sizeof_render_command_set_camera);
     function ("sizeof_render_command_list", &sizeof_render_command_list);
     function ("sizeof_game_input", &sizeof_game_input);
