@@ -9,23 +9,6 @@
 // TODO(ebuchholz): some convenient structure to access assets
 enum mesh_key {
     MESH_KEY_CUBE
-    //MESH_KEY_FLAG,
-    //MESH_KEY_SPIKES,
-    //MESH_KEY_SPHERE,
-    //MESH_KEY_THUMBSTICK,
-    //MESH_KEY_BUTTON,
-    //MESH_KEY_BUMP,
-    //MESH_KEY_YOUWIN,
-
-    //MESH_KEY_HILL,
-    //MESH_KEY_LOOP,
-    //MESH_KEY_LOOP_RAMP,
-    //MESH_KEY_LOOP_RAMP2,
-    //MESH_KEY_GROUND,
-    //MESH_KEY_TRICKY_AREA,
-    //MESH_KEY_CLIFF,
-    //MESH_KEY_TOWERS,
-    //MESH_KEY_UNDER_LOOP
 };
 
 struct mesh_asset {
@@ -34,19 +17,17 @@ struct mesh_asset {
 };
 
 enum texture_key {
-    TEXTURE_KEY_BLUE,
-    TEXTURE_KEY_ATLAS
-    //TEXTURE_KEY_GREEN,
-    //TEXTURE_KEY_WHITE,
-    //TEXTURE_KEY_FLAG,
-    //TEXTURE_KEY_BLACK_TEXTURE
+    TEXTURE_KEY_GOLFMAN
 };
 
 struct texture_asset {
     texture_key key;
+    int width;
+    int height;
     // maybe save pixels, but maybe don't need it after uploaded to GPU
 };
 
+// assuming a particular bmp format (the one that gets exported from gimp: 32 bit, rgba, compression mode 3)
 #pragma pack(push, 1)
 struct bitmap_header {
     unsigned short type;
@@ -65,6 +46,10 @@ struct bitmap_header {
     int yResolution;
     unsigned int numColors;
     unsigned int numImportantColors;
+
+    unsigned int redMask;
+    unsigned int greenMask;
+    unsigned int blueMask;
 };
 #pragma pack(pop)
 
@@ -88,6 +73,22 @@ struct debug_camera {
     int lastPointerY;
     vector3 lookAtTarget;
     vector3 up;
+};
+
+// TODO(ebuchholz): make stretchy
+#define MAX_SPRITES_PER_FRAME 2000
+
+struct sprite {
+    float x;
+    float y;
+    float width;
+    float height;
+    texture_key textureKey;
+};
+
+struct sprite_list {
+    sprite *sprites;
+    int numSprites;
 };
 
 struct game_state {

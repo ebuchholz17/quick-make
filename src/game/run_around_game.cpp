@@ -367,6 +367,17 @@ static void parseOBJ (void *objData, game_assets *assets, int key, memory_arena 
     //}
 }
 
+static unsigned int findLeastSignificantBit (unsigned int value, bool *found) {
+    *found = false;
+    for (unsigned int digit = 0; digit < 32; ++digit) {
+        if (value & (1 << digit)) {
+            *found = true;
+            return digit;
+        }
+    }
+    return 0;
+}
+
 // parses .obj but also makes a copy of some of the data to use for level data
 static void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
     int numTextures = assets->numTextures;
@@ -380,42 +391,47 @@ static void parseBitmap (void *fileData, game_assets *assets, int key, memory_ar
     loadedBitmap->key = key;
 
     bitmap_header *header = (bitmap_header *)fileData;    
-    unsigned char *pixels = (unsigned char *)((char *)fileData + header->bitmapOffset);
+    unsigned int *pixels = (unsigned int *)((char *)fileData + header->bitmapOffset);
 
     int width = header->width;
     int height = header->height;
+    textureAsset->width = width;
+    textureAsset->height = height;
     loadedBitmap->width = width;
     loadedBitmap->height = height;
     unsigned char *bitmapPixels = (unsigned char *)allocateMemorySize(workingMemory, sizeof(unsigned char) * 4 * width * height);
     loadedBitmap->pixels = (unsigned int *)bitmapPixels;
 
-    if (header->bitsPerPixel == 32) {
-        unsigned int numPixelValues = width * height * 4;
-        unsigned int numBitmapValues = 0;
-        for (unsigned int i = 0; i < numPixelValues; i += 4) {
-            bitmapPixels[numBitmapValues] = pixels[i+2];
-            bitmapPixels[numBitmapValues+1] = pixels[i+1];
-            bitmapPixels[numBitmapValues+2] = pixels[i];
-            bitmapPixels[numBitmapValues+3] = pixels[i+3];
-            numBitmapValues += 4;
-        }
-    }
-    else if (header->bitsPerPixel == 24) {
-        unsigned int numPixelValues = width * height * 3;
-        unsigned int numBitmapValues = 0;
-        for (unsigned int i = 0; i < numPixelValues; i += 3) {
-            bitmapPixels[numBitmapValues] = pixels[i+2];
-            bitmapPixels[numBitmapValues+1] = pixels[i+1];
-            bitmapPixels[numBitmapValues+2] = pixels[i];
-            bitmapPixels[numBitmapValues+3] = 0xff;
-            numBitmapValues += 4;
-        }
-    }
-    else {
-        // won't support other ones
-        assert(0);
-    }
+    assert(header->bitsPerPixel == 32 && header->compression == 3);
 
+    unsigned int alphaMask = ~(header->redMask | header->greenMask | header->blueMask);
+
+    bool foundLeastSignificantDigit = false;
+    unsigned int redMaskDigit = findLeastSignificantBit(header->redMask, &foundLeastSignificantDigit);
+    assert(foundLeastSignificantDigit);
+    unsigned int greenMaskDigit = findLeastSignificantBit(header->greenMask, &foundLeastSignificantDigit);
+    assert(foundLeastSignificantDigit);
+    unsigned int blueMaskDigit = findLeastSignificantBit(header->blueMask, &foundLeastSignificantDigit);
+    assert(foundLeastSignificantDigit);
+    unsigned int alphaMaskDigit = findLeastSignificantBit(alphaMask, &foundLeastSignificantDigit);
+    assert(foundLeastSignificantDigit);
+
+    unsigned int numPixelValues = width * height;
+    unsigned int numBitmapValues = 0;
+    for (unsigned int i = 0; i < numPixelValues; i++) {
+        unsigned int color = pixels[i];
+
+        unsigned char red = (unsigned char)((color & header->redMask) >> redMaskDigit);
+        unsigned char green = (unsigned char)((color & header->greenMask) >> greenMaskDigit);
+        unsigned char blue = (unsigned char)((color & header->blueMask) >> blueMaskDigit);
+        unsigned char alpha = (unsigned char)((color & alphaMask) >> alphaMaskDigit);
+
+        bitmapPixels[numBitmapValues] = red;
+        bitmapPixels[numBitmapValues+1] = green;
+        bitmapPixels[numBitmapValues+2] = blue;
+        bitmapPixels[numBitmapValues+3] = alpha;
+        numBitmapValues += 4;
+    }
 }
 
 static void pushAsset (asset_list *assetList, char *path, asset_type type, int key) {
@@ -431,8 +447,7 @@ static void pushAsset (asset_list *assetList, char *path, asset_type type, int k
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
 
-    pushAsset(assetList, "assets/textures/blue.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_BLUE);
-    pushAsset(assetList, "assets/textures/atlas.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_ATLAS);
+    pushAsset(assetList, "assets/textures/golfman.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_GOLFMAN);
 }
 
 extern "C" void parseGameAsset (void *assetData, asset_type type, int key,
@@ -471,18 +486,18 @@ extern "C" void parseGameAsset (void *assetData, asset_type type, int key,
     }
 }
 
-static void drawSprite (float x, float y, float width, float height, texture_key textureKey, 
-                        render_command_list *renderCommands) 
-{
-    render_command_sprite *spriteCommand = 
-        (render_command_sprite *)pushRenderCommand(renderCommands,
-                                                 RENDER_COMMAND_SPRITE,
-                                                 sizeof(render_command_sprite));
-    spriteCommand->textureKey = textureKey;
-    spriteCommand->x = x;
-    spriteCommand->y = y;
-    spriteCommand->width = width;
-    spriteCommand->height = height;
+static void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList) {
+    assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
+
+    sprite *nextSprite = &spriteList->sprites[spriteList->numSprites];
+    ++spriteList->numSprites;
+    nextSprite->x = x;
+    nextSprite->y = y;
+    nextSprite->textureKey = textureKey;
+
+    texture_asset *texAsset = assets->textures[textureKey];
+    nextSprite->width = (float)texAsset->width;
+    nextSprite->height = (float)texAsset->height;
 }
 
 #if 0
@@ -621,14 +636,55 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     gameState->tempMemory.capacity = gameMemory->tempMemoryCapacity;
     gameState->tempMemory.base = (char *)gameMemory->tempMemory;
 
+    // make space for sprites
+    sprite_list spriteList;
+    spriteList.sprites = (sprite *)allocateMemorySize(&gameState->tempMemory, sizeof(sprite) * MAX_SPRITES_PER_FRAME);
+    spriteList.numSprites = 0;
+
     // TODO(ebuchholz): get screen dimensions from render commands? and use them
     float gameWidth = (float)renderCommands->windowWidth;
     float gameHeight = (float)renderCommands->windowHeight;
 
-    float spriteWidth = 1000.0f;
-    float spriteHeight = 1000.0f;
     float spriteX = 10.0f;
     float spriteY = 10.0f;
 
-    drawSprite(spriteX, spriteY, spriteWidth, spriteHeight, TEXTURE_KEY_ATLAS, renderCommands);
+    for (int i = 0; i < 40; ++i) {
+        for (int j = 0; j < 40; ++j) {
+            addSprite(spriteX * i, spriteY * j, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList);
+        }
+    }
+
+    render_command_sprite_list *spriteListCommand = 
+        (render_command_sprite_list *)pushRenderCommand(renderCommands,
+                                                 RENDER_COMMAND_SPRITE_LIST,
+                                                 sizeof(render_command_sprite_list));
+    spriteListCommand->numSprites = spriteList.numSprites;
+    spriteListCommand->sprites = (render_sprite *)allocateMemorySize(&renderCommands->memory, sizeof(render_sprite) * spriteListCommand->numSprites);
+
+    for (int i = 0; i < spriteList.numSprites; ++i) {
+        sprite *sprite = &spriteList.sprites[i];
+
+        render_sprite *renderSprite = &spriteListCommand->sprites[i];
+
+        // TODO(ebuchholz): apply rotation, scale, alpha, parent-child relationships
+        renderSprite->v0X = sprite->x;
+        renderSprite->v0Y = sprite->y;
+        renderSprite->v1X = sprite->x + sprite->width;
+        renderSprite->v1Y = sprite->y;
+        renderSprite->v2X = sprite->x;
+        renderSprite->v2Y = sprite->y + sprite->height;
+        renderSprite->v3X = sprite->x + sprite->width;
+        renderSprite->v3Y = sprite->y + sprite->height;
+
+        renderSprite->t0X = 0.0f;
+        renderSprite->t0Y = 1.0f;
+        renderSprite->t1X = 1.0f;
+        renderSprite->t1Y = 1.0f;
+        renderSprite->t2X = 0.0f;
+        renderSprite->t2Y = 0.0f;
+        renderSprite->t3X = 1.0f;
+        renderSprite->t3Y = 0.0f;
+
+        renderSprite->textureKey;
+    }
 }

@@ -62,6 +62,7 @@ enum render_command_type {
     RENDER_COMMAND_MODEL,
     RENDER_COMMAND_LINES,
     RENDER_COMMAND_SPRITE,
+    RENDER_COMMAND_SPRITE_LIST,
     RENDER_COMMAND_SET_CAMERA
 };
 
@@ -87,6 +88,35 @@ struct render_command_sprite {
     float width;
     float height;
 };
+
+// TODO(ebuchholz): vector2
+struct render_sprite {
+    float v0X;
+    float v0Y;
+    float v1X;
+    float v1Y;
+    float v2X;
+    float v2Y;
+    float v3X;
+    float v3Y;
+
+    float t0X;
+    float t0Y;
+    float t1X;
+    float t1Y;
+    float t2X;
+    float t2Y;
+    float t3X;
+    float t3Y;
+
+    int textureKey;
+};
+
+struct render_command_sprite_list {
+    render_sprite *sprites;
+    int numSprites;
+};
+
 
 struct render_command_set_camera {
     matrix4x4 viewMatrix;

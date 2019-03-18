@@ -62,7 +62,7 @@ WebGLRenderer.prototype = {
 
     initWebGL: function (canvas) {
         this.canvas = canvas;
-        gl = canvas.getContext("webgl");
+        gl = canvas.getContext("webgl", { alpha: false });
         var success = gl.getExtension("OES_element_index_uint"); // TODO(ebuchholz): check
         this.compileAndLinkShader(defaultVertexShaderSource, defaultFragmentShaderSource, ShaderTypes.DEFAULT);
         this.compileAndLinkShader(lineVertexShaderSource, lineFragmentShaderSource, ShaderTypes.LINES);
@@ -91,6 +91,10 @@ WebGLRenderer.prototype = {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, uintBuffer, gl.STATIC_DRAW);
 
         this.debugPositionBuffer = gl.createBuffer();
+
+        // TODO(ebuchholz): use the right blend mode depending on what's being drawn, this is just for default 2d drawing
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     },
 
     compileAndLinkShader: function (vertexShaderText, fragmentShaderText, type) {
@@ -335,9 +339,9 @@ WebGLRenderer.prototype = {
 
     renderFrame: function (game, renderCommands) {
         gl.viewport(0, 0, renderCommands.windowWidth, renderCommands.windowHeight);
-        gl.enable(gl.DEPTH_TEST);
+        //gl.enable(gl.DEPTH_TEST);
         //gl.enable(gl.CULL_FACE);
-        gl.clearColor(0.0, 0.7, 0.8, 1.0);
+        gl.clearColor(0.0, 0.7, 0.8, 0.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         var renderCommandOffset = 0;
