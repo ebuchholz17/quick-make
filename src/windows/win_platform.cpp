@@ -134,7 +134,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
     windowClass.hCursor = LoadCursor(0, IDC_ARROW);
     windowClass.hInstance = instance;
     windowClass.lpfnWndProc = windowCallback;
-    windowClass.lpszClassName = "RunAroundGameClass";
+    windowClass.lpszClassName = "QuickMakeClass";
 
     if (RegisterClassA(&windowClass)) {
 
@@ -150,7 +150,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
         HWND window = CreateWindowExA(
             0, //WS_EX_TOPMOST,
             windowClass.lpszClassName, 
-            "Run Around Game", 
+            "Quick Make", 
             windowStyle,
             CW_USEDEFAULT, 
             CW_USEDEFAULT, 

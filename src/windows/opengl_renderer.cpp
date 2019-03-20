@@ -130,8 +130,8 @@ void loadRendererTexture (renderer_memory *memory, loaded_texture_asset *loadedT
                  0, GL_RGBA, GL_UNSIGNED_BYTE, loadedTexture->pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 }
 
 static void createShaderProgram(openGL_renderer *renderer, shader_type type,
@@ -223,6 +223,7 @@ int initOpenGL (HWND window, renderer_memory *memory) {
     // sprite drawing
     glGenBuffers(1, &renderer->spritePositionBuffer);
     glGenBuffers(1, &renderer->spriteTextureBuffer);
+    glGenBuffers(1, &renderer->spriteColorBuffer);
     glGenBuffers(1, &renderer->spriteIndexBuffer);
 
     // index buffer doesn't change
@@ -359,7 +360,6 @@ void drawSprite (openGL_renderer *renderer, GLuint program, render_command_sprit
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-// TODO(ebuchholz): use buffersubdata instead? and reserve enough for max batch size
 void flushSprites (openGL_renderer *renderer, GLuint program, int numSpritesBatched, 
                    float screenWidth, float screenHeight, int textureKey) 
 {
@@ -376,6 +376,13 @@ void flushSprites (openGL_renderer *renderer, GLuint program, int numSpritesBatc
     GLint texCoordLocation = glGetAttribLocation(program, "texCoord");
     glEnableVertexAttribArray(texCoordLocation);
     glVertexAttribPointer(texCoordLocation, 2, GL_FLOAT, FALSE, 0, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, renderer->spriteColorBuffer);
+    glBufferData(GL_ARRAY_BUFFER, numSpritesBatched * 16 * sizeof(float), renderer->spriteColors, GL_DYNAMIC_DRAW);
+
+    GLint colorLocation = glGetAttribLocation(program, "color");
+    glEnableVertexAttribArray(colorLocation);
+    glVertexAttribPointer(colorLocation, 4, GL_FLOAT, FALSE, 0, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->spriteIndexBuffer);
 
@@ -394,6 +401,7 @@ void flushSprites (openGL_renderer *renderer, GLuint program, int numSpritesBatc
     glDrawElements(GL_TRIANGLES, numSpritesBatched * 6, GL_UNSIGNED_INT, 0);
 }
 
+// TODO(ebuchholz): have game prepare memory directly? and feed it to buffer with offset
 void drawSpriteList (openGL_renderer *renderer, GLuint program, render_command_sprite_list *spriteListCommand, 
                  float screenWidth, float screenHeight) 
 {
@@ -412,24 +420,42 @@ void drawSpriteList (openGL_renderer *renderer, GLuint program, render_command_s
             }
 
             int numFloats = numSpritesBatched * 8;
+            int numColors = numSpritesBatched * 16;
 
-            renderer->spriteVertexPositions[numFloats] = sprite->v0X;
-            renderer->spriteVertexPositions[numFloats+1] = sprite->v0Y;
-            renderer->spriteVertexPositions[numFloats+2] = sprite->v1X;
-            renderer->spriteVertexPositions[numFloats+3] = sprite->v1Y;
-            renderer->spriteVertexPositions[numFloats+4] = sprite->v2X;
-            renderer->spriteVertexPositions[numFloats+5] = sprite->v2Y;
-            renderer->spriteVertexPositions[numFloats+6] = sprite->v3X;
-            renderer->spriteVertexPositions[numFloats+7] = sprite->v3Y;
+            renderer->spriteVertexPositions[numFloats]   = sprite->pos[0].x;
+            renderer->spriteVertexPositions[numFloats+1] = sprite->pos[0].y;
+            renderer->spriteVertexPositions[numFloats+2] = sprite->pos[1].x;
+            renderer->spriteVertexPositions[numFloats+3] = sprite->pos[1].y;
+            renderer->spriteVertexPositions[numFloats+4] = sprite->pos[2].x;
+            renderer->spriteVertexPositions[numFloats+5] = sprite->pos[2].y;
+            renderer->spriteVertexPositions[numFloats+6] = sprite->pos[3].x;
+            renderer->spriteVertexPositions[numFloats+7] = sprite->pos[3].y;
 
-            renderer->spriteTextureCoords[numFloats] = sprite->t0X;
-            renderer->spriteTextureCoords[numFloats+1] = sprite->t0Y;
-            renderer->spriteTextureCoords[numFloats+2] = sprite->t1X;
-            renderer->spriteTextureCoords[numFloats+3] = sprite->t1Y;
-            renderer->spriteTextureCoords[numFloats+4] = sprite->t2X;
-            renderer->spriteTextureCoords[numFloats+5] = sprite->t2Y;
-            renderer->spriteTextureCoords[numFloats+6] = sprite->t3X;
-            renderer->spriteTextureCoords[numFloats+7] = sprite->t3Y;
+            renderer->spriteTextureCoords[numFloats]   = sprite->texCoord[0].x;
+            renderer->spriteTextureCoords[numFloats+1] = sprite->texCoord[0].y;
+            renderer->spriteTextureCoords[numFloats+2] = sprite->texCoord[1].x;
+            renderer->spriteTextureCoords[numFloats+3] = sprite->texCoord[1].y;
+            renderer->spriteTextureCoords[numFloats+4] = sprite->texCoord[2].x;
+            renderer->spriteTextureCoords[numFloats+5] = sprite->texCoord[2].y;
+            renderer->spriteTextureCoords[numFloats+6] = sprite->texCoord[3].x;
+            renderer->spriteTextureCoords[numFloats+7] = sprite->texCoord[3].y;
+
+            renderer->spriteColors[numColors]   =  sprite->color[0].r;
+            renderer->spriteColors[numColors+1] =  sprite->color[0].g;
+            renderer->spriteColors[numColors+2] =  sprite->color[0].b;
+            renderer->spriteColors[numColors+3] =  sprite->color[0].a;
+            renderer->spriteColors[numColors+4] =  sprite->color[1].r;
+            renderer->spriteColors[numColors+5] =  sprite->color[1].g;
+            renderer->spriteColors[numColors+6] =  sprite->color[1].b;
+            renderer->spriteColors[numColors+7] =  sprite->color[1].a;
+            renderer->spriteColors[numColors+8] =  sprite->color[2].r;
+            renderer->spriteColors[numColors+9] =  sprite->color[2].g;
+            renderer->spriteColors[numColors+10] = sprite->color[2].b;
+            renderer->spriteColors[numColors+11] = sprite->color[2].a;
+            renderer->spriteColors[numColors+12] = sprite->color[3].r;
+            renderer->spriteColors[numColors+13] = sprite->color[3].g;
+            renderer->spriteColors[numColors+14] = sprite->color[3].b;
+            renderer->spriteColors[numColors+15] = sprite->color[3].a;
 
             ++numSpritesBatched;
         }

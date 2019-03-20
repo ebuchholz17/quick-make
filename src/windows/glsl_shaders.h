@@ -44,11 +44,13 @@ char *defaultFragmentShaderSource = R"shader(
 char *spriteVertexShaderSource = R"shader(
     attribute vec2 position;
     attribute vec2 texCoord;
+    attribute vec4 color;
 
     uniform float screenWidth;
     uniform float screenHeight;
 
     varying vec2 vTexCoord;
+    varying vec4 vColor;
 
     void main() {
         vec4 pos = vec4(position.x, position.y, -1.0, 1.0);
@@ -56,16 +58,19 @@ char *spriteVertexShaderSource = R"shader(
         pos.y = (screenHeight - pos.y) * (1.0 / screenHeight) * 2.0 - 1.0;
         gl_Position = pos;
         vTexCoord = texCoord;
+        vColor = color;
     }
 )shader";
 
 char *spriteFragmentShaderSource = R"shader(
     varying vec2 vTexCoord;
+    varying vec4 vColor;
 
     uniform sampler2D texture;
 
     void main() {
-        gl_FragColor = texture2D(texture, vTexCoord);
+        vec4 baseColor = texture2D(texture, vTexCoord);
+        gl_FragColor = vColor * baseColor;
     }
 )shader";
 

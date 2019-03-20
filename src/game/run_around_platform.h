@@ -89,26 +89,10 @@ struct render_command_sprite {
     float height;
 };
 
-// TODO(ebuchholz): vector2
 struct render_sprite {
-    float v0X;
-    float v0Y;
-    float v1X;
-    float v1Y;
-    float v2X;
-    float v2Y;
-    float v3X;
-    float v3Y;
-
-    float t0X;
-    float t0Y;
-    float t1X;
-    float t1Y;
-    float t2X;
-    float t2Y;
-    float t3X;
-    float t3Y;
-
+    vector2 pos[4];
+    vector2 texCoord[4];
+    vector4 color[4];
     int textureKey;
 };
 

@@ -79,10 +79,14 @@ struct debug_camera {
 #define MAX_SPRITES_PER_FRAME 2000
 
 struct sprite {
-    float x;
-    float y;
+    vector2 pos;
+    vector2 anchor;
     float width;
     float height;
+    float scale;
+    float rotation;
+    float alpha;
+    unsigned int tint;
     texture_key textureKey;
 };
 

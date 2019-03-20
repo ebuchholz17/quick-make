@@ -29,6 +29,7 @@ module.exports = {
         new WriteFileWebpackPlugin(),
         new CopyWebpackPlugin([
             { from: 'index.html', to: '../../build/web/index.html' },
+            { from: '../data', to: '../../build/web' },
             { from: 'wasm/game.wasm', to: '../../build/web/game.wasm' },
         ])
     ],

@@ -222,10 +222,12 @@ struct openGL_renderer {
     // one set of buffers for all sprites
     GLuint spritePositionBuffer;
     GLuint spriteTextureBuffer;
+    GLuint spriteColorBuffer;
     GLuint spriteIndexBuffer;
 
     float spriteVertexPositions[MAX_SPRITES_PER_BATCH * 4 * 2];
     float spriteTextureCoords[MAX_SPRITES_PER_BATCH * 4 * 2];
+    float spriteColors[MAX_SPRITES_PER_BATCH * 4 * 4]; 
     int spriteIndices[MAX_SPRITES_PER_BATCH * 3 * 2];
 
     GLuint debugPositionBuffer;

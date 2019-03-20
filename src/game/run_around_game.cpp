@@ -383,8 +383,7 @@ static void parseBitmap (void *fileData, game_assets *assets, int key, memory_ar
     int numTextures = assets->numTextures;
     assert(numTextures < MAX_NUM_TEXTURES);
 
-    texture_asset *textureAsset = (texture_asset *)allocateMemorySize(&assets->assetMemory, sizeof(texture_asset *));
-    assets->textures[key] = textureAsset;
+    texture_asset *textureAsset = (texture_asset *)allocateMemorySize(&assets->assetMemory, sizeof(texture_asset *)); assets->textures[key] = textureAsset;
     assets->numTextures++;
 
     loaded_texture_asset *loadedBitmap = (loaded_texture_asset *)allocateMemorySize(workingMemory, sizeof(loaded_texture_asset));
@@ -486,13 +485,22 @@ extern "C" void parseGameAsset (void *assetData, asset_type type, int key,
     }
 }
 
-static void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList) {
+static void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList, 
+                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
+                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
+{
     assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
 
     sprite *nextSprite = &spriteList->sprites[spriteList->numSprites];
     ++spriteList->numSprites;
-    nextSprite->x = x;
-    nextSprite->y = y;
+    nextSprite->pos.x = x;
+    nextSprite->pos.y = y;
+    nextSprite->anchor.x = anchorX;
+    nextSprite->anchor.y = anchorY;
+    nextSprite->scale = scale;
+    nextSprite->rotation = rotation;
+    nextSprite->alpha = alpha;
+    nextSprite->tint = tint;
     nextSprite->textureKey = textureKey;
 
     texture_asset *texAsset = assets->textures[textureKey];
@@ -501,6 +509,14 @@ static void addSprite (float x, float y, game_assets *assets, texture_key textur
 }
 
 #if 0
+static void addSprite (sprite newSprite, sprite_list *spriteList) {
+    assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
+
+    sprite *nextSprite = &spriteList->sprites[spriteList->numSprites];
+    ++spriteList->numSprites;
+    *nextSprite = newSprite;
+}
+
 static void drawModel (mesh_key meshKey, texture_key textureKey, 
                        matrix4x4 modelMatrix, render_command_list *renderCommands) {
     render_command_model *modelCommand = 
@@ -648,43 +664,100 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     float spriteX = 40.0f;
     float spriteY = 40.0f;
 
+    static float testRotation = 0.0f;
+    testRotation += 0.032f;
     for (int i = 0; i < 40; ++i) {
         for (int j = 0; j < 40; ++j) {
-            addSprite(spriteX * i, spriteY * j, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList);
+            int colorType = (i * 40 + j) % 8;
+            unsigned int tint;
+            switch (colorType) {
+                default:
+                case 0: 
+                    tint = 0xffffff;
+                    break;
+                case 1: 
+                    tint = 0xff0000;
+                    break;
+                case 2: 
+                    tint = 0x00ff00;
+                    break;
+                case 3: 
+                    tint = 0x0000ff;
+                    break;
+                case 4: 
+                    tint = 0xffff00;
+                    break;
+                case 5: 
+                    tint = 0xff00ff;
+                    break;
+                case 6: 
+                    tint = 0x00ffff;
+                    break;
+                case 7: 
+                    tint = 0x000000;
+                    break;
+
+            }
+            addSprite(spriteX * j, spriteY * i, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList, 
+                      0.5f, 0.5f, 1.0f + 0.005f * (i * 40 + j), 0.02f * (i * 40 + j) + testRotation, 1.0f - 0.00125f * (i*40 + j), tint);        
+            //addSprite(spriteX * i, spriteY * j, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList);
         }
     }
+    
 
     render_command_sprite_list *spriteListCommand = 
         (render_command_sprite_list *)pushRenderCommand(renderCommands,
                                                  RENDER_COMMAND_SPRITE_LIST,
                                                  sizeof(render_command_sprite_list));
     spriteListCommand->numSprites = spriteList.numSprites;
-    spriteListCommand->sprites = (render_sprite *)allocateMemorySize(&renderCommands->memory, sizeof(render_sprite) * spriteListCommand->numSprites);
+    spriteListCommand->sprites = (render_sprite *)allocateMemorySize(&renderCommands->memory, 
+                                                                     sizeof(render_sprite) * spriteListCommand->numSprites);
 
+    matrix3x3 spriteTransform;
     for (int i = 0; i < spriteList.numSprites; ++i) {
         sprite *sprite = &spriteList.sprites[i];
 
+        // TODO(ebuchholz): base case for untransformed sprites (common case?)
         render_sprite *renderSprite = &spriteListCommand->sprites[i];
+        spriteTransform = identityMatrix3x3();
+        spriteTransform.m[2] = -sprite->anchor.x;
+        spriteTransform.m[5] = -sprite->anchor.y;
+
+        float scaledWidth = sprite->scale * sprite->width;
+        float scaledHeight = sprite->scale * sprite->height;
+        matrix3x3 scaleMatrix = {};
+        scaleMatrix.m[0] = scaledWidth;
+        scaleMatrix.m[4] = scaledHeight;
+        scaleMatrix.m[8] = 1.0f;
+        spriteTransform = scaleMatrix * spriteTransform;
+        spriteTransform = rotationMatrix3x3(sprite->rotation) * spriteTransform;
+        spriteTransform = translationMatrix(sprite->pos.x, sprite->pos.y) * spriteTransform;
 
         // TODO(ebuchholz): apply rotation, scale, alpha, parent-child relationships
-        renderSprite->v0X = sprite->x;
-        renderSprite->v0Y = sprite->y;
-        renderSprite->v1X = sprite->x + sprite->width;
-        renderSprite->v1Y = sprite->y;
-        renderSprite->v2X = sprite->x;
-        renderSprite->v2Y = sprite->y + sprite->height;
-        renderSprite->v3X = sprite->x + sprite->width;
-        renderSprite->v3Y = sprite->y + sprite->height;
+        renderSprite->pos[0] = spriteTransform * Vector2(0.0f, 0.0f);
+        renderSprite->pos[1] = spriteTransform * Vector2(1.0f, 0.0f);
+        renderSprite->pos[2] = spriteTransform * Vector2(0.0f, 1.0f);
+        renderSprite->pos[3] = spriteTransform * Vector2(1.0f, 1.0f);
 
-        renderSprite->t0X = 0.0f;
-        renderSprite->t0Y = 1.0f;
-        renderSprite->t1X = 1.0f;
-        renderSprite->t1Y = 1.0f;
-        renderSprite->t2X = 0.0f;
-        renderSprite->t2Y = 0.0f;
-        renderSprite->t3X = 1.0f;
-        renderSprite->t3Y = 0.0f;
+        renderSprite->texCoord[0] = Vector2(0.0f, 1.0f);
+        renderSprite->texCoord[1] = Vector2(1.0f, 1.0f);
+        renderSprite->texCoord[2] = Vector2(0.0f, 0.0f);
+        renderSprite->texCoord[3] = Vector2(1.0f, 0.0f);
 
-        renderSprite->textureKey;
+        float red = (float)((sprite->tint >> 16) & (0xff)) / 255.0f;
+        float green = (float)((sprite->tint >> 8) & (0xff)) / 255.0f;
+        float blue = (float)((sprite->tint) & (0xff)) / 255.0f;
+
+        vector4 color;
+        color.r = red;
+        color.g = green;
+        color.b = blue;
+        color.a = sprite->alpha;
+        renderSprite->color[0] = color;
+        renderSprite->color[1] = color;
+        renderSprite->color[2] = color;
+        renderSprite->color[3] = color;
+
+        renderSprite->textureKey = sprite->textureKey;
     }
 }

@@ -18,6 +18,14 @@ union matrix4x4 {
     // TODO(ebuchholz): 2 dimensional array? struct with individual members? [] operator?
 };
 
+union vector2 {
+    struct {
+        float x;
+        float y;
+    };
+    float c[2];
+};
+
 union vector3 {
     struct {
         float x;
@@ -32,6 +40,21 @@ union vector3 {
     float c[3];
 };
 
+union vector4 {
+    struct {
+        float x;
+        float y;
+        float z;
+        float w;
+    };
+    struct {
+        float r;
+        float g;
+        float b;
+        float a;
+    };
+    float c[4];
+};
 
 // TODO(ebuchholz): double check all of this quaternion stuff
 struct quaternion {

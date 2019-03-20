@@ -83,6 +83,56 @@ inline matrix3x3 inverse (matrix3x3 a) {
     return result;
 }
 
+inline matrix3x3 identityMatrix3x3 () {
+    matrix3x3 result = {};
+
+    result.m[0] = 1.0f;
+    result.m[4] = 1.0f;
+    result.m[8] = 1.0f;
+
+    return result;
+}
+
+inline matrix3x3 translationMatrix (float x, float y) {
+    matrix3x3 result = identityMatrix3x3();
+
+    result.m[2] = x;
+    result.m[5] = y;
+
+    return result;
+}
+
+inline matrix3x3 scaleMatrix3x3 (float s) {
+    matrix3x3 result = {};
+
+    result.m[0] = s;
+    result.m[4] = s;
+    result.m[8] = 1.0f;
+
+    return result;
+}
+
+inline matrix3x3 scaleMatrix3x3 (float x, float y) {
+    matrix3x3 result = {};
+
+    result.m[0] = x;
+    result.m[4] = y;
+    result.m[8] = 1.0f;
+
+    return result;
+}
+
+inline matrix3x3 rotationMatrix3x3 (float angle) {
+    matrix3x3 result = identityMatrix3x3();
+
+    result.m[0] = cosf(angle);
+    result.m[1] = -sinf(angle);
+    result.m[3] = sinf(angle);
+    result.m[4] = cosf(angle);
+
+    return result;
+}
+
 inline matrix4x4 operator* (matrix4x4 a, matrix4x4 b) {
     matrix4x4 result;
 
@@ -276,7 +326,7 @@ inline matrix4x4 translationMatrix (float x, float y, float z) {
     return result;
 }
 
-inline matrix4x4 scaleMatrix (float s) {
+inline matrix4x4 scaleMatrix4x4 (float s) {
     matrix4x4 result = {};
 
     result.m[0] = s;
@@ -287,7 +337,7 @@ inline matrix4x4 scaleMatrix (float s) {
     return result;
 }
 
-inline matrix4x4 scaleMatrix (float x, float y, float z) {
+inline matrix4x4 scaleMatrix4x4 (float x, float y, float z) {
     matrix4x4 result = {};
 
     result.m[0] = x;
@@ -325,6 +375,129 @@ inline float square (float a) {
 //    return a < b ? a : b;
 //}
 
+// vector2
+inline vector2 Vector2 (float x = 0.0f, float y = 0.0f) {
+    vector2 result;
+
+    result.x = x;
+    result.y = y;
+
+    return result;
+};
+
+inline vector2 operator+ (vector2 a, vector2 b) {
+    vector2 result;
+
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+
+    return result;
+}
+
+inline vector2 & operator+= (vector2 &a, vector2 b) {
+    a = a + b;
+    return a;
+}
+
+inline vector2 operator- (vector2 a, vector2 b) {
+    vector2 result;
+
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+
+    return result;
+}
+
+inline vector2 operator- (vector2 a) {
+    vector2 result;
+
+    result.x = -a.x;
+    result.y = -a.y;
+
+    return result;
+}
+
+
+inline vector2 & operator-= (vector2 &a, vector2 b) {
+    a = a - b;
+    return a;
+}
+
+inline vector2 operator* (float a, vector2 b) {
+    vector2 result;
+
+    result.x = a * b.x;
+    result.y = a * b.y;
+
+    return result;
+}
+
+inline vector2 operator* (vector2 a, float b) {
+    vector2 result = b * a;
+    return result;
+}
+
+inline vector2 & operator*= (vector2 &a, float b) {
+    a = b * a;
+    return a;
+}
+
+// think this is called the hadamard product
+inline vector2 operator* (vector2 a, vector2 b) {
+    vector2 result;
+
+    result.x = a.x * b.x;
+    result.y = a.y * b.y;
+
+    return result;
+}
+
+inline vector2 & operator*= (vector2 &a, vector2 b) {
+    a = a * b;
+    return a;
+}
+
+inline float dotProduct (vector2 a, vector2 b) {
+    return a.x * b.x + a.y * b.y;
+}
+
+inline vector2 operator* (matrix3x3 m, vector2 v){
+    vector2 result;
+
+    result.x = m.m[0]*v.x + m.m[1]*v.y + m.m[2]*1.0f;
+    result.y = m.m[3]*v.x + m.m[4]*v.y + m.m[5]*1.0f;
+    // w component would be here
+    // TODO(ebuchholz): check if this is a good idea
+
+    return result;
+}
+
+inline vector2 transformPoint (matrix3x3 m, vector2 v, float* z){
+    vector2 result;
+
+    result.x = m.m[0]*v.x + m.m[1]*v.y + m.m[2]*(*z);
+    result.y = m.m[3]*v.x + m.m[4]*v.y + m.m[5]*(*z);
+
+    // z as an out parameter so we don't have to make a vector3
+    *z = m.m[6]*v.x + m.m[7]*v.y + m.m[8]*1.0f;
+
+    return result;
+}
+
+// Multiplies the vector like a direction
+// TODO(ebuchholz): make a separate point data type?
+inline vector2 transformDirection (matrix3x3 m, vector2 v) {
+    vector2 result;
+
+    result.x = m.m[0]*v.x + m.m[1]*v.y + m.m[2]*0.0f;
+    result.y = m.m[3]*v.x + m.m[4]*v.y + m.m[5]*0.0f;
+    // w component would be here
+    // TODO(ebuchholz): check if this is a good idea
+
+    return result;
+}
+
+// vector3
 inline vector3 Vector3 (float x = 0.0f, float y = 0.0f, float z = 0.0f) {
     vector3 result;
 
