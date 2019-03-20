@@ -166,7 +166,7 @@ static void parseOBJ (void *objData, game_assets *assets, int key, memory_arena 
     int numMeshes = assets->numMeshes;
     assert(numMeshes < MAX_NUM_MESHES);
 
-    mesh_asset *meshAsset = (mesh_asset *)allocateMemorySize(&assets->assetMemory, sizeof(mesh_asset *));
+    mesh_asset *meshAsset = (mesh_asset *)allocateMemorySize(&assets->assetMemory, sizeof(mesh_asset));
     assets->meshes[key] = meshAsset;
     assets->numMeshes++;
     meshAsset->key = (mesh_key)key;
@@ -383,7 +383,8 @@ static void parseBitmap (void *fileData, game_assets *assets, int key, memory_ar
     int numTextures = assets->numTextures;
     assert(numTextures < MAX_NUM_TEXTURES);
 
-    texture_asset *textureAsset = (texture_asset *)allocateMemorySize(&assets->assetMemory, sizeof(texture_asset *)); assets->textures[key] = textureAsset;
+    texture_asset *textureAsset = (texture_asset *)allocateMemorySize(&assets->assetMemory, sizeof(texture_asset)); 
+    assets->textures[key] = textureAsset;
     assets->numTextures++;
 
     loaded_texture_asset *loadedBitmap = (loaded_texture_asset *)allocateMemorySize(workingMemory, sizeof(loaded_texture_asset));
@@ -446,6 +447,7 @@ static void pushAsset (asset_list *assetList, char *path, asset_type type, int k
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
 
+    pushAsset(assetList, "assets/textures/atlas.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_ATLAS);
     pushAsset(assetList, "assets/textures/golfman.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_GOLFMAN);
 }
 
@@ -667,8 +669,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     static float testRotation = 0.0f;
     testRotation += 0.032f;
     for (int i = 0; i < 40; ++i) {
-        for (int j = 0; j < 40; ++j) {
-            int colorType = (i * 40 + j) % 8;
+        for (int j = 0; j < 10; ++j) {
+            int colorType = (i * 10 + j) % 8;
             unsigned int tint;
             switch (colorType) {
                 default:
@@ -699,11 +701,11 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
             }
             addSprite(spriteX * j, spriteY * i, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList, 
-                      0.5f, 0.5f, 1.0f + 0.005f * (i * 40 + j), 0.02f * (i * 40 + j) + testRotation, 1.0f - 0.00125f * (i*40 + j), tint);        
+                      0.5f, 0.5f, 1.0f + 0.005f * (i * 10 + j), 0.02f * (i * 10 + j) + testRotation, 1.0f - 0.00125f * (i*10 + j), tint);        
             //addSprite(spriteX * i, spriteY * j, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList);
         }
     }
-    
+    addSprite(350.0f, 10.0f, &gameState->assets, TEXTURE_KEY_ATLAS, &spriteList, 0.0f, 0.0f, 2.0f, 0.0f, 1.0f);
 
     render_command_sprite_list *spriteListCommand = 
         (render_command_sprite_list *)pushRenderCommand(renderCommands,
@@ -725,15 +727,11 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
         float scaledWidth = sprite->scale * sprite->width;
         float scaledHeight = sprite->scale * sprite->height;
-        matrix3x3 scaleMatrix = {};
-        scaleMatrix.m[0] = scaledWidth;
-        scaleMatrix.m[4] = scaledHeight;
-        scaleMatrix.m[8] = 1.0f;
+        matrix3x3 scaleMatrix = scaleMatrix3x3(scaledWidth, scaledHeight);
         spriteTransform = scaleMatrix * spriteTransform;
         spriteTransform = rotationMatrix3x3(sprite->rotation) * spriteTransform;
         spriteTransform = translationMatrix(sprite->pos.x, sprite->pos.y) * spriteTransform;
 
-        // TODO(ebuchholz): apply rotation, scale, alpha, parent-child relationships
         renderSprite->pos[0] = spriteTransform * Vector2(0.0f, 0.0f);
         renderSprite->pos[1] = spriteTransform * Vector2(1.0f, 0.0f);
         renderSprite->pos[2] = spriteTransform * Vector2(0.0f, 1.0f);

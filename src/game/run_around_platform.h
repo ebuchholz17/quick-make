@@ -101,7 +101,6 @@ struct render_command_sprite_list {
     int numSprites;
 };
 
-
 struct render_command_set_camera {
     matrix4x4 viewMatrix;
     matrix4x4 projMatrix;

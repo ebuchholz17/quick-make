@@ -15,8 +15,14 @@ int sizeof_matrix3x3 () {
 int sizeof_matrix4x4 () {
     return sizeof(matrix4x4);
 }  
+int sizeof_vector2 () {
+    return sizeof(vector2);
+}  
 int sizeof_vector3 () {
     return sizeof(vector3);
+}  
+int sizeof_vector4 () {
+    return sizeof(vector4);
 }  
 int sizeof_quaternion () {
     return sizeof(quaternion);

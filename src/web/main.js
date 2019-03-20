@@ -261,6 +261,11 @@ WebPlatform.prototype = {
                                         this.game.getPointer(this.renderCommands.memory.base),
                                         this.renderCommands.memory.capacity);
         uintBuffer.fill(0);
+        // zero temp memory
+        uintBuffer = new Uint8Array(this.game.buffer,
+                                        this.game.getPointer(this.gameMemory.tempMemory),
+                                        this.gameMemory.tempMemoryCapacity);
+        uintBuffer.fill(0);
         this.game.ccall("updateGame", 
             "null", 
             ["number", "number", "number"], 

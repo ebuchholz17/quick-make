@@ -6,6 +6,12 @@ interface matrix4x4 {
     attribute float[] m;
 };
 
+interface vector2 {
+    attribute float x;
+    attribute float y;
+    attribute float[] c;
+};
+
 interface vector3 {
     attribute float x;
     attribute float y;
@@ -16,6 +22,17 @@ interface vector3 {
     attribute float[] c;
 };
 
+interface vector4 {
+    attribute float x;
+    attribute float y;
+    attribute float z;
+    attribute float w;
+    attribute float r;
+    attribute float g;
+    attribute float b;
+    attribute float a;
+    attribute float[] c;
+};
 
 // TODO(ebuchholz): double check all of this quaternion stuff, it's ported from nfl thrower 
 // typescript code
@@ -132,23 +149,9 @@ interface render_command_sprite {
 };
 
 interface render_sprite {
-    attribute float v0X;
-    attribute float v0Y;
-    attribute float v1X;
-    attribute float v1Y;
-    attribute float v2X;
-    attribute float v2Y;
-    attribute float v3X;
-    attribute float v3Y;
-
-    attribute float t0X;
-    attribute float t0Y;
-    attribute float t1X;
-    attribute float t1Y;
-    attribute float t2X;
-    attribute float t2Y;
-    attribute float t3X;
-    attribute float t3Y;
+    [Value] attribute vector2[] pos;
+    [Value] attribute vector2[] texCoord;
+    [Value] attribute vector4[] color;
 
     attribute long textureKey;
 };

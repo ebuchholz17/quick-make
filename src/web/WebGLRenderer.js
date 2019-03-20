@@ -47,10 +47,12 @@ var WebGLRenderer = function () {
 
     this.spritePositionBuffer = 0;
     this.spriteTextureBuffer = 0;
+    this.spriteColorBuffer = 0;
     this.spriteIndexBuffer = 0;
     
     this.spriteVertexPositions;
     this.spriteTextureCoords;
+    this.spriteColors;
     this.spriteIndices;
 
     this.debugPositionBuffer = 0;
@@ -71,10 +73,12 @@ WebGLRenderer.prototype = {
         // sprite drawing
         this.spritePositionBuffer = gl.createBuffer();
         this.spriteTextureBuffer = gl.createBuffer();
+        this.spriteColorBuffer = gl.createBuffer();
         this.spriteIndexBuffer = gl.createBuffer();
 
         this.spriteVertexPositions = new Float32Array(WebGLRenderer.MAX_SPRITES_PER_BATCH * 8);
         this.spriteTextureCoords = new Float32Array(WebGLRenderer.MAX_SPRITES_PER_BATCH * 8);
+        this.spriteColors = new Float32Array(WebGLRenderer.MAX_SPRITES_PER_BATCH * 16);
         this.spriteIndices = new Uint32Array(WebGLRenderer.MAX_SPRITES_PER_BATCH * 6);
 
         // index buffer doesn't change
@@ -333,17 +337,26 @@ WebGLRenderer.prototype = {
         gl.enableVertexAttribArray(texCoordLocation);
         gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteColorBuffer);
+        floatBuffer = Float32Array.from(this.spriteColors);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
+
+        var colorCoordLocation = gl.getAttribLocation(program, "color");
+        gl.enableVertexAttribArray(colorCoordLocation);
+        gl.vertexAttribPointer(colorCoordLocation, 4, gl.FLOAT, false, 0, 0);
+
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndexBuffer);
+
+        var texture = this.textures[textureKey];
 
         var screenWidthLocation = gl.getUniformLocation(program, "screenWidth");
         gl.uniform1f(screenWidthLocation, screenWidth);
         var screenHeightLocation = gl.getUniformLocation(program, "screenHeight");
         gl.uniform1f(screenHeightLocation, screenHeight);
 
-        var texture = this.textures[textureKey];
+        gl.activeTexture(gl.TEXTURE0);
         var textureLocation = gl.getUniformLocation(program, "texture");
         gl.uniform1i(textureLocation, 0);
-        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
 
         gl.drawElements(gl.TRIANGLES, numSpritesBatched * 6, gl.UNSIGNED_INT, 0);
@@ -365,25 +378,46 @@ WebGLRenderer.prototype = {
                 }
 
                 var numFloats = numSpritesBatched * 8;
+                var numColors = numSpritesBatched * 16;
 
                 // TODO(ebuchholz): maybe calculate these whole buffers on C side? to avoid copying, and using webidl getters/setters
-                this.spriteVertexPositions[numFloats] = sprite.v0X;
-                this.spriteVertexPositions[numFloats+1] = sprite.v0Y;
-                this.spriteVertexPositions[numFloats+2] = sprite.v1X;
-                this.spriteVertexPositions[numFloats+3] = sprite.v1Y;
-                this.spriteVertexPositions[numFloats+4] = sprite.v2X;
-                this.spriteVertexPositions[numFloats+5] = sprite.v2Y;
-                this.spriteVertexPositions[numFloats+6] = sprite.v3X;
-                this.spriteVertexPositions[numFloats+7] = sprite.v3Y;
+                var spritePos = new Float32Array(game.buffer, sprite.pos.ptr, 8);
+                this.spriteVertexPositions[numFloats]   = spritePos[0];
+                this.spriteVertexPositions[numFloats+1] = spritePos[1];
+                this.spriteVertexPositions[numFloats+2] = spritePos[2];
+                this.spriteVertexPositions[numFloats+3] = spritePos[3];
+                this.spriteVertexPositions[numFloats+4] = spritePos[4];
+                this.spriteVertexPositions[numFloats+5] = spritePos[5];
+                this.spriteVertexPositions[numFloats+6] = spritePos[6];
+                this.spriteVertexPositions[numFloats+7] = spritePos[7];
 
-                this.spriteTextureCoords[numFloats] = sprite.t0X;
-                this.spriteTextureCoords[numFloats+1] = sprite.t0Y;
-                this.spriteTextureCoords[numFloats+2] = sprite.t1X;
-                this.spriteTextureCoords[numFloats+3] = sprite.t1Y;
-                this.spriteTextureCoords[numFloats+4] = sprite.t2X;
-                this.spriteTextureCoords[numFloats+5] = sprite.t2Y;
-                this.spriteTextureCoords[numFloats+6] = sprite.t3X;
-                this.spriteTextureCoords[numFloats+7] = sprite.t3Y;
+                var spriteTex = new Float32Array(game.buffer, sprite.texCoord.ptr, 8);
+                this.spriteTextureCoords[numFloats]   = spriteTex[0];
+                this.spriteTextureCoords[numFloats+1] = spriteTex[1];
+                this.spriteTextureCoords[numFloats+2] = spriteTex[2];
+                this.spriteTextureCoords[numFloats+3] = spriteTex[3];
+                this.spriteTextureCoords[numFloats+4] = spriteTex[4];
+                this.spriteTextureCoords[numFloats+5] = spriteTex[5];
+                this.spriteTextureCoords[numFloats+6] = spriteTex[6];
+                this.spriteTextureCoords[numFloats+7] = spriteTex[7];
+
+                var spriteColor = new Float32Array(game.buffer, sprite.color.ptr, 16);
+                this.spriteColors[numColors]    = spriteColor[0];
+                this.spriteColors[numColors+1]  = spriteColor[1];
+                this.spriteColors[numColors+2]  = spriteColor[2];
+                this.spriteColors[numColors+3]  = spriteColor[3];
+                this.spriteColors[numColors+4]  = spriteColor[4];
+                this.spriteColors[numColors+5]  = spriteColor[5];
+                this.spriteColors[numColors+6]  = spriteColor[6];
+                this.spriteColors[numColors+7]  = spriteColor[7];
+                this.spriteColors[numColors+8]  = spriteColor[8];
+                this.spriteColors[numColors+9]  = spriteColor[9];
+                this.spriteColors[numColors+10] = spriteColor[10];
+                this.spriteColors[numColors+11] = spriteColor[11];
+                this.spriteColors[numColors+12] = spriteColor[12];
+                this.spriteColors[numColors+13] = spriteColor[13];
+                this.spriteColors[numColors+14] = spriteColor[14];
+                this.spriteColors[numColors+15] = spriteColor[15];
 
                 ++numSpritesBatched;
             }

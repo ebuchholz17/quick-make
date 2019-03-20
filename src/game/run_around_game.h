@@ -17,6 +17,7 @@ struct mesh_asset {
 };
 
 enum texture_key {
+    TEXTURE_KEY_ATLAS,
     TEXTURE_KEY_GOLFMAN
 };
 

@@ -175,7 +175,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             // Game memory (game state, etc.)
             game_memory gameMemory = {};
-            gameMemory.memoryCapacity = 50 * 1024 * 1024; // 10MB arbitrarily decided
+            gameMemory.memoryCapacity = 50 * 1024 * 1024; // 50MB arbitrarily decided
             gameMemory.memory = malloc(gameMemory.memoryCapacity);
             gameMemory.tempMemoryCapacity = 10 * 1024 * 1024; // another 10MB arbitrarily decided
             gameMemory.tempMemory = malloc(gameMemory.tempMemoryCapacity);
