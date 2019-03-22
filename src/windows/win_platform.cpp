@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../game/run_around_game.cpp"
+#include "../game/quickmake_game.cpp"
 
 #include "opengl_renderer.cpp"
 

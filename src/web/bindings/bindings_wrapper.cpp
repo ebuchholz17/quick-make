@@ -1,5 +1,5 @@
 // WebIDL bindings
-#include "../../game/run_around_platform.h"
+#include "../../game/quickmake_platform.h"
 
 #include "bindings.cpp"
 

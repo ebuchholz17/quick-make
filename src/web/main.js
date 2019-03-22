@@ -31,7 +31,7 @@ WebPlatform.prototype = {
     },
 
     run: function () {
-        this.viewport = document.getElementById("run-around-game");
+        this.viewport = document.getElementById("quickmake");
         this.viewport.style["touch-action"] = "none";
         this.viewport.style["overflow"] = "hidden";
         this.canvas = document.createElement("canvas");
@@ -257,15 +257,17 @@ WebPlatform.prototype = {
         this.renderCommands.windowHeight = this.canvas.height;
         this.renderCommands.memory.size = 0;
         // zero render command memory
-        var uintBuffer = new Uint8Array(this.game.buffer,
-                                        this.game.getPointer(this.renderCommands.memory.base),
-                                        this.renderCommands.memory.capacity);
-        uintBuffer.fill(0);
-        // zero temp memory
-        uintBuffer = new Uint8Array(this.game.buffer,
-                                        this.game.getPointer(this.gameMemory.tempMemory),
-                                        this.gameMemory.tempMemoryCapacity);
-        uintBuffer.fill(0);
+        // TODO(ebuchholz): use 32 bit array, it's faster
+        // TODO(ebuchholz): fill is slow in some browsers (firefox) so maybe don't zero it, or zero it on webassembly side
+        //var uintBuffer = new Uint8Array(this.game.buffer,
+        //                                this.game.getPointer(this.renderCommands.memory.base),
+        //                                this.renderCommands.memory.capacity);
+        //uintBuffer.fill(0);
+        //// zero temp memory
+        //uintBuffer = new Uint8Array(this.game.buffer,
+        //                                this.game.getPointer(this.gameMemory.tempMemory),
+        //                                this.gameMemory.tempMemoryCapacity);
+        //uintBuffer.fill(0);
         this.game.ccall("updateGame", 
             "null", 
             ["number", "number", "number"], 

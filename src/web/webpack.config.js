@@ -6,7 +6,7 @@ var path = require('path');
 module.exports = {
     entry: './main.js',
     output: { 
-        filename: "run-around-game.js",
+        filename: "quickmake.js",
         path: path.join(__dirname, "../../build/web")
     },
     node: {

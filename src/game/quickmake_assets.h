@@ -1,10 +1,5 @@
-#ifndef RUN_AROUND_GAME_H
-#define RUN_AROUND_GAME_H
-
-#include "run_around_platform.h"
-#include "run_around_math.cpp"
-
-#define DELTA_TIME (1.0f / 60.0f)
+#ifndef QUICKMAKE_ASSETS_H
+#define QUICKMAKE_ASSETS_H
 
 // TODO(ebuchholz): some convenient structure to access assets
 enum mesh_key {
@@ -26,6 +21,37 @@ struct texture_asset {
     int width;
     int height;
     // maybe save pixels, but maybe don't need it after uploaded to GPU
+};
+
+enum atlas_key {
+    ATLAS_KEY_ATLAS
+};
+
+struct atlas_frame {
+    // assumes unrotated
+    float frameX;
+    float frameY;
+    float frameWidth;
+    float frameHeight;
+};
+
+struct atlas_map_entry {
+    char *key;
+    unsigned int textureKey;
+
+    atlas_frame frameInfo;
+
+    atlas_map_entry *next;
+};
+
+struct atlas_map {
+
+};
+
+struct atlas_asset {
+    atlas_key key;
+    int width;
+    int height;
 };
 
 // assuming a particular bmp format (the one that gets exported from gimp: 32 bit, rgba, compression mode 3)
@@ -65,45 +91,6 @@ struct game_assets {
 
     texture_asset *textures[MAX_NUM_TEXTURES];
     int numTextures;
-};
-
-struct debug_camera {
-    vector3 pos;
-    quaternion rotation;
-    int lastPointerX;
-    int lastPointerY;
-    vector3 lookAtTarget;
-    vector3 up;
-};
-
-// TODO(ebuchholz): make stretchy
-#define MAX_SPRITES_PER_FRAME 2000
-
-struct sprite {
-    vector2 pos;
-    vector2 anchor;
-    float width;
-    float height;
-    float scale;
-    float rotation;
-    float alpha;
-    unsigned int tint;
-    texture_key textureKey;
-};
-
-struct sprite_list {
-    sprite *sprites;
-    int numSprites;
-};
-
-struct game_state {
-    memory_arena memory;
-    memory_arena tempMemory; // cleared every frame
-    bool assetsInitialized;
-    game_assets assets;
-    bool gameInitialized;
-
-    debug_camera debugCamera;
 };
 
 #endif
