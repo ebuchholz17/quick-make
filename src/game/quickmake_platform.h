@@ -15,13 +15,15 @@ struct memory_arena {
 // asset loading
 enum asset_type {
     ASSET_TYPE_OBJ,
-    ASSET_TYPE_BMP
+    ASSET_TYPE_BMP,
+    ASSET_TYPE_ATLAS
 };
 
 struct asset_to_load {
     char *path;
     asset_type type;
     int key;
+    int secondKey;
 };
 
 struct asset_list {
@@ -52,6 +54,14 @@ struct loaded_mesh_asset {
 };
 
 struct loaded_texture_asset {
+    int key;
+    int width;
+    int height;
+    void *pixels; // unsigned int, but void for compatibility with webidl
+};
+
+// same as texture asset, combine?
+struct loaded_atlas_asset {
     int key;
     int width;
     int height;

@@ -201,16 +201,15 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 asset_to_load *assetToLoad = assetList.assetsToLoad + i;
                 workingAssetMemory.size = 0;
                 switch (assetToLoad->type){
-                    case ASSET_TYPE_OBJ: 
-                    {
+                    case ASSET_TYPE_OBJ: {
                         char *fileData = readEntireTextFile(assetToLoad->path);
-                        parseGameAsset(fileData, ASSET_TYPE_OBJ, assetToLoad->key, &gameMemory, &workingAssetMemory);
+                        parseGameAsset(fileData, 0, ASSET_TYPE_OBJ, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory);
                         free(fileData);
 
                         loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
                     } break;
-                    case ASSET_TYPE_BMP:
-                    {
+                    case ASSET_TYPE_BMP: {
                         FILE *bmpFile; 
                         fopen_s(&bmpFile, assetToLoad->path, "rb");
                         assert(bmpFile); // TODO(ebuchholz): better error check?
@@ -223,11 +222,48 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fread(fileData, fileSize, 1, bmpFile);
                         fclose(bmpFile);
 
-                        parseGameAsset(fileData, ASSET_TYPE_BMP, assetToLoad->key, &gameMemory, &workingAssetMemory);
+                        parseGameAsset(fileData, 0, ASSET_TYPE_BMP, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory);
                         free(fileData);
 
                         // load texture onto gpu
                         loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
+                    } break;
+                    case ASSET_TYPE_ATLAS: {
+                        char *atlasData = readEntireTextFile(assetToLoad->path);
+                        char bitmapPath[MAX_PATH];
+                        int letterIndex = 0;
+                        for (; atlasData[letterIndex] != 0; ++letterIndex) {
+                            bitmapPath[letterIndex] = atlasData[letterIndex];
+                        }
+                        for (; letterIndex >= 0; --letterIndex) {
+                            if (bitmapPath[letterIndex] == '.') {
+                                ++letterIndex;
+                                bitmapPath[letterIndex] = 'b';
+                                ++letterIndex;
+                                bitmapPath[letterIndex] = 'm';
+                                ++letterIndex;
+                                bitmapPath[letterIndex] = 'p';
+                                break;
+                            }
+                        }
+
+                        FILE *bmpFile; 
+                        fopen_s(&bmpFile, bitmapPath, "rb");
+                        assert(bmpFile); // TODO(ebuchholz): better error check?
+
+                        fseek(bmpFile, 0, SEEK_END);
+                        int fileSize = ftell(bmpFile);
+                        fseek(bmpFile, 0, SEEK_SET);
+
+                        char *bitmapData = (char *)malloc(fileSize);
+                        fread(bitmapData, fileSize, 1, bmpFile);
+                        fclose(bmpFile);
+
+                        parseGameAsset(atlasData, bitmapData, ASSET_TYPE_ATLAS, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory);
+                        free(bitmapData);
+                        free(atlasData);
                     } break;
                 }
             }

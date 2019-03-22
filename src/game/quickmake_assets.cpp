@@ -261,6 +261,27 @@ void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *wo
     }
 }
 
+void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int textureKey, memory_arena *workingMemory) {
+    int numAtlases = assets->numAtlases;
+    assert(numAtlases < MAX_NUM_ATLASES);
+
+    atlas_asset *atlasAsset = (atlas_asset *)allocateMemorySize(&assets->assetMemory, sizeof(atlas_asset)); 
+    assets->atlases[atlasKey] = atlasAsset;
+    assets->numAtlases++;
+
+    // bitmap is already handled by this point
+
+    // scan file, count num frames
+
+    // allocate enough atlas_frames
+
+    // rewind, for each frame, calc uvs, calc hash, put into array
+
+    // for each conflict, get next and put it after that
+}
+
+// get from atlas map function: calc hash, get item from array, check key, if conflict, get next and check key again
+
 void pushAsset (asset_list *assetList, char *path, asset_type type, int key) {
     assert(assetList->numAssetsToLoad < assetList->maxAssetsToLoad);
     asset_to_load *assetToLoad = assetList->assetsToLoad + assetList->numAssetsToLoad;
@@ -268,4 +289,15 @@ void pushAsset (asset_list *assetList, char *path, asset_type type, int key) {
     assetToLoad->path = path;
     assetToLoad->type = type;
     assetToLoad->key = key;
+    assetToLoad->secondKey = -1;
+}
+
+void pushAsset (asset_list *assetList, char *path, asset_type type, int key, int secondKey) {
+    assert(assetList->numAssetsToLoad < assetList->maxAssetsToLoad);
+    asset_to_load *assetToLoad = assetList->assetsToLoad + assetList->numAssetsToLoad;
+    assetList->numAssetsToLoad++;
+    assetToLoad->path = path;
+    assetToLoad->type = type;
+    assetToLoad->key = key;
+    assetToLoad->secondKey = secondKey;
 }

@@ -12,8 +12,8 @@ struct mesh_asset {
 };
 
 enum texture_key {
-    TEXTURE_KEY_ATLAS,
-    TEXTURE_KEY_GOLFMAN
+    TEXTURE_KEY_GOLFMAN,
+    TEXTURE_KEY_GAME_ATLAS
 };
 
 struct texture_asset {
@@ -24,32 +24,30 @@ struct texture_asset {
 };
 
 enum atlas_key {
-    ATLAS_KEY_ATLAS
+    ATLAS_KEY_GAME
 };
 
 struct atlas_frame {
     // assumes unrotated
-    float frameX;
-    float frameY;
-    float frameWidth;
-    float frameHeight;
+    vector2 frameCorners[4]; // 0.0-1.0 texture coords, not pixel width/height
+    int frameWidth;
+    int frameHeight;
 };
 
 struct atlas_map_entry {
     char *key;
-    unsigned int textureKey;
-
-    atlas_frame frameInfo;
-
     atlas_map_entry *next;
+    atlas_frame *frameInfo;
 };
 
 struct atlas_map {
-
+    atlas_map_entry entries[500];
+    atlas_frame *frames;
 };
 
 struct atlas_asset {
-    atlas_key key;
+    atlas_key atlasKey;
+    texture_key textureKey;
     int width;
     int height;
 };
@@ -67,6 +65,7 @@ struct bitmap_header {
     int height;
     unsigned short planes;
     unsigned short bitsPerPixel;
+
     unsigned int compression;
     unsigned int imageSize;
     int xResolution;
@@ -82,6 +81,7 @@ struct bitmap_header {
 
 #define MAX_NUM_MESHES 100
 #define MAX_NUM_TEXTURES 100
+#define MAX_NUM_ATLASES 20
 
 struct game_assets {
     memory_arena assetMemory;
@@ -91,6 +91,9 @@ struct game_assets {
 
     texture_asset *textures[MAX_NUM_TEXTURES];
     int numTextures;
+
+    atlas_asset *atlases[MAX_NUM_ATLASES];
+    int numAtlases;
 };
 
 #endif

@@ -36,19 +36,6 @@ static bool lineSegmentTriangleIntersection (line *lineSegment, triangleWithNorm
     return false;
 }
 #endif
-
-static line *pushLineOntoRenderCommand (render_command_list *renderCommands, render_command_lines *lineCommand) {
-    assert(renderCommands->memory.size + sizeof(line) < renderCommands->memory.capacity);
-
-    line *result = (line *)((char *)renderCommands->memory.base + renderCommands->memory.size);
-    renderCommands->memory.size += sizeof(line);
-
-    // must finish with the line command before doing other ones
-    assert(result == lineCommand->lines + lineCommand->numLines);
-    lineCommand->numLines++;
-
-    return result;
-}
                                         
 static void *pushRenderCommand (render_command_list *renderCommands, 
                          render_command_type type, 
@@ -94,6 +81,19 @@ static void addSprite (float x, float y, game_assets *assets, texture_key textur
 }
 
 #if 0
+
+static line *pushLineOntoRenderCommand (render_command_list *renderCommands, render_command_lines *lineCommand) {
+    assert(renderCommands->memory.size + sizeof(line) < renderCommands->memory.capacity);
+
+    line *result = (line *)((char *)renderCommands->memory.base + renderCommands->memory.size);
+    renderCommands->memory.size += sizeof(line);
+
+    // must finish with the line command before doing other ones
+    assert(result == lineCommand->lines + lineCommand->numLines);
+    lineCommand->numLines++;
+
+    return result;
+}
 static void addSprite (sprite newSprite, sprite_list *spriteList) {
     assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
 
@@ -112,7 +112,6 @@ static void drawModel (mesh_key meshKey, texture_key textureKey,
     modelCommand->textureKey = textureKey;
     modelCommand->modelMatrix = modelMatrix;
 }
-#endif
 
 static render_command_lines *startLines (render_command_list *renderCommands) {
     render_command_lines *lineCommand = 
@@ -224,16 +223,17 @@ static void debugCameraMovement (debug_camera *debugCamera, game_input *input) {
     moveVector = rotateVectorByQuaternion(moveVector, debugCamera->rotation);
     debugCamera->pos += moveVector;
 }
+#endif
 
 // TODO(ebuchholz): Maybe pack everything into a single file and load that?
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
 
     pushAsset(assetList, "assets/textures/golfman.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_GOLFMAN);
-    pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME);
+    pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
 }
 
-extern "C" void parseGameAsset (void *assetData, asset_type type, int key,
+extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
                                 game_memory *gameMemory, memory_arena *workingMemory) 
 {
     game_state *gameState = (game_state *)gameMemory->memory;
@@ -265,6 +265,10 @@ extern "C" void parseGameAsset (void *assetData, asset_type type, int key,
         break;
     case ASSET_TYPE_BMP:
         parseBitmap(assetData, &gameState->assets, key, workingMemory);
+        break;
+    case ASSET_TYPE_ATLAS:
+        parseBitmap(secondAssetData, &gameState->assets, secondKey, workingMemory);
+        parseAtlas(assetData, &gameState->assets, key, secondKey, workingMemory);
         break;
     }
 }
@@ -364,6 +368,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         renderSprite->pos[2] = spriteTransform * Vector2(0.0f, 1.0f);
         renderSprite->pos[3] = spriteTransform * Vector2(1.0f, 1.0f);
 
+        // determine uvs for texture atlases
         renderSprite->texCoord[0] = Vector2(0.0f, 1.0f);
         renderSprite->texCoord[1] = Vector2(1.0f, 1.0f);
         renderSprite->texCoord[2] = Vector2(0.0f, 0.0f);
