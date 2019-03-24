@@ -2,9 +2,9 @@
 #define QUICKMAKE_GAME_H
 
 #include "quickmake_platform.h"
+#include "quickmake_math.cpp"
 #include "quickmake_util.h"
 #include "quickmake_assets.cpp"
-#include "quickmake_math.cpp"
 
 #define DELTA_TIME (1.0f / 60.0f)
 

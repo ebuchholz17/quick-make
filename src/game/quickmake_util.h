@@ -17,6 +17,27 @@ void readLine (char *data, char **start, char **end) {
     *end = data + index;
 }
 
+void readLine (char *data, char **start, char **end, char **nextLineStart) {
+    *start = data;
+    int index = 0;
+    while (data[index] != 0 && data[index] != '\n' && data[index] != '\r') {
+        ++index;
+    }
+    *end = data + index;
+
+    if (**end == 0) {
+        *nextLineStart = 0;
+    }
+    else {
+        if (**end == '\r') {
+            *nextLineStart = *end + 2;
+        }
+        else {
+            *nextLineStart = *end + 1;
+        }
+    }
+}
+
 int stringToInt (char *start, char *end) {
     int result = 0;
     bool negative = false;

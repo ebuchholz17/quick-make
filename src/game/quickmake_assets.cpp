@@ -268,16 +268,125 @@ void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int texture
     atlas_asset *atlasAsset = (atlas_asset *)allocateMemorySize(&assets->assetMemory, sizeof(atlas_asset)); 
     assets->atlases[atlasKey] = atlasAsset;
     assets->numAtlases++;
+    atlasAsset->atlasKey = (atlas_key)atlasKey;
+    atlasAsset->textureKey = (texture_key)textureKey;
 
-    // bitmap is already handled by this point
+    // texture packer libgdx format
+    char *start, *end, *nextLineStart;
+    start = (char *)atlasData;
+    readLine(start, &start, &end, &nextLineStart); // skip file name
+    start = nextLineStart;
+    readLine(start, &start, &end, &nextLineStart);
 
-    // scan file, count num frames
+    char *wordStart = start;
+    char *wordEnd = wordStart;
+    while (*wordEnd != ' ' && wordEnd != end) { ++wordEnd; }
+    ++wordEnd;
+    wordStart = wordEnd;
+    while (*wordEnd != ',' && wordEnd != end) { ++wordEnd; }
+    atlasAsset->width = stringToInt(wordStart, wordEnd-1);
+
+    wordEnd+=2;
+    wordStart = wordEnd;
+    while (*wordEnd != '\n' && *wordEnd != '\r' && wordEnd != end) { ++wordEnd; }
+    atlasAsset->height = stringToInt(wordStart, wordEnd-1);
+
+    start = nextLineStart;
+    // skip format, filter, repeat
+    readLine(start, &start, &end, &nextLineStart);
+    start = nextLineStart;
+    readLine(start, &start, &end, &nextLineStart);
+    start = nextLineStart;
+    readLine(start, &start, &end, &nextLineStart);
+    start = nextLineStart;
+
+    char *frameInfoStart = start;
+    int numFrames = 0;
+    while (true) {
+        for (int i = 0; i < 7; ++i) {
+            readLine(start, &start, &end, &nextLineStart);
+            start = nextLineStart;
+        }
+        numFrames++;
+        if (*(end+1) == 0) { break; }
+    }
+
+    int t = 0;
 
     // allocate enough atlas_frames
+    assert(numFrames < 500);
+    for (int i = 0; i < 500; ++i) {
+        atlasAsset->map.entries[i] = {};
+    }
+    // TODO(ebuchholz): get rid of this first scan or change structure of map
 
     // rewind, for each frame, calc uvs, calc hash, put into array
-
     // for each conflict, get next and put it after that
+    // TODO(ebuchholz): more convenient file reading/string copying functions
+    start = frameInfoStart;
+    for (int i = 0; i < numFrames; ++i) {
+        atlas_frame frame;
+        readLine(start, &start, &end, &nextLineStart);
+        int length = (int)(end - start);
+        char *frameName = (char *)allocateMemorySize(&assets->assetMemory, 
+                                                     sizeof(char) * length+1);
+        for (int j = 0; j < length-1; ++j) {
+            frameName[j] = start[j];
+        }
+        frameName[length-1] = 0;
+        frame.key = frameName;
+
+        start = nextLineStart;
+        readLine(start, &start, &end, &nextLineStart);
+        start = nextLineStart;
+        readLine(start, &start, &end, &nextLineStart);
+
+        start += 6;
+        wordStart = start;
+        wordEnd = wordStart;
+        while (*wordEnd != ',' && wordEnd != end) { ++wordEnd; }
+        int frameX = stringToInt(wordStart, wordEnd-1);
+
+        wordEnd += 2;
+        wordStart = wordEnd;
+        while (*wordEnd != '\n' && *wordEnd != '\r' && wordEnd != end) { ++wordEnd; }
+        int frameY = stringToInt(wordStart, wordEnd-1);
+
+        start = nextLineStart;
+        readLine(start, &start, &end, &nextLineStart);
+
+        start += 8;
+        wordStart = start;
+        wordEnd = wordStart;
+        while (*wordEnd != ',' && wordEnd != end) { ++wordEnd; }
+        int frameWidth = stringToInt(wordStart, wordEnd-1);
+
+        wordEnd += 2;
+        wordStart = wordEnd;
+        while (*wordEnd != '\n' && *wordEnd != '\r' && wordEnd != end) { ++wordEnd; }
+        int frameHeight = stringToInt(wordStart, wordEnd-1);
+
+        // skip the rest of the frame info
+        start = nextLineStart;
+        readLine(start, &start, &end, &nextLineStart);
+        start = nextLineStart;
+        readLine(start, &start, &end, &nextLineStart);
+        start = nextLineStart;
+        readLine(start, &start, &end, &nextLineStart);
+        start = nextLineStart;
+
+        frame.frameWidth = frameWidth;
+        frame.frameHeight = frameHeight;
+
+        float uvWidth = (float)frameWidth / (float)atlasAsset->width;
+        float uvHeight = (float)frameHeight / (float)atlasAsset->height;
+        frame.frameCorners[0] = Vector2((float)frameX / (float)atlasAsset->width,
+                                        (float)frameY / (float)atlasAsset->height);
+        frame.frameCorners[1] = Vector2(frame.frameCorners[0].x + uvWidth, frame.frameCorners[0].y);
+        frame.frameCorners[2] = Vector2(frame.frameCorners[0].x, frame.frameCorners[0].y + uvHeight);
+        frame.frameCorners[3] = Vector2(frame.frameCorners[0].x + uvWidth, frame.frameCorners[0].y + uvHeight);
+    }
+
 }
 
 // get from atlas map function: calc hash, get item from array, check key, if conflict, get next and check key again

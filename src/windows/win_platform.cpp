@@ -233,8 +233,8 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         char *atlasData = readEntireTextFile(assetToLoad->path);
                         char bitmapPath[MAX_PATH];
                         int letterIndex = 0;
-                        for (; atlasData[letterIndex] != 0; ++letterIndex) {
-                            bitmapPath[letterIndex] = atlasData[letterIndex];
+                        for (; assetToLoad->path[letterIndex] != 0; ++letterIndex) {
+                            bitmapPath[letterIndex] = assetToLoad->path[letterIndex];
                         }
                         for (; letterIndex >= 0; --letterIndex) {
                             if (bitmapPath[letterIndex] == '.') {
@@ -244,6 +244,8 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                                 bitmapPath[letterIndex] = 'm';
                                 ++letterIndex;
                                 bitmapPath[letterIndex] = 'p';
+                                ++letterIndex;
+                                bitmapPath[letterIndex] = 0;
                                 break;
                             }
                         }

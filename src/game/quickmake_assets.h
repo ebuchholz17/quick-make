@@ -30,22 +30,17 @@ enum atlas_key {
 struct atlas_frame {
     // assumes unrotated
     vector2 frameCorners[4]; // 0.0-1.0 texture coords, not pixel width/height
+    char *key;
     int frameWidth;
     int frameHeight;
 };
 
-struct atlas_map_entry {
-    char *key;
-    atlas_map_entry *next;
-    atlas_frame *frameInfo;
-};
-
 struct atlas_map {
-    atlas_map_entry entries[500];
-    atlas_frame *frames;
+    atlas_frame entries[500];
 };
 
 struct atlas_asset {
+    atlas_map map;
     atlas_key atlasKey;
     texture_key textureKey;
     int width;
