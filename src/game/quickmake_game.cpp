@@ -56,14 +56,14 @@ static void *pushRenderCommand (render_command_list *renderCommands,
     return renderCommand;
 }
 
-
-static void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList, 
+static sprite *createSpriteAndSetProperties (float x, float y, game_assets *assets, sprite_list *spriteList, 
                        float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
                        float alpha = 1.0f, unsigned int tint = 0xffffff) 
 {
     assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
 
     sprite *nextSprite = &spriteList->sprites[spriteList->numSprites];
+    *nextSprite = {};
     ++spriteList->numSprites;
     nextSprite->pos.x = x;
     nextSprite->pos.y = y;
@@ -73,11 +73,43 @@ static void addSprite (float x, float y, game_assets *assets, texture_key textur
     nextSprite->rotation = rotation;
     nextSprite->alpha = alpha;
     nextSprite->tint = tint;
-    nextSprite->textureKey = textureKey;
 
-    texture_asset *texAsset = assets->textures[textureKey];
-    nextSprite->width = (float)texAsset->width;
-    nextSprite->height = (float)texAsset->height;
+    return nextSprite;
+}
+
+//static void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList, 
+//                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
+//                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
+//{
+//    sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
+//
+//    // TODO(ebuchholz): maybe pointer to texture info instead of copying?
+//    texture_asset *texAsset = assets->textures[textureKey];
+//    nextSprite->textureKey = textureKey
+//    nextSprite->width = (float)texAsset->width;
+//    nextSprite->height = (float)texAsset->height;
+//
+//    nextSprite->frameCorners[0] = Vector2(0.0f, 1.0f);
+//    nextSprite->frameCorners[1] = Vector2(1.0f, 1.0f);
+//    nextSprite->frameCorners[2] = Vector2(0.0f, 0.0f);
+//    nextSprite->frameCorners[3] = Vector2(1.0f, 0.0f);
+//}
+
+static void addSprite (float x, float y, game_assets *assets, atlas_key atlasKey, char *frameName, sprite_list *spriteList, 
+                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
+                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
+{
+    sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
+
+    atlas_asset *atlas = assets->atlases[atlasKey];
+    nextSprite->textureKey = atlas->textureKey;
+
+    atlas_frame *frame = getAtlasFrame(assets, atlasKey, frameName);
+    nextSprite->width = (float)frame->frameWidth;
+    nextSprite->height = (float)frame->frameHeight;
+    for (int i = 0; i < 4; ++i) {
+        nextSprite->frameCorners[i] = frame->frameCorners[i];
+    }
 }
 
 #if 0
@@ -300,6 +332,19 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
     static float testRotation = 0.0f;
     testRotation += 0.032f;
+    char *testFrameNames[] = {
+        "flag",
+        "golfer_blue_idle",
+        "fairway_up",
+        "wedge",
+        "wind_arrow_diagonal",
+        "golfman_run_0",
+        "heart",
+        "putter",
+        "ghost_0",
+        "driver"
+    };
+    static int currentFrameIndex = 0;
     for (int i = 0; i < 40; ++i) {
         for (int j = 0; j < 10; ++j) {
             int colorType = (i * 10 + j) % 8;
@@ -332,9 +377,10 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
                     break;
 
             }
-            addSprite(spriteX * j, spriteY * i, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList, 
+            addSprite(spriteX * j, spriteY * i, &gameState->assets, ATLAS_KEY_GAME, testFrameNames[currentFrameIndex], &spriteList, 
                       0.5f, 0.5f, 1.0f + 0.005f * (i * 10 + j), 0.02f * (i * 10 + j) + testRotation, 1.0f - 0.00125f * (i*10 + j), tint);        
             //addSprite(spriteX * i, spriteY * j, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList);
+            currentFrameIndex = (currentFrameIndex + 1) % 10;
         }
     }
 
@@ -369,10 +415,10 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         renderSprite->pos[3] = spriteTransform * Vector2(1.0f, 1.0f);
 
         // determine uvs for texture atlases
-        renderSprite->texCoord[0] = Vector2(0.0f, 1.0f);
-        renderSprite->texCoord[1] = Vector2(1.0f, 1.0f);
-        renderSprite->texCoord[2] = Vector2(0.0f, 0.0f);
-        renderSprite->texCoord[3] = Vector2(1.0f, 0.0f);
+        renderSprite->texCoord[0] = sprite->frameCorners[0];
+        renderSprite->texCoord[1] = sprite->frameCorners[1];
+        renderSprite->texCoord[2] = sprite->frameCorners[2];
+        renderSprite->texCoord[3] = sprite->frameCorners[3];
 
         float red = (float)((sprite->tint >> 16) & (0xff)) / 255.0f;
         float green = (float)((sprite->tint >> 8) & (0xff)) / 255.0f;

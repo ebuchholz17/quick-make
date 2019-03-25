@@ -23,6 +23,7 @@ struct debug_camera {
 struct sprite {
     vector2 pos;
     vector2 anchor;
+    vector2 frameCorners[4];
     float width;
     float height;
     float scale;

@@ -261,6 +261,20 @@ void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *wo
     }
 }
 
+// djb2
+// http://www.cse.yorku.ca/~oz/hash.html
+unsigned int hashString (char *string) {
+    unsigned int hash = 5381;
+    int c;
+    assert(string);
+    do {
+        c = *string++;
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    } while (c);
+
+    return hash;
+}
+
 void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int textureKey, memory_arena *workingMemory) {
     int numAtlases = assets->numAtlases;
     assert(numAtlases < MAX_NUM_ATLASES);
@@ -308,10 +322,8 @@ void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int texture
             start = nextLineStart;
         }
         numFrames++;
-        if (*(end+1) == 0) { break; }
+        if (*(nextLineStart) == 0) { break; }
     }
-
-    int t = 0;
 
     // allocate enough atlas_frames
     assert(numFrames < 500);
@@ -320,8 +332,6 @@ void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int texture
     }
     // TODO(ebuchholz): get rid of this first scan or change structure of map
 
-    // rewind, for each frame, calc uvs, calc hash, put into array
-    // for each conflict, get next and put it after that
     // TODO(ebuchholz): more convenient file reading/string copying functions
     start = frameInfoStart;
     for (int i = 0; i < numFrames; ++i) {
@@ -330,10 +340,10 @@ void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int texture
         int length = (int)(end - start);
         char *frameName = (char *)allocateMemorySize(&assets->assetMemory, 
                                                      sizeof(char) * length+1);
-        for (int j = 0; j < length-1; ++j) {
+        for (int j = 0; j < length; ++j) {
             frameName[j] = start[j];
         }
-        frameName[length-1] = 0;
+        frameName[length] = 0;
         frame.key = frameName;
 
         start = nextLineStart;
@@ -381,12 +391,43 @@ void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int texture
         float uvWidth = (float)frameWidth / (float)atlasAsset->width;
         float uvHeight = (float)frameHeight / (float)atlasAsset->height;
         frame.frameCorners[0] = Vector2((float)frameX / (float)atlasAsset->width,
-                                        (float)frameY / (float)atlasAsset->height);
+                                        1.0f - (float)frameY / (float)atlasAsset->height);
         frame.frameCorners[1] = Vector2(frame.frameCorners[0].x + uvWidth, frame.frameCorners[0].y);
-        frame.frameCorners[2] = Vector2(frame.frameCorners[0].x, frame.frameCorners[0].y + uvHeight);
-        frame.frameCorners[3] = Vector2(frame.frameCorners[0].x + uvWidth, frame.frameCorners[0].y + uvHeight);
+        frame.frameCorners[2] = Vector2(frame.frameCorners[0].x, frame.frameCorners[0].y - uvHeight);
+        frame.frameCorners[3] = Vector2(frame.frameCorners[0].x + uvWidth, frame.frameCorners[0].y - uvHeight);
+
+        unsigned int hash = hashString(frameName);
+        unsigned int mapIndex = hash % 500;
+        atlas_frame *existingFrame = &atlasAsset->map.entries[mapIndex];
+        while (existingFrame->key != 0) {
+            mapIndex = (mapIndex + 1) % 500;
+            existingFrame = &atlasAsset->map.entries[mapIndex];
+        }
+        atlasAsset->map.entries[mapIndex] = frame;
+    }
+}
+
+atlas_frame *getAtlasFrame (game_assets *assets, int atlasKey, char *frameName) {
+    atlas_frame *result;
+
+    atlas_asset *textureAtlas = assets->atlases[atlasKey];
+    assert(textureAtlas);
+
+    unsigned int hash = hashString(frameName);
+    unsigned int mapIndex = hash % 500;
+    unsigned int originalMapIndex = mapIndex; // check that we actually find it after looping all the way around
+    while (true) {
+        result = &textureAtlas->map.entries[mapIndex];
+        if (stringsAreEqual(frameName, result->key)) {
+            break;
+        }
+        else {
+            mapIndex = (mapIndex + 1) % 500;
+            assert(mapIndex != originalMapIndex);
+        }
     }
 
+    return result;
 }
 
 // get from atlas map function: calc hash, get item from array, check key, if conflict, get next and check key again

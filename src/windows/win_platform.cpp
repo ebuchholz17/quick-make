@@ -109,7 +109,7 @@ static void processWindowsMessages (HWND window, game_input *input, render_comma
 
 static char *readEntireTextFile (char *path) {
     FILE *textFile; 
-    fopen_s(&textFile, path, "r");
+    fopen_s(&textFile, path, "rb");
     assert(textFile); // TODO(ebuchholz): better error check?
 
     fseek(textFile, 0, SEEK_END);
@@ -266,6 +266,8 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                                        &gameMemory, &workingAssetMemory);
                         free(bitmapData);
                         free(atlasData);
+
+                        loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
                     } break;
                 }
             }

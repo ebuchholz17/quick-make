@@ -104,7 +104,6 @@ float stringToFloat (char *start, char *end) {
 //    return stringToFloat(string, end);
 //}
 
-// TODO(ebuchholz): move somewhere else
 bool stringsAreEqual (int length, char *a, char *b) {
     char *bIndex = b;
     for (int i = 0; i < length; ++i, ++bIndex) {
@@ -113,6 +112,16 @@ bool stringsAreEqual (int length, char *a, char *b) {
         }
     }
     return (*bIndex == 0);
+}
+
+bool stringsAreEqual (char *a, char *b) {
+    int i, j;
+    for (i = 0, j = 0; a[i] && b[j]; ++i, ++j) {
+        if (a[i] != b[j]) { 
+            return false;
+        }
+    }
+    return a[i] == 0 && b[j] == 0;
 }
 
 unsigned int findLeastSignificantBit (unsigned int value, bool *found) {
