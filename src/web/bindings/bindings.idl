@@ -77,13 +77,15 @@ interface memory_arena {
 
 enum asset_type {
     "ASSET_TYPE_OBJ",
-    "ASSET_TYPE_BMP"
+    "ASSET_TYPE_BMP",
+    "ASSET_TYPE_ATLAS"
 };
 
 interface asset_to_load {
     attribute DOMString path;
     attribute asset_type type;
     attribute long key;
+    attribute long secondKey;
 };
 
 interface asset_list {
@@ -111,6 +113,13 @@ interface loaded_mesh_asset {
 };
 
 interface loaded_texture_asset {
+    attribute long key;
+    attribute long width;
+    attribute long height;
+    attribute VoidPtr pixels; 
+};
+
+interface loaded_atlas_asset {
     attribute long key;
     attribute long width;
     attribute long height;

@@ -65,6 +65,9 @@ int sizeof_loaded_mesh_asset () {
 int sizeof_loaded_texture_asset () {
     return sizeof(loaded_mesh_asset);
 }  
+int sizeof_loaded_atlas_asset () {
+    return sizeof(loaded_mesh_asset);
+}  
 int sizeof_render_command_header () {
     return sizeof(render_command_header);
 }  
@@ -113,6 +116,7 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_int_mesh_attribute", &sizeof_int_mesh_attribute);
     function ("sizeof_loaded_mesh_asset", &sizeof_loaded_mesh_asset);
     function ("sizeof_loaded_texture_asset", &sizeof_loaded_texture_asset);
+    function ("sizeof_loaded_atlas_asset", &sizeof_loaded_atlas_asset);
     function ("sizeof_render_command_header", &sizeof_render_command_header);
     function ("sizeof_render_command_model", &sizeof_render_command_model);
     function ("sizeof_render_command_lines", &sizeof_render_command_lines);

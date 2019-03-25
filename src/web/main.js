@@ -64,6 +64,8 @@ WebPlatform.prototype = {
         this.gameMemory.tempMemoryCapacity = 10 * 1024 * 1024;
         this.gameMemory.tempMemory = this.game._malloc(this.gameMemory.tempMemoryCapacity);
 
+        // TODO(ebuchholz): clear memory
+
         this.assetList = this.game.wrapPointer(this.game._malloc(this.game.sizeof_asset_list()), 
                                                 this.game.asset_list);
         this.assetList.numAssetsToLoad = 0;
@@ -86,6 +88,9 @@ WebPlatform.prototype = {
         for (var i = 0; i < this.assetList.numAssetsToLoad; ++i) {
             var assetToLoad = this.game.wrapPointer(assetsToLoadPointer + this.game.sizeof_asset_to_load() * i, this.game.asset_to_load);
             switch (assetToLoad.type) {
+                default:
+                    console.log("invalid asset to load type");
+                    break;
                 case this.game.ASSET_TYPE_OBJ: 
                 {
                     this.loadOBJFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
@@ -94,12 +99,16 @@ WebPlatform.prototype = {
                 {
                     this.loadBMPFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
                 } break;
+                case this.game.ASSET_TYPE_ATLAS: 
+                {
+                    this.loadTextureAtlas(assetToLoad.path, assetToLoad.type, assetToLoad.key, assetToLoad.secondKey);
+                } break;
             }
         }
 
     },
 
-    loadOBJFile: function (path, assetType, assetKey) {
+    loadOBJFile: function (path, assetType, assetKey, assetSecondKey) {
         fetch(path).then(
             function (file) {
                 file.text().then(
@@ -115,8 +124,10 @@ WebPlatform.prototype = {
                             ["number", "number", "number", "number", "number"], 
                             [
                                 objFileData, 
+                                0,
                                 assetType,
                                 assetKey,
+                                assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory)
                             ]
@@ -142,12 +153,11 @@ WebPlatform.prototype = {
         );
     },
 
-    loadBMPFile: function (path, assetType, assetKey) {
+    loadBMPFile: function (path, assetType, assetKey, assetSecondKey) {
         fetch(path).then(
             function (file) {
                 file.arrayBuffer().then(
                     function (data) {
-                        console.log();
                         var fileDataView = new Uint8Array(data);
                         //var strLength = this.game.lengthBytesUTF8(data);
                         var numBytes = data.byteLength;
@@ -164,8 +174,10 @@ WebPlatform.prototype = {
                             ["number", "number", "number", "number", "number"], 
                             [
                                 bmpFileData, 
+                                0,
                                 assetType,
                                 assetKey,
+                                assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory)
                             ]
@@ -189,6 +201,102 @@ WebPlatform.prototype = {
                 console.log("Failed to fetch " + path);
             }.bind(this)
         );
+    },
+
+    loadTextureAtlas: function (path, assetType, assetKey, assetSecondKey) {
+        var bmpPath = path.slice();
+        bmpPath = bmpPath.replace(".txt", ".bmp");
+        Promise.all([this.fetchTextFile(path), this.fetchBinaryFile(bmpPath)]).then(
+            (results) => {
+                var txtData = results[0];
+                var bmpData = results[1];
+
+                var strLength = this.game.lengthBytesUTF8(txtData);
+                var txtFileData = this.game._malloc(strLength + 1);
+                this.game.writeAsciiToMemory(txtData, txtFileData); 
+
+                var fileDataView = new Uint8Array(bmpData);
+                //var strLength = this.game.lengthBytesUTF8(bmpData);
+                var numBytes = bmpData.byteLength;
+                var bmpFileData = this.game._malloc(numBytes);
+                var bmpDataView = new Uint8Array(this.game.buffer, 
+                                                 bmpFileData,
+                                                 numBytes);
+                bmpDataView.set(fileDataView, 0);
+
+                this.workingAssetMemory.size = 0;
+
+                this.game.ccall("parseGameAsset", 
+                    "null", 
+                    ["number", "number", "number", "number", "number"], 
+                    [
+                        txtFileData, 
+                        bmpFileData, 
+                        assetType,
+                        assetKey,
+                        assetSecondKey,
+                        this.game.getPointer(this.gameMemory),
+                        this.game.getPointer(this.workingAssetMemory)
+                    ]
+                );
+
+                var loadedTexture = 
+                    this.game.wrapPointer(
+                        this.game.getPointer(this.workingAssetMemory.base), 
+                        this.game.loaded_texture_asset
+                    );
+
+                this.renderer.loadTexture(this.game, loadedTexture);
+                this.onAssetLoaded();
+            },
+            () => {
+                console.log("failed to load texture atlas");
+            }
+        );
+    },
+
+    fetchTextFile: function (path) {
+        return new Promise((resolve, reject) => {
+            fetch(path).then(
+                function (file) {
+                    file.text().then(
+                        function (data) {
+                            resolve(data);
+                        }.bind(this),
+                        function () {
+                            console.log("fetch .text() failed for " + path);
+                            reject();
+                        }.bind(this)
+                    );
+                }.bind(this),
+                function () {
+                    console.log("Failed to fetch " + path);
+                    reject();
+                }.bind(this)
+            );
+        });
+    },
+
+    fetchBinaryFile: function (path) {
+        return new Promise((resolve, reject) => {
+            fetch(path).then(
+                function (file) {
+                    file.arrayBuffer().then(
+                        function (data) {
+                            resolve(data);
+                        }.bind(this),
+                        function () {
+                            console.log("fetch .arrayBuffer() failed for " + path);
+                            reject();
+                        }.bind(this)
+                    );
+                }.bind(this),
+                function () {
+                    console.log("Failed to fetch " + path);
+                    reject();
+                }.bind(this)
+            );
+        });
     },
 
     onAssetLoaded: function () {

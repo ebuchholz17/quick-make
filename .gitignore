@@ -5,10 +5,12 @@
 /Debug
 /src/web/node_modules
 /src/web/wasm
-/src/windows/run_around_game.VC.db
 /src/windows/.vs
 /src/web/bindings/bindings.js
 /src/web/bindings/parser.out
 /src/web/bindings/WebIDLGrammar.pkl
 /src/web/bindings/bindings.cpp
+/src/windows/run_around_game.VC.db
 /src/windows/run_around_game.VC.VC.opendb
+/src/windows/quickmake.VC.db
+/src/windows/quickmake.VC.VC.opendb
