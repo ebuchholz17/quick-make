@@ -56,6 +56,32 @@ static void *pushRenderCommand (render_command_list *renderCommands,
     return renderCommand;
 }
 
+static void pushSpriteMatrix (matrix3x3 transform, sprite_list *spriteList) {
+    assert(spriteList->matrixStackIndex < MATRIX_STACK_CAPACITY);
+    spriteList->matrixStackIndex++;
+    spriteList->matrixStack[spriteList->matrixStackIndex] = 
+        spriteList->matrixStack[spriteList->matrixStackIndex - 1] * transform;
+}
+
+static matrix3x3 peekSpriteMatrix (sprite_list *spriteList) {
+    return spriteList->matrixStack[spriteList->matrixStackIndex];
+}
+
+static matrix3x3 popSpriteMatrix (sprite_list *spriteList) {
+    assert(spriteList->matrixStackIndex > 0);
+    matrix3x3 result = spriteList->matrixStack[spriteList->matrixStackIndex];
+    spriteList->matrixStackIndex--;
+    return result;
+}
+
+static void pushSpriteTransform(sprite_list *spriteList, vector2 pos, float scale = 1.0f, float rotation = 0.0f) {
+    matrix3x3 transform = scaleMatrix3x3(scale, scale);
+    transform = rotationMatrix3x3(rotation) * transform;
+    transform = translationMatrix(pos.x, pos.y) * transform;
+
+    pushSpriteMatrix(transform, spriteList);
+}
+
 static sprite *createSpriteAndSetProperties (float x, float y, game_assets *assets, sprite_list *spriteList, 
                        float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
                        float alpha = 1.0f, unsigned int tint = 0xffffff) 
@@ -73,6 +99,8 @@ static sprite *createSpriteAndSetProperties (float x, float y, game_assets *asse
     nextSprite->rotation = rotation;
     nextSprite->alpha = alpha;
     nextSprite->tint = tint;
+
+    nextSprite->parentTransform = peekSpriteMatrix(spriteList);
 
     return nextSprite;
 }
@@ -111,6 +139,7 @@ static void addSprite (float x, float y, game_assets *assets, atlas_key atlasKey
         nextSprite->frameCorners[i] = frame->frameCorners[i];
     }
 }
+
 
 #if 0
 
@@ -257,6 +286,28 @@ static void debugCameraMovement (debug_camera *debugCamera, game_input *input) {
 }
 #endif
 
+//static void growTransformGroupEntryList () {
+//
+//}
+
+//static transform_group *addTransformGroup (transform_group_list *groupList, memory_arena *tempMemory) {
+//    assert(groupList->numGroups < MAX_TRANSFORM_GROUPS);
+//
+//    transform_group *group = &groupList->groups[groupList->numGroups];
+//    *group = {};
+//    ++groupList->numGroups;
+//
+//    group->children.length = 0;
+//    group->children.capacity = 16;
+//    group->children.entries = (transform_group_entry *)allocateMemorySize(tempMemory, group->children.capacity * sizeof(transform_group_entry)); 
+//
+//    return group;
+//}
+
+//static void addChild () {
+//
+//}
+
 // TODO(ebuchholz): Maybe pack everything into a single file and load that?
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
@@ -318,71 +369,53 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
     // Zero memory here? since uint8array.fill is slow in firefix
 
-    // make space for sprites
-    sprite_list spriteList;
+    sprite_list spriteList = {};
     spriteList.sprites = (sprite *)allocateMemorySize(&gameState->tempMemory, sizeof(sprite) * MAX_SPRITES_PER_FRAME);
     spriteList.numSprites = 0;
+    spriteList.matrixStack[0] = identityMatrix3x3();
+
+    //transform_group_list groupList;
+    //groupList.groups = (transform_group *)allocateMemorySize(&gameState->tempMemory, sizeof(transform_group) * MAX_TRANSFORM_GROUPS);
+    //groupList.numGroups = 0;
+
+    //transform_group *rootGroup = addTransformGroup(&groupList, &gameState->tempMemory);
+
+
 
     // TODO(ebuchholz): get screen dimensions from render commands? and use them
-    float gameWidth = (float)renderCommands->windowWidth;
-    float gameHeight = (float)renderCommands->windowHeight;
+    float screenWidth = (float)renderCommands->windowWidth;
+    float screenHeight = (float)renderCommands->windowHeight;
 
-    float spriteX = 40.0f;
-    float spriteY = 40.0f;
+    float gameWidth = 640.0f;
+    float gameHeight = 360.0f;
+    float normalAspectRatio = gameWidth / gameHeight;
+    float actualAspectRatio = screenWidth / screenHeight;
+    float gameScale;
+    vector2 gameOrigin;
+    if (actualAspectRatio < normalAspectRatio) {
+        float widthRatio = screenWidth / gameWidth;
+        gameScale = widthRatio;
+        gameOrigin.x = 0.0f;
+        gameOrigin.y = (screenHeight - (gameHeight * gameScale)) / 2.0f;
+    }
+    else {
+        float heightRatio = screenHeight / gameHeight;
+        gameScale = heightRatio;
+        gameOrigin.x = (screenWidth - (gameWidth * gameScale)) / 2.0f;
+        gameOrigin.y = 0.0f;
+    }
 
-    static float testRotation = 0.0f;
-    testRotation += 0.032f;
-    char *testFrameNames[] = {
-        "flag",
-        "golfer_blue_idle",
-        "fairway_up",
-        "wedge",
-        "wind_arrow_diagonal",
-        "golfman_run_0",
-        "heart",
-        "putter",
-        "ghost_0",
-        "driver"
-    };
-    static int currentFrameIndex = 0;
-    for (int i = 0; i < 40; ++i) {
+    pushSpriteTransform(&spriteList, gameOrigin, gameScale);
+    pushSpriteTransform(&spriteList, Vector2(gameWidth/2.0f, gameHeight/2.0f));
+
+    for (int i = 0; i < 10; ++i) {
         for (int j = 0; j < 10; ++j) {
-            int colorType = (i * 10 + j) % 8;
-            unsigned int tint;
-            switch (colorType) {
-                default:
-                case 0: 
-                    tint = 0xffffff;
-                    break;
-                case 1: 
-                    tint = 0xff0000;
-                    break;
-                case 2: 
-                    tint = 0x00ff00;
-                    break;
-                case 3: 
-                    tint = 0x0000ff;
-                    break;
-                case 4: 
-                    tint = 0xffff00;
-                    break;
-                case 5: 
-                    tint = 0xff00ff;
-                    break;
-                case 6: 
-                    tint = 0x00ffff;
-                    break;
-                case 7: 
-                    tint = 0x000000;
-                    break;
-
-            }
-            addSprite(spriteX * j, spriteY * i, &gameState->assets, ATLAS_KEY_GAME, testFrameNames[currentFrameIndex], &spriteList, 
-                      0.5f, 0.5f, 1.0f + 0.005f * (i * 10 + j), 0.02f * (i * 10 + j) + testRotation, 1.0f - 0.00125f * (i*10 + j), tint);        
-            //addSprite(spriteX * i, spriteY * j, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList);
-            currentFrameIndex = (currentFrameIndex + 1) % 10;
+            addSprite(-144.0f + 32.0f * j, -144.0f + 32.0f * i, &gameState->assets, ATLAS_KEY_GAME, "golfman_run_0", &spriteList, 0.5f, 0.5f);
         }
     }
+
+    popSpriteMatrix(&spriteList);
+    popSpriteMatrix(&spriteList);
 
     render_command_sprite_list *spriteListCommand = 
         (render_command_sprite_list *)pushRenderCommand(renderCommands,
@@ -408,6 +441,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         spriteTransform = scaleMatrix * spriteTransform;
         spriteTransform = rotationMatrix3x3(sprite->rotation) * spriteTransform;
         spriteTransform = translationMatrix(sprite->pos.x, sprite->pos.y) * spriteTransform;
+
+        spriteTransform = sprite->parentTransform * spriteTransform;
 
         renderSprite->pos[0] = spriteTransform * Vector2(0.0f, 0.0f);
         renderSprite->pos[1] = spriteTransform * Vector2(1.0f, 0.0f);
