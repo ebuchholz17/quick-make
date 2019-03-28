@@ -56,89 +56,6 @@ static void *pushRenderCommand (render_command_list *renderCommands,
     return renderCommand;
 }
 
-static void pushSpriteMatrix (matrix3x3 transform, sprite_list *spriteList) {
-    assert(spriteList->matrixStackIndex < MATRIX_STACK_CAPACITY);
-    spriteList->matrixStackIndex++;
-    spriteList->matrixStack[spriteList->matrixStackIndex] = 
-        spriteList->matrixStack[spriteList->matrixStackIndex - 1] * transform;
-}
-
-static matrix3x3 peekSpriteMatrix (sprite_list *spriteList) {
-    return spriteList->matrixStack[spriteList->matrixStackIndex];
-}
-
-static matrix3x3 popSpriteMatrix (sprite_list *spriteList) {
-    assert(spriteList->matrixStackIndex > 0);
-    matrix3x3 result = spriteList->matrixStack[spriteList->matrixStackIndex];
-    spriteList->matrixStackIndex--;
-    return result;
-}
-
-static void pushSpriteTransform(sprite_list *spriteList, vector2 pos, float scale = 1.0f, float rotation = 0.0f) {
-    matrix3x3 transform = scaleMatrix3x3(scale, scale);
-    transform = rotationMatrix3x3(rotation) * transform;
-    transform = translationMatrix(pos.x, pos.y) * transform;
-
-    pushSpriteMatrix(transform, spriteList);
-}
-
-static sprite *createSpriteAndSetProperties (float x, float y, game_assets *assets, sprite_list *spriteList, 
-                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
-                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
-{
-    assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
-
-    sprite *nextSprite = &spriteList->sprites[spriteList->numSprites];
-    *nextSprite = {};
-    ++spriteList->numSprites;
-    nextSprite->pos.x = x;
-    nextSprite->pos.y = y;
-    nextSprite->anchor.x = anchorX;
-    nextSprite->anchor.y = anchorY;
-    nextSprite->scale = scale;
-    nextSprite->rotation = rotation;
-    nextSprite->alpha = alpha;
-    nextSprite->tint = tint;
-
-    nextSprite->parentTransform = peekSpriteMatrix(spriteList);
-
-    return nextSprite;
-}
-
-//static void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList, 
-//                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
-//                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
-//{
-//    sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
-//
-//    // TODO(ebuchholz): maybe pointer to texture info instead of copying?
-//    texture_asset *texAsset = assets->textures[textureKey];
-//    nextSprite->textureKey = textureKey
-//    nextSprite->width = (float)texAsset->width;
-//    nextSprite->height = (float)texAsset->height;
-//
-//    nextSprite->frameCorners[0] = Vector2(0.0f, 1.0f);
-//    nextSprite->frameCorners[1] = Vector2(1.0f, 1.0f);
-//    nextSprite->frameCorners[2] = Vector2(0.0f, 0.0f);
-//    nextSprite->frameCorners[3] = Vector2(1.0f, 0.0f);
-//}
-
-static void addSprite (float x, float y, game_assets *assets, atlas_key atlasKey, char *frameName, sprite_list *spriteList, 
-                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
-                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
-{
-    sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
-
-    atlas_asset *atlas = assets->atlases[atlasKey];
-    nextSprite->textureKey = atlas->textureKey;
-
-    atlas_frame *frame = getAtlasFrame(assets, atlasKey, frameName);
-    nextSprite->width = (float)frame->frameWidth;
-    nextSprite->height = (float)frame->frameHeight;
-    for (int i = 0; i < 4; ++i) {
-        nextSprite->frameCorners[i] = frame->frameCorners[i];
-    }
-}
 
 
 #if 0
@@ -312,7 +229,6 @@ static void debugCameraMovement (debug_camera *debugCamera, game_input *input) {
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
 
-    pushAsset(assetList, "assets/textures/golfman.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_GOLFMAN);
     pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
 }
 
@@ -360,6 +276,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->gameInitialized) {
         gameState->gameInitialized = true;
+        initBlockGame(&gameState->memory, &gameState->blockGame);
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -380,41 +297,31 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
     //transform_group *rootGroup = addTransformGroup(&groupList, &gameState->tempMemory);
 
-
-
     // TODO(ebuchholz): get screen dimensions from render commands? and use them
     float screenWidth = (float)renderCommands->windowWidth;
     float screenHeight = (float)renderCommands->windowHeight;
 
-    float gameWidth = 640.0f;
-    float gameHeight = 360.0f;
-    float normalAspectRatio = gameWidth / gameHeight;
+    float normalAspectRatio = GAME_WIDTH / GAME_HEIGHT;
     float actualAspectRatio = screenWidth / screenHeight;
     float gameScale;
     vector2 gameOrigin;
     if (actualAspectRatio < normalAspectRatio) {
-        float widthRatio = screenWidth / gameWidth;
+        float widthRatio = screenWidth / GAME_WIDTH;
         gameScale = widthRatio;
         gameOrigin.x = 0.0f;
-        gameOrigin.y = (screenHeight - (gameHeight * gameScale)) / 2.0f;
+        gameOrigin.y = (screenHeight - (GAME_HEIGHT * gameScale)) / 2.0f;
     }
     else {
-        float heightRatio = screenHeight / gameHeight;
+        float heightRatio = screenHeight / GAME_HEIGHT;
         gameScale = heightRatio;
-        gameOrigin.x = (screenWidth - (gameWidth * gameScale)) / 2.0f;
+        gameOrigin.x = (screenWidth - (GAME_WIDTH * gameScale)) / 2.0f;
         gameOrigin.y = 0.0f;
     }
 
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
-    pushSpriteTransform(&spriteList, Vector2(gameWidth/2.0f, gameHeight/2.0f));
 
-    for (int i = 0; i < 10; ++i) {
-        for (int j = 0; j < 10; ++j) {
-            addSprite(-144.0f + 32.0f * j, -144.0f + 32.0f * i, &gameState->assets, ATLAS_KEY_GAME, "golfman_run_0", &spriteList, 0.5f, 0.5f);
-        }
-    }
+    updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
 
-    popSpriteMatrix(&spriteList);
     popSpriteMatrix(&spriteList);
 
     render_command_sprite_list *spriteListCommand = 

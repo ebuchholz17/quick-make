@@ -4,7 +4,9 @@
         <key>fileFormatVersion</key>
         <int>4</int>
         <key>texturePackerVersion</key>
-        <string>4.12.0</string>
+        <string>4.6.1</string>
+        <key>fileName</key>
+        <string>C:/Users/erik.buchholz/Code/Personal/quickmake/art/atlas.tps</string>
         <key>autoSDSettings</key>
         <array>
             <struct type="AutoSDSettings">
@@ -127,6 +129,22 @@
                 <uint>1</uint>
             </struct>
         </struct>
+        <key>andEngine</key>
+        <struct type="AndEngine">
+            <key>minFilter</key>
+            <enum type="AndEngine::MinFilter">Linear</enum>
+            <key>packageName</key>
+            <string>Texture</string>
+            <key>wrap</key>
+            <struct type="AndEngineWrap">
+                <key>s</key>
+                <enum type="AndEngineWrap::Wrap">Clamp</enum>
+                <key>t</key>
+                <enum type="AndEngineWrap::Wrap">Clamp</enum>
+            </struct>
+            <key>magFilter</key>
+            <enum type="AndEngine::MagFilter">MagLinear</enum>
+        </struct>
         <key>dataFileNames</key>
         <map type="GFileNameMap">
             <key>data</key>
@@ -181,41 +199,8 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">bone_0.png</key>
-            <key type="filename">bone_1.png</key>
-            <key type="filename">driver.png</key>
-            <key type="filename">fireball_0.png</key>
-            <key type="filename">fireball_1.png</key>
-            <key type="filename">fireball_2.png</key>
-            <key type="filename">fireball_3.png</key>
-            <key type="filename">ghost_0.png</key>
-            <key type="filename">ghost_1.png</key>
-            <key type="filename">ghoul_0.png</key>
-            <key type="filename">ghoul_1.png</key>
-            <key type="filename">golfer_blue_idle.png</key>
-            <key type="filename">golfer_blue_swing_0.png</key>
-            <key type="filename">golfer_blue_swing_1.png</key>
-            <key type="filename">golfer_blue_swing_2.png</key>
-            <key type="filename">golfer_blue_swing_3.png</key>
-            <key type="filename">golfer_ghost.png</key>
-            <key type="filename">golfer_red_idle.png</key>
-            <key type="filename">golfer_red_swing_0.png</key>
-            <key type="filename">golfer_red_swing_1.png</key>
-            <key type="filename">golfer_red_swing_2.png</key>
-            <key type="filename">golfer_red_swing_3.png</key>
-            <key type="filename">golfman.png</key>
-            <key type="filename">golfman_appear_0.png</key>
-            <key type="filename">golfman_appear_1.png</key>
-            <key type="filename">golfman_appear_2.png</key>
-            <key type="filename">golfman_punch.png</key>
-            <key type="filename">golfman_run_0.png</key>
-            <key type="filename">golfman_run_1.png</key>
-            <key type="filename">iron.png</key>
-            <key type="filename">putter.png</key>
-            <key type="filename">skeleton.png</key>
-            <key type="filename">wedge.png</key>
-            <key type="filename">wind_arrow.png</key>
-            <key type="filename">wind_arrow_diagonal.png</key>
+            <key type="filename">blue_tile.png</key>
+            <key type="filename">sheep.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -228,86 +213,7 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">bunker.png</key>
-            <key type="filename">bunker_down.png</key>
-            <key type="filename">bunker_downleft.png</key>
-            <key type="filename">bunker_downright.png</key>
-            <key type="filename">bunker_left.png</key>
-            <key type="filename">bunker_right.png</key>
-            <key type="filename">bunker_up.png</key>
-            <key type="filename">bunker_upleft.png</key>
-            <key type="filename">bunker_upright.png</key>
-            <key type="filename">dirt.png</key>
-            <key type="filename">fairway.png</key>
-            <key type="filename">fairway_down.png</key>
-            <key type="filename">fairway_downleft.png</key>
-            <key type="filename">fairway_downright.png</key>
-            <key type="filename">fairway_left.png</key>
-            <key type="filename">fairway_right.png</key>
-            <key type="filename">fairway_up.png</key>
-            <key type="filename">fairway_upleft.png</key>
-            <key type="filename">fairway_upright.png</key>
-            <key type="filename">floor.png</key>
-            <key type="filename">green_0.png</key>
-            <key type="filename">green_1.png</key>
-            <key type="filename">green_up.png</key>
-            <key type="filename">oob.png</key>
-            <key type="filename">oob_down.png</key>
-            <key type="filename">oob_downleft.png</key>
-            <key type="filename">oob_downright.png</key>
-            <key type="filename">oob_fringe.png</key>
-            <key type="filename">oob_left.png</key>
-            <key type="filename">oob_right.png</key>
-            <key type="filename">oob_up.png</key>
-            <key type="filename">oob_upleft.png</key>
-            <key type="filename">oob_upright.png</key>
-            <key type="filename">rock.png</key>
-            <key type="filename">rough.png</key>
-            <key type="filename">rough_down.png</key>
-            <key type="filename">rough_downleft.png</key>
-            <key type="filename">rough_downright.png</key>
-            <key type="filename">rough_left.png</key>
-            <key type="filename">rough_right.png</key>
-            <key type="filename">rough_up.png</key>
-            <key type="filename">rough_upleft.png</key>
-            <key type="filename">rough_upright.png</key>
-            <key type="filename">wall-down.png</key>
-            <key type="filename">wall-downleft.png</key>
-            <key type="filename">wall-downright.png</key>
-            <key type="filename">wall-inside-corner-downleft.png</key>
-            <key type="filename">wall-inside-corner-downright.png</key>
-            <key type="filename">wall-inside-corner-upleft.png</key>
-            <key type="filename">wall-inside-corner-upright.png</key>
-            <key type="filename">wall-left.png</key>
-            <key type="filename">wall-right.png</key>
-            <key type="filename">wall-up.png</key>
-            <key type="filename">wall-upleft.png</key>
-            <key type="filename">wall-upright.png</key>
-            <key type="filename">wall.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>2,2,4,4</rect>
-                <key>scale9Paddings</key>
-                <rect>2,2,4,4</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">bunny.png</key>
-            <key type="filename">club_arrow.png</key>
-            <key type="filename">flagIcon.png</key>
-            <key type="filename">ghoul.png</key>
-            <key type="filename">golf_ball_0.png</key>
-            <key type="filename">golf_ball_1.png</key>
-            <key type="filename">golf_ball_2.png</key>
-            <key type="filename">golf_ball_3.png</key>
-            <key type="filename">heart.png</key>
-            <key type="filename">hitbox.png</key>
-            <key type="filename">hurtbox.png</key>
-            <key type="filename">trajectory_dot.png</key>
+            <key type="filename">tile_backing.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -317,32 +223,6 @@
                 <rect>4,4,8,8</rect>
                 <key>scale9Paddings</key>
                 <rect>4,4,8,8</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">flag.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>8,30,15,59</rect>
-                <key>scale9Paddings</key>
-                <rect>8,30,15,59</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">flagBar.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>25,4,50,8</rect>
-                <key>scale9Paddings</key>
-                <rect>25,4,50,8</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>

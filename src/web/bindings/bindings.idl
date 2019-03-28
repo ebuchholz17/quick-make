@@ -190,9 +190,13 @@ interface game_input {
     attribute boolean downButton;
 
     attribute boolean turnUpButton;
+    attribute boolean turnUpButtonJustPressed;
     attribute boolean turnDownButton;
+    attribute boolean turnDownButtonJustPressed;
     attribute boolean turnLeftButton;
+    attribute boolean turnLeftButtonJustPressed;
     attribute boolean turnRightButton;
+    attribute boolean turnRightButtonJustPressed;
 
     attribute boolean pointerDown;
     attribute boolean pointerJustDown;
