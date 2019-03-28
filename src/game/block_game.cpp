@@ -1,115 +1,225 @@
 #include "block_game.h"
 
+void addNewBlockToGrid (block_game *blockGame, int row, int col) {
+    int freeBlockIndex = -1;
+    for (int i = 0; i < blockGame->numBlocks; ++i) {
+        grid_block *block = blockGame->blocks + i;
+        if (!block->active) {
+            freeBlockIndex = i;
+            break;
+        }
+    }
+
+    grid_block *block;
+    if (freeBlockIndex != -1) {
+        block = blockGame->blocks + freeBlockIndex;
+        *block = {};
+        block->id = freeBlockIndex;
+    }
+    else {
+        block = &blockGame->blocks[blockGame->numBlocks];
+        *block = {};
+        block->id = blockGame->numBlocks;
+        blockGame->numBlocks++;
+    }
+    block->active = true;
+
+    block->row = row;
+    block->col = col;
+
+    // TODO(ebuchholz): un-copy-paste gridrow/colstart
+    float gridRowStart = -((float)(NUM_GRID_ROWS - 1) * GRID_BLOCK_WIDTH) * 0.5f;
+    float gridColStart = -((float)(NUM_GRID_COLS - 1) * GRID_BLOCK_HEIGHT) * 0.5f;
+    block->x = gridColStart + GRID_BLOCK_WIDTH * block->col;
+    block->y = gridRowStart + GRID_BLOCK_HEIGHT * block->row;
+
+    blockGame->grid[row * NUM_GRID_COLS + col] = block->id;
+}
+
+void addBlockIfUnoccupied (block_game *blockGame, int row, int col) {
+    if (blockGame->grid[row * NUM_GRID_COLS + col] == -1) {
+        addNewBlockToGrid(blockGame, row, col);
+    }
+}
+
 void initBlockGame (memory_arena *memory, block_game* blockGame) {
+    *blockGame = {};
     grid_block *blocks = blockGame->blocks;
 
-    grid_block *block = &blocks[blockGame->numBlocks];
-    blockGame->numBlocks++;
-    *block = {};
-    block->row = 3;
-    block->col = 2;
+    for (int i = 0; i < NUM_GRID_ROWS; ++i) {
+        for (int j = 0; j < NUM_GRID_COLS; ++j) {
+            blockGame->grid[i * NUM_GRID_COLS + j] = -1;
+        }
+    }
 
-    block = &blocks[blockGame->numBlocks];
-    blockGame->numBlocks++;
-    *block = {};
-    block->row = 3;
-    block->col = 3;
+    addNewBlockToGrid(blockGame, 3, 1);
+    addNewBlockToGrid(blockGame, 3, 2);
+    addNewBlockToGrid(blockGame, 3, 3);
+    addNewBlockToGrid(blockGame, 3, 4);
+    addNewBlockToGrid(blockGame, 3, 5);
+    addNewBlockToGrid(blockGame, 3, 6);
+    addNewBlockToGrid(blockGame, 3, 7);
+    addNewBlockToGrid(blockGame, 3, 8);
 
-    block = &blocks[blockGame->numBlocks];
-    blockGame->numBlocks++;
-    *block = {};
-    block->row = 3;
-    block->col = 4;
+    addNewBlockToGrid(blockGame, 7, 1);
+    addNewBlockToGrid(blockGame, 7, 2);
+    addNewBlockToGrid(blockGame, 7, 3);
+    addNewBlockToGrid(blockGame, 7, 4);
+    addNewBlockToGrid(blockGame, 7, 5);
+    addNewBlockToGrid(blockGame, 7, 6);
+    addNewBlockToGrid(blockGame, 7, 7);
+    addNewBlockToGrid(blockGame, 7, 8);
 
-    block = &blocks[blockGame->numBlocks];
-    blockGame->numBlocks++;
-    *block = {};
-    block->row = 3;
-    block->col = 5;
-
-    //for (int i = 0; i < NUM_GRID_ROWS; ++i) {
-    //    for (int j = 0; j < NUM_GRID_COLS; ++j) {
-    //        grid_block *block = &blocks[i * NUM_GRID_COLS + j];
-    //        block->row = i;
-    //        block->col = j;
-    //        blockGame->numBlocks++;
-    //    }
-    //}
+    addNewBlockToGrid(blockGame, 8, 4);
+    addNewBlockToGrid(blockGame, 8, 5);
+    addNewBlockToGrid(blockGame, 8, 6);
+    addNewBlockToGrid(blockGame, 8, 7);
 
     blockGame->sheep = {};
     blockGame->sheep.row = 6;
     blockGame->sheep.col = 6;
+
+    blockGame->timeToSpawnNextPiece = 10.0f;
+    blockGame->nextPieceTimer = 0.0f;
 }
 
-void updateSheep (block_game *blockGame, game_input *input) {
+direction tryMoveSheep (block_game *blockGame, game_input *input) {
+    block_sheep *sheep = &blockGame->sheep;
+    if (blockGame->nextMoveDirection == DIRECTION_NONE) {
+        if (input->turnUpButton) {
+            blockGame->nextMoveDirection = DIRECTION_UP;
+        }
+        else if (input->turnDownButton) {
+            blockGame->nextMoveDirection = DIRECTION_DOWN;
+        }
+        else if (input->turnLeftButton) {
+            blockGame->nextMoveDirection = DIRECTION_LEFT;
+        }
+        else if (input->turnRightButton) {
+            blockGame->nextMoveDirection = DIRECTION_RIGHT;
+        }
+    }
+    return blockGame->nextMoveDirection;
+}
+
+void moveSheep (block_game *blockGame, game_input *input) {
     float gridRowStart = -((float)(NUM_GRID_ROWS - 1) * GRID_BLOCK_WIDTH) * 0.5f;
     float gridColStart = -((float)(NUM_GRID_COLS - 1) * GRID_BLOCK_HEIGHT) * 0.5f;
 
     block_sheep *sheep = &blockGame->sheep;
-    if (!sheep->moving) {
-        sheep->prevRow = sheep->row;
-        sheep->prevCol = sheep->col;
+    sheep->moveTime += DELTA_TIME;
+    if (sheep->moveTime > BLOCK_MOVE_SPEED) { sheep->moveTime = BLOCK_MOVE_SPEED; }
 
-        bool startMoving = false;
-        if (blockGame->nextMoveDirection == -1) {
-            if (input->turnUpButton) {
-                blockGame->nextMoveDirection = 0;
-            }
-            else if (input->turnDownButton) {
-                blockGame->nextMoveDirection = 1;
-            }
-            else if (input->turnLeftButton) {
-                blockGame->nextMoveDirection = 2;
-            }
-            else if (input->turnRightButton) {
-                blockGame->nextMoveDirection = 3;
-            }
-        }
-        if (blockGame->nextMoveDirection != -1) {
-            if (blockGame->nextMoveDirection == 0) {
-                sheep->row--;
-                startMoving = true;
-            }
-            else if (blockGame->nextMoveDirection == 1) {
-                sheep->row++;
-                startMoving = true;
-            }
-            else if (blockGame->nextMoveDirection == 2) {
-                sheep->col--;
-                startMoving = true;
-            }
-            else if (blockGame->nextMoveDirection == 3) {
-                sheep->col++;
-                startMoving = true;
-            }
-            blockGame->nextMoveDirection = -1;
+    float prevX = gridColStart + GRID_BLOCK_WIDTH * sheep->prevCol;
+    float prevY = gridRowStart + GRID_BLOCK_WIDTH * sheep->prevRow;
 
-            if (startMoving) {
-                sheep->moving = true;
-                sheep->moveTime = 0.0f;
-            }
-        }
+    float nextX = gridColStart + GRID_BLOCK_WIDTH * sheep->col;
+    float nextY = gridRowStart + GRID_BLOCK_WIDTH * sheep->row;
 
-        sheep->x = gridColStart + GRID_BLOCK_WIDTH * sheep->col;
-        sheep->y = gridRowStart + GRID_BLOCK_HEIGHT * sheep->row;
+    float t = sheep->moveTime / BLOCK_MOVE_SPEED;
+    sheep->x = prevX + t * (nextX - prevX);
+    sheep->y = prevY + t * (nextY - prevY);
+
+    if (sheep->moveTime == BLOCK_MOVE_SPEED) {
+        sheep->moving = false;
+    }
+}
+
+void moveBlocks (block_game *blockGame, game_input *input) {
+    float gridRowStart = -((float)(NUM_GRID_ROWS - 1) * GRID_BLOCK_WIDTH) * 0.5f;
+    float gridColStart = -((float)(NUM_GRID_COLS - 1) * GRID_BLOCK_HEIGHT) * 0.5f;
+
+    grid_block *blocks = blockGame->blocks;
+    for (int i = 0; i < blockGame->numBlocks; ++i) {
+        grid_block *block = blocks + i;
+
+        if (block->active) {
+            if (block->moving) {
+                block->moveTime += DELTA_TIME;
+                if (block->moveTime > BLOCK_MOVE_SPEED) { block->moveTime = BLOCK_MOVE_SPEED; }
+
+                float prevX = gridColStart + GRID_BLOCK_WIDTH * block->prevCol;
+                float prevY = gridRowStart + GRID_BLOCK_WIDTH * block->prevRow;
+
+                float nextX = gridColStart + GRID_BLOCK_WIDTH * block->col;
+                float nextY = gridRowStart + GRID_BLOCK_WIDTH * block->row;
+
+                float t = block->moveTime / BLOCK_MOVE_SPEED;
+                block->x = prevX + t * (nextX - prevX);
+                block->y = prevY + t * (nextY - prevY);
+
+                if (block->moveTime == BLOCK_MOVE_SPEED) {
+                    block->moving = false;
+                }
+            }
+            else {
+                block->x = gridColStart + GRID_BLOCK_WIDTH * block->col;
+                block->y = gridRowStart + GRID_BLOCK_HEIGHT * block->row;
+            }
+        } 
+    }
+}
+
+void nextRowCol (int row, int col, direction dir, int *outRow, int *outCol) {
+    *outRow = row;
+    *outCol = col;
+    if (dir == DIRECTION_UP) {
+        *outRow = row - 1;
+    }
+    else if (dir == DIRECTION_DOWN) {
+        *outRow = row + 1;
+    }
+    else if (dir == DIRECTION_LEFT) {
+        *outCol = col - 1;
+    }
+    else if (dir == DIRECTION_RIGHT) {
+        *outCol = col + 1;
+    }
+}
+
+bool tryMoveBlockInDirection (block_game *blockGame, int row, int col, direction dir) {
+    int nextRow, nextCol;
+    nextRowCol(row, col, dir, &nextRow, &nextCol);
+    if (nextRow < 0 || nextRow >= NUM_GRID_ROWS || 
+        nextCol < 0 || nextCol >= NUM_GRID_COLS) 
+    {
+        return false;
+    }
+    int nextGridID = blockGame->grid[nextRow * NUM_GRID_ROWS + nextCol];
+
+    bool canMoveBlock = false;
+    if (nextGridID == -1) {
+        canMoveBlock = true;
+    }
+    else {
+        canMoveBlock = tryMoveBlockInDirection(blockGame, nextRow, nextCol, dir);
     }
 
-    if (sheep->moving) {
-        sheep->moveTime += DELTA_TIME;
-        if (sheep->moveTime > SHEEP_MOVE_SPEED) { sheep->moveTime = SHEEP_MOVE_SPEED; }
+    if (canMoveBlock) {
+        int blockID = blockGame->grid[row * NUM_GRID_ROWS + col];
+        grid_block *block = &blockGame->blocks[blockID];
+        block->prevRow = block->row;
+        block->prevCol = block->col;
+        block->row = nextRow;
+        block->col = nextCol;
+        block->moving = true;
+        block->moveTime = 0.0f;
+        blockGame->grid[nextRow * NUM_GRID_ROWS + nextCol] = blockID;
+        blockGame->grid[row * NUM_GRID_ROWS + col] = -1;
+    }
 
-        float prevX = gridColStart + GRID_BLOCK_WIDTH * sheep->prevCol;
-        float prevY = gridRowStart + GRID_BLOCK_WIDTH * sheep->prevRow;
+    return canMoveBlock;
+}
 
-        float nextX = gridColStart + GRID_BLOCK_WIDTH * sheep->col;
-        float nextY = gridRowStart + GRID_BLOCK_WIDTH * sheep->row;
-
-        float t = sheep->moveTime / SHEEP_MOVE_SPEED;
-        sheep->x = prevX + t * (nextX - prevX);
-        sheep->y = prevY + t * (nextY - prevY);
-
-        if (sheep->moveTime == SHEEP_MOVE_SPEED) {
-            sheep->moving = false;
+void blockBubbleSort (grid_block *blocks, block_game *blockGame) {
+    for (int i = 0; i < blockGame->numBlocks; ++i) {
+        for (int j = i; j > 0; --j) {
+            grid_block firstBlock = blocks[j-1];
+            grid_block secondBlock = blocks[j];
+            if (secondBlock.row < firstBlock.row) {
+                blocks[j-1] = secondBlock;
+                blocks[j] = firstBlock;
+            }
         }
     }
 }
@@ -118,38 +228,172 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
                       block_game *blockGame, sprite_list *spriteList) 
 {
     if (input->turnUpButtonJustPressed) {
-        blockGame->nextMoveDirection = 0;
+        blockGame->nextMoveDirection = DIRECTION_UP;
     }
     else if (input->turnDownButtonJustPressed) {
-        blockGame->nextMoveDirection = 1;
+        blockGame->nextMoveDirection = DIRECTION_DOWN;
     }
     else if (input->turnLeftButtonJustPressed) {
-        blockGame->nextMoveDirection = 2;
+        blockGame->nextMoveDirection = DIRECTION_LEFT;
     }
     else if (input->turnRightButtonJustPressed) {
-        blockGame->nextMoveDirection = 3;
+        blockGame->nextMoveDirection = DIRECTION_RIGHT;
     }
-
-    updateSheep(blockGame, input);
-
-    pushSpriteTransform(spriteList, Vector2(GAME_WIDTH/2.0f, GAME_HEIGHT/2.0f));
 
     float gridRowStart = -((float)(NUM_GRID_ROWS - 1) * GRID_BLOCK_WIDTH) * 0.5f;
     float gridColStart = -((float)(NUM_GRID_COLS - 1) * GRID_BLOCK_HEIGHT) * 0.5f;
+
+    block_sheep *sheep = &blockGame->sheep;
+    if (!sheep->moving) {
+        sheep->prevRow = sheep->row;
+        sheep->prevCol = sheep->col;
+
+        sheep->x = gridColStart + GRID_BLOCK_WIDTH * sheep->col;
+        sheep->y = gridRowStart + GRID_BLOCK_HEIGHT * sheep->row;
+
+        direction sheepMoveDir = tryMoveSheep(blockGame, input);
+        if (sheepMoveDir != DIRECTION_NONE) {
+            blockGame->nextMoveDirection = DIRECTION_NONE;
+
+            int nextRow = sheep->row;
+            int nextCol = sheep->col;
+
+            bool validMove = true;
+            nextRowCol(nextRow, nextCol, sheepMoveDir, &nextRow, &nextCol);
+
+            if (nextRow < 0 || nextRow >= NUM_GRID_ROWS || 
+                nextCol < 0 || nextCol >= NUM_GRID_COLS) 
+            {
+                validMove = false;
+            }
+            else if (blockGame->grid[nextRow * NUM_GRID_COLS + nextCol] != -1) {
+                validMove = tryMoveBlockInDirection(blockGame, nextRow, nextCol, sheepMoveDir);
+            }
+            
+            if (validMove) {
+                sheep->row = nextRow;
+                sheep->col = nextCol;
+                sheep->moving = true;
+                sheep->moveTime = 0.0f;
+            }
+        }
+    }
+    if (sheep->moving) {
+        moveSheep(blockGame, input);
+    }
+    moveBlocks(blockGame, input);
+
+    // check for lines
+    bool rowsToClear[NUM_GRID_ROWS];
+    for (int i = 0; i < NUM_GRID_ROWS; ++i) {
+        bool foundFullRow = true;
+        for (int j = 0; j < NUM_GRID_COLS; ++j) {
+            int blockID = blockGame->grid[i * NUM_GRID_ROWS + j];
+            if (blockID == -1) {
+                foundFullRow = false;
+                break;
+            }
+            else {
+                grid_block *block = blockGame->blocks + blockID;
+                if (block->moving) {
+                    foundFullRow = false;
+                    break;
+                }
+            }
+        }
+        if (foundFullRow) {
+            rowsToClear[i] = true;
+        }
+        else {
+            rowsToClear[i] = false;
+        }
+    }
+
+    bool colsToClear[NUM_GRID_COLS];
+    for (int i = 0; i < NUM_GRID_COLS; ++i) {
+        bool foundFullCol = true;
+        for (int j = 0; j < NUM_GRID_ROWS; ++j) {
+            int blockID = blockGame->grid[j * NUM_GRID_ROWS + i];
+            if (blockID == -1) {
+                foundFullCol = false;
+                break;
+            }
+            else {
+                grid_block *block = blockGame->blocks + blockID;
+                if (block->moving) {
+                    foundFullCol = false;
+                    break;
+                }
+            }
+        }
+        if (foundFullCol) {
+            colsToClear[i] = true;
+        }
+        else {
+            colsToClear[i] = false;
+        }
+    }
+
+    // TODO(ebuchholz): animate, pause until done
+    for (int i = 0; i < NUM_GRID_ROWS; ++i) {
+        if (rowsToClear[i]) {
+            for (int j = 0; j < NUM_GRID_COLS; ++j) {
+                int blockID = blockGame->grid[i * NUM_GRID_ROWS + j];
+                grid_block *block = blockGame->blocks + blockID;
+
+                blockGame->grid[i * NUM_GRID_ROWS + j] = -1;
+                block->active = false;
+            }
+        }
+    }
+    for (int i = 0; i < NUM_GRID_COLS; ++i) {
+        if (colsToClear[i]) {
+            for (int j = 0; j < NUM_GRID_ROWS; ++j) {
+                int blockID = blockGame->grid[j * NUM_GRID_ROWS + i];
+                // may have been cleared in a row
+                if (blockID != -1) {
+                    grid_block *block = blockGame->blocks + blockID;
+
+                    blockGame->grid[j * NUM_GRID_ROWS + i] = -1;
+                    block->active = false;
+                }
+            }
+        }
+    }
+
+    blockGame->nextPieceTimer += DELTA_TIME;
+    if (blockGame->nextPieceTimer >= blockGame->timeToSpawnNextPiece) {
+        blockGame->nextPieceTimer -= blockGame->timeToSpawnNextPiece;
+
+        // TODO(ebuchholz): random number generator
+        addBlockIfUnoccupied(blockGame, 2, 1);
+        addBlockIfUnoccupied(blockGame, 2, 2);
+        addBlockIfUnoccupied(blockGame, 2, 3);
+        addBlockIfUnoccupied(blockGame, 2, 4);
+    }
+
+    pushSpriteTransform(spriteList, Vector2(GAME_WIDTH/2.0f, GAME_HEIGHT/2.0f));
+
     for (int i = 0; i < NUM_GRID_ROWS; ++i) {
         for (int j = 0; j < NUM_GRID_COLS; ++j) {
             addSprite(gridColStart + GRID_BLOCK_WIDTH * j, gridRowStart + GRID_BLOCK_HEIGHT * i, assets, ATLAS_KEY_GAME, "tile_backing", spriteList, 0.5f, 0.5f);
         }
     }
 
-    grid_block *blocks = blockGame->blocks;
+    grid_block sortedBlocks[NUM_GRID_ROWS * NUM_GRID_COLS];
+    // TODO(ebuchholz): memory copy
+    for (int i = 0; i < blockGame->numBlocks; ++i) {
+        sortedBlocks[i] = blockGame->blocks[i];
+    }
+    blockBubbleSort(sortedBlocks, blockGame);
 
     for (int i = 0; i < blockGame->numBlocks; ++i) {
-        grid_block *block = &blocks[i];
-        addSprite(gridColStart + GRID_BLOCK_WIDTH * block->col, gridRowStart + GRID_BLOCK_HEIGHT * block->row, assets, ATLAS_KEY_GAME, "blue_tile", spriteList, 0.5f, 0.5f);
+        grid_block *block = &sortedBlocks[i];
+        if (block->active) {
+            addSprite(block->x, block->y, assets, ATLAS_KEY_GAME, "blue_tile", spriteList, 0.5f, 0.5f);
+        }
     }
 
-    block_sheep *sheep = &blockGame->sheep;
     addSprite(sheep->x, sheep->y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
 
     popSpriteMatrix(spriteList);

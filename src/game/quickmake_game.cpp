@@ -312,7 +312,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         gameOrigin.y = (screenHeight - (GAME_HEIGHT * gameScale)) / 2.0f;
     }
     else {
-        float heightRatio = screenHeight / GAME_HEIGHT;
+		float heightRatio = screenHeight / GAME_HEIGHT;
         gameScale = heightRatio;
         gameOrigin.x = (screenWidth - (GAME_WIDTH * gameScale)) / 2.0f;
         gameOrigin.y = 0.0f;

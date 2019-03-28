@@ -6,32 +6,55 @@
 #define GRID_BLOCK_WIDTH 16.0f
 #define GRID_BLOCK_HEIGHT 16.0f
 
-#define SHEEP_MOVE_SPEED 0.15f
+#define BLOCK_MOVE_SPEED 0.15f
 
+enum direction {
+    DIRECTION_NONE,
+    DIRECTION_UP,
+    DIRECTION_DOWN,
+    DIRECTION_LEFT,
+    DIRECTION_RIGHT
+};
+
+// TODO(ebuchholz): group together "movable block" stuff
 struct block_sheep {
+    bool moving;
+    float moveTime;
+
     int row;
     int col;
-
-    float x;
-    float y;
-
-    bool moving;
     int prevCol;
     int prevRow;
-    float moveTime;
+    float x;
+    float y;
 };
 
 struct grid_block {
+    int id;
+    bool active;
+
+    bool moving;
+    float moveTime;
+
     int row;
     int col;
+    int prevCol;
+    int prevRow;
+    float x;
+    float y;
 };
 
 struct block_game {
     grid_block blocks[NUM_GRID_ROWS * NUM_GRID_COLS];
     int numBlocks = 0;
 
+    int grid[NUM_GRID_ROWS * NUM_GRID_COLS];
+
     block_sheep sheep;
-    int nextMoveDirection;
+    direction nextMoveDirection;
+
+    float timeToSpawnNextPiece;
+    float nextPieceTimer;
 };
 
 
