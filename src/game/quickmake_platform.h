@@ -130,10 +130,15 @@ struct game_input {
     bool upButton;
     bool downButton;
 
+    // TODO(ebuchholz): add just pressed for other buttons, maybe button struct
     bool turnUpButton;
+    bool turnUpButtonJustPressed;
     bool turnDownButton;
+    bool turnDownButtonJustPressed;
     bool turnLeftButton;
+    bool turnLeftButtonJustPressed;
     bool turnRightButton;
+    bool turnRightButtonJustPressed;
 
     bool pointerDown;
     bool pointerJustDown;

@@ -1,42 +1,16 @@
 #ifndef QUICKMAKE_GAME_H
 #define QUICKMAKE_GAME_H
 
+#define DELTA_TIME (1.0f / 60.0f)
+#define GAME_WIDTH 384.0f
+#define GAME_HEIGHT 216.0f
+
 #include "quickmake_platform.h"
 #include "quickmake_math.cpp"
 #include "quickmake_util.h"
 #include "quickmake_assets.cpp"
-
-#define DELTA_TIME (1.0f / 60.0f)
-
-struct debug_camera {
-    vector3 pos;
-    quaternion rotation;
-    int lastPointerX;
-    int lastPointerY;
-    vector3 lookAtTarget;
-    vector3 up;
-};
-
-// TODO(ebuchholz): make stretchy
-#define MAX_SPRITES_PER_FRAME 2000
-
-struct sprite {
-    vector2 pos;
-    vector2 anchor;
-    vector2 frameCorners[4];
-    float width;
-    float height;
-    float scale;
-    float rotation;
-    float alpha;
-    unsigned int tint;
-    texture_key textureKey;
-};
-
-struct sprite_list {
-    sprite *sprites;
-    int numSprites;
-};
+#include "quickmake_sprites.cpp"
+#include "block_game.cpp"
 
 struct game_state {
     memory_arena memory;
@@ -45,7 +19,7 @@ struct game_state {
     game_assets assets;
     bool gameInitialized;
 
-    debug_camera debugCamera;
+    block_game blockGame;
 };
 
 #endif

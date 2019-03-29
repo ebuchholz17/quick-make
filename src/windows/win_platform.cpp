@@ -8,8 +8,8 @@
 
 static bool programRunning = false;
 
-static int gameWidth = 960;
-static int gameHeight = 540;
+static int gameWidth = 1152;
+static int gameHeight = 648;
 static float targetMSPerFrame = 1000.0f / 60.0f;
 
 void DEBUGPrintString (char *string) {
@@ -65,15 +65,27 @@ static void processWindowsMessages (HWND window, game_input *input, render_comma
                     input->rightButton = keyDown;
                 }
                 else if (keyCode == VK_UP) {
+                    if (!input->turnUpButton && keyDown) {
+                        input->turnUpButtonJustPressed = true;
+                    }
                     input->turnUpButton = keyDown;
                 }
                 else if (keyCode == VK_DOWN) {
+                    if (!input->turnDownButton && keyDown) {
+                        input->turnDownButtonJustPressed = true;
+                    }
                     input->turnDownButton = keyDown;
                 }
                 else if (keyCode == VK_LEFT) {
+                    if (!input->turnLeftButton && keyDown) {
+                        input->turnLeftButtonJustPressed = true;
+                    }
                     input->turnLeftButton = keyDown;
                 }
                 else if (keyCode == VK_RIGHT) {
+                    if (!input->turnRightButton && keyDown) {
+                        input->turnRightButtonJustPressed = true;
+                    }
                     input->turnRightButton = keyDown;
                 }
                 else if (keyCode == VK_SPACE) {
@@ -289,6 +301,10 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             while (programRunning) {
                 input.pointerJustDown = false;
+                input.turnUpButtonJustPressed = false;
+                input.turnDownButtonJustPressed = false;
+                input.turnLeftButtonJustPressed = false;
+                input.turnRightButtonJustPressed = false;
                 processWindowsMessages(window, &input, &renderCommands);
 
                 renderCommands.windowWidth = gameWidth;

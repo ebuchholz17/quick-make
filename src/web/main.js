@@ -347,9 +347,13 @@ WebPlatform.prototype = {
         this.gameInput.upButton = this.input.keyDown[" "];
         this.gameInput.downButton = this.input.keyDown["shift"];
         this.gameInput.turnUpButton = this.input.keyDown["arrowup"];
+        this.gameInput.turnUpButtonJustPressed = this.input.keyJustPressed["arrowup"];
         this.gameInput.turnDownButton = this.input.keyDown["arrowdown"];
+        this.gameInput.turnDownButtonJustPressed = this.input.keyJustPressed["arrowdown"];
         this.gameInput.turnLeftButton = this.input.keyDown["arrowleft"];
+        this.gameInput.turnLeftButtonJustPressed = this.input.keyJustPressed["arrowleft"];
         this.gameInput.turnRightButton = this.input.keyDown["arrowright"];
+        this.gameInput.turnRightButtonJustPressed = this.input.keyJustPressed["arrowright"];
 
         this.gameInput.pointerDown = this.input.pointerDown;
         this.gameInput.pointerJustDown = this.input.pointerJustDown;
@@ -388,7 +392,7 @@ WebPlatform.prototype = {
         this.renderer.renderFrame(this.game, this.renderCommands);
 
         for (var key in this.input.keyJustPressed) {
-            if (this.input.hasOwnProperty(key)) {
+            if (this.input.keyJustPressed.hasOwnProperty(key)) {
                 this.input.keyJustPressed[key] = false;
             }
         }

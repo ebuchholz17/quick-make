@@ -56,61 +56,7 @@ static void *pushRenderCommand (render_command_list *renderCommands,
     return renderCommand;
 }
 
-static sprite *createSpriteAndSetProperties (float x, float y, game_assets *assets, sprite_list *spriteList, 
-                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
-                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
-{
-    assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
 
-    sprite *nextSprite = &spriteList->sprites[spriteList->numSprites];
-    *nextSprite = {};
-    ++spriteList->numSprites;
-    nextSprite->pos.x = x;
-    nextSprite->pos.y = y;
-    nextSprite->anchor.x = anchorX;
-    nextSprite->anchor.y = anchorY;
-    nextSprite->scale = scale;
-    nextSprite->rotation = rotation;
-    nextSprite->alpha = alpha;
-    nextSprite->tint = tint;
-
-    return nextSprite;
-}
-
-//static void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList, 
-//                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
-//                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
-//{
-//    sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
-//
-//    // TODO(ebuchholz): maybe pointer to texture info instead of copying?
-//    texture_asset *texAsset = assets->textures[textureKey];
-//    nextSprite->textureKey = textureKey
-//    nextSprite->width = (float)texAsset->width;
-//    nextSprite->height = (float)texAsset->height;
-//
-//    nextSprite->frameCorners[0] = Vector2(0.0f, 1.0f);
-//    nextSprite->frameCorners[1] = Vector2(1.0f, 1.0f);
-//    nextSprite->frameCorners[2] = Vector2(0.0f, 0.0f);
-//    nextSprite->frameCorners[3] = Vector2(1.0f, 0.0f);
-//}
-
-static void addSprite (float x, float y, game_assets *assets, atlas_key atlasKey, char *frameName, sprite_list *spriteList, 
-                       float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
-                       float alpha = 1.0f, unsigned int tint = 0xffffff) 
-{
-    sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
-
-    atlas_asset *atlas = assets->atlases[atlasKey];
-    nextSprite->textureKey = atlas->textureKey;
-
-    atlas_frame *frame = getAtlasFrame(assets, atlasKey, frameName);
-    nextSprite->width = (float)frame->frameWidth;
-    nextSprite->height = (float)frame->frameHeight;
-    for (int i = 0; i < 4; ++i) {
-        nextSprite->frameCorners[i] = frame->frameCorners[i];
-    }
-}
 
 #if 0
 
@@ -257,11 +203,32 @@ static void debugCameraMovement (debug_camera *debugCamera, game_input *input) {
 }
 #endif
 
+//static void growTransformGroupEntryList () {
+//
+//}
+
+//static transform_group *addTransformGroup (transform_group_list *groupList, memory_arena *tempMemory) {
+//    assert(groupList->numGroups < MAX_TRANSFORM_GROUPS);
+//
+//    transform_group *group = &groupList->groups[groupList->numGroups];
+//    *group = {};
+//    ++groupList->numGroups;
+//
+//    group->children.length = 0;
+//    group->children.capacity = 16;
+//    group->children.entries = (transform_group_entry *)allocateMemorySize(tempMemory, group->children.capacity * sizeof(transform_group_entry)); 
+//
+//    return group;
+//}
+
+//static void addChild () {
+//
+//}
+
 // TODO(ebuchholz): Maybe pack everything into a single file and load that?
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
 
-    pushAsset(assetList, "assets/textures/golfman.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_GOLFMAN);
     pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
 }
 
@@ -309,6 +276,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->gameInitialized) {
         gameState->gameInitialized = true;
+        initBlockGame(&gameState->memory, &gameState->blockGame);
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -318,71 +286,43 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
     // Zero memory here? since uint8array.fill is slow in firefix
 
-    // make space for sprites
-    sprite_list spriteList;
+    sprite_list spriteList = {};
     spriteList.sprites = (sprite *)allocateMemorySize(&gameState->tempMemory, sizeof(sprite) * MAX_SPRITES_PER_FRAME);
     spriteList.numSprites = 0;
+    spriteList.matrixStack[0] = identityMatrix3x3();
+
+    //transform_group_list groupList;
+    //groupList.groups = (transform_group *)allocateMemorySize(&gameState->tempMemory, sizeof(transform_group) * MAX_TRANSFORM_GROUPS);
+    //groupList.numGroups = 0;
+
+    //transform_group *rootGroup = addTransformGroup(&groupList, &gameState->tempMemory);
 
     // TODO(ebuchholz): get screen dimensions from render commands? and use them
-    float gameWidth = (float)renderCommands->windowWidth;
-    float gameHeight = (float)renderCommands->windowHeight;
+    float screenWidth = (float)renderCommands->windowWidth;
+    float screenHeight = (float)renderCommands->windowHeight;
 
-    float spriteX = 40.0f;
-    float spriteY = 40.0f;
-
-    static float testRotation = 0.0f;
-    testRotation += 0.032f;
-    char *testFrameNames[] = {
-        "flag",
-        "golfer_blue_idle",
-        "fairway_up",
-        "wedge",
-        "wind_arrow_diagonal",
-        "golfman_run_0",
-        "heart",
-        "putter",
-        "ghost_0",
-        "driver"
-    };
-    static int currentFrameIndex = 0;
-    for (int i = 0; i < 40; ++i) {
-        for (int j = 0; j < 10; ++j) {
-            int colorType = (i * 10 + j) % 8;
-            unsigned int tint;
-            switch (colorType) {
-                default:
-                case 0: 
-                    tint = 0xffffff;
-                    break;
-                case 1: 
-                    tint = 0xff0000;
-                    break;
-                case 2: 
-                    tint = 0x00ff00;
-                    break;
-                case 3: 
-                    tint = 0x0000ff;
-                    break;
-                case 4: 
-                    tint = 0xffff00;
-                    break;
-                case 5: 
-                    tint = 0xff00ff;
-                    break;
-                case 6: 
-                    tint = 0x00ffff;
-                    break;
-                case 7: 
-                    tint = 0x000000;
-                    break;
-
-            }
-            addSprite(spriteX * j, spriteY * i, &gameState->assets, ATLAS_KEY_GAME, testFrameNames[currentFrameIndex], &spriteList, 
-                      0.5f, 0.5f, 1.0f + 0.005f * (i * 10 + j), 0.02f * (i * 10 + j) + testRotation, 1.0f - 0.00125f * (i*10 + j), tint);        
-            //addSprite(spriteX * i, spriteY * j, &gameState->assets, TEXTURE_KEY_GOLFMAN, &spriteList);
-            currentFrameIndex = (currentFrameIndex + 1) % 10;
-        }
+    float normalAspectRatio = GAME_WIDTH / GAME_HEIGHT;
+    float actualAspectRatio = screenWidth / screenHeight;
+    float gameScale;
+    vector2 gameOrigin;
+    if (actualAspectRatio < normalAspectRatio) {
+        float widthRatio = screenWidth / GAME_WIDTH;
+        gameScale = widthRatio;
+        gameOrigin.x = 0.0f;
+        gameOrigin.y = (screenHeight - (GAME_HEIGHT * gameScale)) / 2.0f;
     }
+    else {
+		float heightRatio = screenHeight / GAME_HEIGHT;
+        gameScale = heightRatio;
+        gameOrigin.x = (screenWidth - (GAME_WIDTH * gameScale)) / 2.0f;
+        gameOrigin.y = 0.0f;
+    }
+
+    pushSpriteTransform(&spriteList, gameOrigin, gameScale);
+
+    updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
+
+    popSpriteMatrix(&spriteList);
 
     render_command_sprite_list *spriteListCommand = 
         (render_command_sprite_list *)pushRenderCommand(renderCommands,
@@ -408,6 +348,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         spriteTransform = scaleMatrix * spriteTransform;
         spriteTransform = rotationMatrix3x3(sprite->rotation) * spriteTransform;
         spriteTransform = translationMatrix(sprite->pos.x, sprite->pos.y) * spriteTransform;
+
+        spriteTransform = sprite->parentTransform * spriteTransform;
 
         renderSprite->pos[0] = spriteTransform * Vector2(0.0f, 0.0f);
         renderSprite->pos[1] = spriteTransform * Vector2(1.0f, 0.0f);
