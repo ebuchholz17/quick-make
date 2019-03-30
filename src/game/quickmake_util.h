@@ -141,10 +141,10 @@ inline void setRNGSeed (unsigned int seed) {
     rngSeed = seed;
 }
 
-#define MAX_RAND_NUMBER (1U << 31)
+#define MAX_RAND_NUMBER (((1U << 31)-1) >> 16)
 
 inline unsigned int randomUint () {
-    rngSeed = (rngSeed * 1103515245 + 12345) % MAX_RAND_NUMBER;
+    rngSeed = (rngSeed * 1103515245U + 12345U) % (1U << 31);
     return (rngSeed & ((1U << 31)-1)) >> 16;
 }
 

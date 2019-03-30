@@ -307,18 +307,6 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 input.turnRightButtonJustPressed = false;
                 processWindowsMessages(window, &input, &renderCommands);
 
-                unsigned int l = randomUint();
-                unsigned int l1 = randomUint();
-                unsigned int l2 = randomUint();
-                unsigned int l3 = randomUint();
-                unsigned int l4 = randomUint();
-                unsigned int l5 = randomUint();
-                unsigned int l6 = randomUint();
-                unsigned int l7 = randomUint();
-                unsigned int l8 = randomUint();
-                unsigned int l9 = randomUint();
-                unsigned int l10 = randomUint();
-
                 renderCommands.windowWidth = gameWidth;
                 renderCommands.windowHeight = gameHeight;
                 renderCommands.memory.size = 0;

@@ -198,6 +198,12 @@ bool blockFitsOnGrid (block_piece *blockPiece, int row, int col) {
     return true;
 }
 
+void copyBlockType (block_piece *nextPiece, int *blockType) {
+    for (int i = 0; i < 5*5; ++i) {
+        nextPiece->filledCells[i] = blockType[i];
+    }
+}
+
 void chooseNextBlockPiece (block_piece *blockPiece) {
     unsigned int nextPieceType = randomUint() % 19;
 
@@ -215,7 +221,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 1: {
             int blockType[] = {
@@ -225,7 +231,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 2: {
             int blockType[] = {
@@ -235,7 +241,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 3: {
             int blockType[] = {
@@ -245,7 +251,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 4: {
             int blockType[] = {
@@ -255,7 +261,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 5: {
             int blockType[] = {
@@ -265,7 +271,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 1, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 6: {
             int blockType[] = {
@@ -275,7 +281,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 1, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 7: {
             int blockType[] = {
@@ -285,7 +291,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 8: {
             int blockType[] = {
@@ -295,7 +301,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 1, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 9: {
             int blockType[] = {
@@ -305,7 +311,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 10: {
             int blockType[] = {
@@ -315,7 +321,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 11: {
             int blockType[] = {
@@ -325,7 +331,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 1, 1, 1, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 12: {
             int blockType[] = {
@@ -335,7 +341,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 1, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 13: {
             int blockType[] = {
@@ -345,7 +351,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 1, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 14: {
             int blockType[] = {
@@ -355,7 +361,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 1, 1, 1, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 15: {
             int blockType[] = {
@@ -365,7 +371,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 1, 1, 1, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 16: {
             int blockType[] = {
@@ -375,7 +381,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 17: {
             int blockType[] = {
@@ -385,7 +391,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 1, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 18: {
             int blockType[] = {
@@ -395,7 +401,7 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
         case 19: {
             int blockType[] = {
@@ -405,13 +411,10 @@ void chooseNextBlockPiece (block_piece *blockPiece) {
                 0, 0, 1, 0, 0,
                 0, 0, 1, 0, 0
             };
-            nextPiece = blockType;
+            copyBlockType(blockPiece, blockType);
         } break;
     }
 
-    for (int i = 0; i < 5*5; ++i) {
-        blockPiece->filledCells[i] = nextPiece[i];
-    }
 
     unsigned int randomColor = randomUint() % 6;
     switch (randomColor) {
@@ -489,8 +492,8 @@ void initBlockGame (memory_arena *memory, block_game* blockGame) {
     blockGame->sheep.row = 6;
     blockGame->sheep.col = 6;
 
-    blockGame->timeToSpawnNextPiece = 1.0f;
-    blockGame->nextPieceTimer = 0.0f;
+    blockGame->timeToSpawnNextPiece = 5.0f;
+    blockGame->nextPieceTimer = 5.0f;
 
     chooseNextBlockPiece(&blockGame->nextPiece);
     chooseNextBlockPieceLocation(blockGame);
@@ -638,16 +641,15 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
         blockGame->nextPieceTimer -= blockGame->timeToSpawnNextPiece;
 
         block_piece *nextPiece = &blockGame->nextPiece;
-        addBlockIfUnoccupied(blockGame, randomUint() % NUM_GRID_ROWS, randomUint() % NUM_GRID_COLS);
-        //for (int i = -2; i <= 2; ++i) {
-        //    for (int j = -2; j <= 2; ++j) {
-        //        if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
-        //            int gridRow = i + blockGame->nextBlockPieceRow;
-        //            int gridCol = j + blockGame->nextBlockPieceCol;
-        //            addBlockIfUnoccupied(blockGame, gridRow, gridCol);
-        //        }
-        //    }
-        //}
+        for (int i = -2; i <= 2; ++i) {
+            for (int j = -2; j <= 2; ++j) {
+                if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
+                    int gridRow = i + blockGame->nextBlockPieceRow;
+                    int gridCol = j + blockGame->nextBlockPieceCol;
+                    addBlockIfUnoccupied(blockGame, gridRow, gridCol);
+                }
+            }
+        }
         chooseNextBlockPiece(&blockGame->nextPiece);
         chooseNextBlockPieceLocation(blockGame);
     }
