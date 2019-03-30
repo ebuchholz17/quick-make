@@ -135,5 +135,23 @@ unsigned int findLeastSignificantBit (unsigned int value, bool *found) {
     return 0;
 }
 
+static unsigned int rngSeed;
+
+inline void setRNGSeed (unsigned int seed) {
+    rngSeed = seed;
+}
+
+#define MAX_RAND_NUMBER (1U << 31)
+
+inline unsigned int randomUint () {
+    rngSeed = (rngSeed * 1103515245 + 12345) % MAX_RAND_NUMBER;
+    return (rngSeed & ((1U << 31)-1)) >> 16;
+}
+
+inline float randomFloat () {
+    unsigned int randomNum = randomUint();
+    return (float)randomNum / (float)(MAX_RAND_NUMBER);
+}
+
 
 #endif

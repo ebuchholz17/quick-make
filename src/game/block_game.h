@@ -44,6 +44,11 @@ struct grid_block {
     float y;
 };
 
+struct block_piece {
+    int filledCells[5*5];
+    char *color;
+};
+
 struct block_game {
     grid_block blocks[NUM_GRID_ROWS * NUM_GRID_COLS];
     int numBlocks = 0;
@@ -55,6 +60,10 @@ struct block_game {
 
     float timeToSpawnNextPiece;
     float nextPieceTimer;
+
+    block_piece nextPiece;
+    int nextBlockPieceRow;
+    int nextBlockPieceCol;
 };
 
 

@@ -42,46 +42,6 @@ void addBlockIfUnoccupied (block_game *blockGame, int row, int col) {
     }
 }
 
-void initBlockGame (memory_arena *memory, block_game* blockGame) {
-    *blockGame = {};
-    grid_block *blocks = blockGame->blocks;
-
-    for (int i = 0; i < NUM_GRID_ROWS; ++i) {
-        for (int j = 0; j < NUM_GRID_COLS; ++j) {
-            blockGame->grid[i * NUM_GRID_COLS + j] = -1;
-        }
-    }
-
-    addNewBlockToGrid(blockGame, 3, 1);
-    addNewBlockToGrid(blockGame, 3, 2);
-    addNewBlockToGrid(blockGame, 3, 3);
-    addNewBlockToGrid(blockGame, 3, 4);
-    addNewBlockToGrid(blockGame, 3, 5);
-    addNewBlockToGrid(blockGame, 3, 6);
-    addNewBlockToGrid(blockGame, 3, 7);
-    addNewBlockToGrid(blockGame, 3, 8);
-
-    addNewBlockToGrid(blockGame, 7, 1);
-    addNewBlockToGrid(blockGame, 7, 2);
-    addNewBlockToGrid(blockGame, 7, 3);
-    addNewBlockToGrid(blockGame, 7, 4);
-    addNewBlockToGrid(blockGame, 7, 5);
-    addNewBlockToGrid(blockGame, 7, 6);
-    addNewBlockToGrid(blockGame, 7, 7);
-    addNewBlockToGrid(blockGame, 7, 8);
-
-    addNewBlockToGrid(blockGame, 8, 4);
-    addNewBlockToGrid(blockGame, 8, 5);
-    addNewBlockToGrid(blockGame, 8, 6);
-    addNewBlockToGrid(blockGame, 8, 7);
-
-    blockGame->sheep = {};
-    blockGame->sheep.row = 6;
-    blockGame->sheep.col = 6;
-
-    blockGame->timeToSpawnNextPiece = 10.0f;
-    blockGame->nextPieceTimer = 0.0f;
-}
 
 direction tryMoveSheep (block_game *blockGame, game_input *input) {
     block_sheep *sheep = &blockGame->sheep;
@@ -222,6 +182,318 @@ void blockBubbleSort (grid_block *blocks, block_game *blockGame) {
             }
         }
     }
+}
+
+bool blockFitsOnGrid (block_piece *blockPiece, int row, int col) {
+    for (int i = -2; i <= 2; ++i) {
+        for (int j = -2; j <= 2; ++j) {
+            if (blockPiece->filledCells[(i+2) * 5 + (j+2)] == 1) {
+                int gridRow = i + row;
+                int gridCol = j + col;
+                if (gridRow < 0 || gridRow >= NUM_GRID_ROWS) { return false; }
+                if (gridCol < 0 || gridCol >= NUM_GRID_COLS) { return false; }
+            }
+        }
+    }
+    return true;
+}
+
+void chooseNextBlockPiece (block_piece *blockPiece) {
+    unsigned int nextPieceType = randomUint() % 19;
+
+    int *nextPiece;
+    switch (nextPieceType) {
+        default: {
+            nextPiece = 0;
+            assert(false);
+        } break;
+        case 0: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 1: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 1, 1, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 2: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 3: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 1, 1, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 4: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 5: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 1, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 6: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 1, 1, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 7: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 1, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 8: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 9: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 1, 1, 1, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 10: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 1, 1, 0,
+                0, 0, 1, 1, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 11: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 1, 1, 1, 0,
+                0, 1, 1, 1, 0,
+                0, 1, 1, 1, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 12: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 1, 1, 1, 0,
+                0, 1, 0, 0, 0,
+                0, 1, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 13: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 1, 1, 1, 0,
+                0, 0, 0, 1, 0,
+                0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 14: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 1, 0, 0, 0,
+                0, 1, 0, 0, 0,
+                0, 1, 1, 1, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 15: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 1, 0,
+                0, 0, 0, 1, 0,
+                0, 1, 1, 1, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 16: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 1, 1, 1, 1,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 17: {
+            int blockType[] = {
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 18: {
+            int blockType[] = {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                1, 1, 1, 1, 1,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+        case 19: {
+            int blockType[] = {
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 1, 0, 0
+            };
+            nextPiece = blockType;
+        } break;
+    }
+
+    for (int i = 0; i < 5*5; ++i) {
+        blockPiece->filledCells[i] = nextPiece[i];
+    }
+
+    unsigned int randomColor = randomUint() % 6;
+    switch (randomColor) {
+        case 0: {
+            blockPiece->color = "red_tile";
+        } break;
+        case 1: {
+            blockPiece->color = "green_tile";
+        } break;
+        case 2: {
+            blockPiece->color = "blue_tile";
+        } break;
+        case 3: {
+            blockPiece->color = "cyan_tile";
+        } break;
+        case 4: {
+            blockPiece->color = "magenta_tile";
+        } break;
+        case 5: {
+            blockPiece->color = "yellow_tile";
+        } break;
+    }
+}
+
+void chooseNextBlockPieceLocation (block_game *blockGame) {
+    block_piece *blockPiece = &blockGame->nextPiece;
+
+    int row = 0;
+    int col = 0;
+    do {
+        row = randomUint() % NUM_GRID_ROWS;
+        col = randomUint() % NUM_GRID_COLS;
+    } while (!blockFitsOnGrid(blockPiece, row, col));
+
+    blockGame->nextBlockPieceRow = row;
+    blockGame->nextBlockPieceCol = col;
+}
+
+void initBlockGame (memory_arena *memory, block_game* blockGame) {
+    setRNGSeed(0); // TODO(ebuchholz): seed with time?
+
+    *blockGame = {};
+    grid_block *blocks = blockGame->blocks;
+
+    for (int i = 0; i < NUM_GRID_ROWS; ++i) {
+        for (int j = 0; j < NUM_GRID_COLS; ++j) {
+            blockGame->grid[i * NUM_GRID_COLS + j] = -1;
+        }
+    }
+
+    //addNewBlockToGrid(blockGame, 3, 1);
+    //addNewBlockToGrid(blockGame, 3, 2);
+    //addNewBlockToGrid(blockGame, 3, 3);
+    //addNewBlockToGrid(blockGame, 3, 4);
+    //addNewBlockToGrid(blockGame, 3, 5);
+    //addNewBlockToGrid(blockGame, 3, 6);
+    //addNewBlockToGrid(blockGame, 3, 7);
+    //addNewBlockToGrid(blockGame, 3, 8);
+
+    //addNewBlockToGrid(blockGame, 7, 1);
+    //addNewBlockToGrid(blockGame, 7, 2);
+    //addNewBlockToGrid(blockGame, 7, 3);
+    //addNewBlockToGrid(blockGame, 7, 4);
+    //addNewBlockToGrid(blockGame, 7, 5);
+    //addNewBlockToGrid(blockGame, 7, 6);
+    //addNewBlockToGrid(blockGame, 7, 7);
+    //addNewBlockToGrid(blockGame, 7, 8);
+
+    //addNewBlockToGrid(blockGame, 8, 4);
+    //addNewBlockToGrid(blockGame, 8, 5);
+    //addNewBlockToGrid(blockGame, 8, 6);
+    //addNewBlockToGrid(blockGame, 8, 7);
+
+    blockGame->sheep = {};
+    blockGame->sheep.row = 6;
+    blockGame->sheep.col = 6;
+
+    blockGame->timeToSpawnNextPiece = 1.0f;
+    blockGame->nextPieceTimer = 0.0f;
+
+    chooseNextBlockPiece(&blockGame->nextPiece);
+    chooseNextBlockPieceLocation(blockGame);
 }
 
 void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_assets *assets, game_input *input, 
@@ -365,11 +637,19 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
     if (blockGame->nextPieceTimer >= blockGame->timeToSpawnNextPiece) {
         blockGame->nextPieceTimer -= blockGame->timeToSpawnNextPiece;
 
-        // TODO(ebuchholz): random number generator
-        addBlockIfUnoccupied(blockGame, 2, 1);
-        addBlockIfUnoccupied(blockGame, 2, 2);
-        addBlockIfUnoccupied(blockGame, 2, 3);
-        addBlockIfUnoccupied(blockGame, 2, 4);
+        block_piece *nextPiece = &blockGame->nextPiece;
+        addBlockIfUnoccupied(blockGame, randomUint() % NUM_GRID_ROWS, randomUint() % NUM_GRID_COLS);
+        //for (int i = -2; i <= 2; ++i) {
+        //    for (int j = -2; j <= 2; ++j) {
+        //        if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
+        //            int gridRow = i + blockGame->nextBlockPieceRow;
+        //            int gridCol = j + blockGame->nextBlockPieceCol;
+        //            addBlockIfUnoccupied(blockGame, gridRow, gridCol);
+        //        }
+        //    }
+        //}
+        chooseNextBlockPiece(&blockGame->nextPiece);
+        chooseNextBlockPieceLocation(blockGame);
     }
 
     pushSpriteTransform(spriteList, Vector2(GAME_WIDTH/2.0f, GAME_HEIGHT/2.0f));
