@@ -1,6 +1,6 @@
 #include "block_game.h"
 
-void addNewBlockToGrid (block_game *blockGame, int row, int col) {
+void addNewBlockToGrid (block_game *blockGame, int row, int col, char *color) {
     int freeBlockIndex = -1;
     for (int i = 0; i < blockGame->numBlocks; ++i) {
         grid_block *block = blockGame->blocks + i;
@@ -26,6 +26,7 @@ void addNewBlockToGrid (block_game *blockGame, int row, int col) {
 
     block->row = row;
     block->col = col;
+    block->color = color;
 
     // TODO(ebuchholz): un-copy-paste gridrow/colstart
     float gridRowStart = -((float)(NUM_GRID_ROWS - 1) * GRID_BLOCK_WIDTH) * 0.5f;
@@ -36,9 +37,9 @@ void addNewBlockToGrid (block_game *blockGame, int row, int col) {
     blockGame->grid[row * NUM_GRID_COLS + col] = block->id;
 }
 
-void addBlockIfUnoccupied (block_game *blockGame, int row, int col) {
+void addBlockIfUnoccupied (block_game *blockGame, int row, int col, char *color) {
     if (blockGame->grid[row * NUM_GRID_COLS + col] == -1) {
-        addNewBlockToGrid(blockGame, row, col);
+        addNewBlockToGrid(blockGame, row, col, color);
     }
 }
 
@@ -465,29 +466,6 @@ void initBlockGame (memory_arena *memory, block_game* blockGame) {
         }
     }
 
-    //addNewBlockToGrid(blockGame, 3, 1);
-    //addNewBlockToGrid(blockGame, 3, 2);
-    //addNewBlockToGrid(blockGame, 3, 3);
-    //addNewBlockToGrid(blockGame, 3, 4);
-    //addNewBlockToGrid(blockGame, 3, 5);
-    //addNewBlockToGrid(blockGame, 3, 6);
-    //addNewBlockToGrid(blockGame, 3, 7);
-    //addNewBlockToGrid(blockGame, 3, 8);
-
-    //addNewBlockToGrid(blockGame, 7, 1);
-    //addNewBlockToGrid(blockGame, 7, 2);
-    //addNewBlockToGrid(blockGame, 7, 3);
-    //addNewBlockToGrid(blockGame, 7, 4);
-    //addNewBlockToGrid(blockGame, 7, 5);
-    //addNewBlockToGrid(blockGame, 7, 6);
-    //addNewBlockToGrid(blockGame, 7, 7);
-    //addNewBlockToGrid(blockGame, 7, 8);
-
-    //addNewBlockToGrid(blockGame, 8, 4);
-    //addNewBlockToGrid(blockGame, 8, 5);
-    //addNewBlockToGrid(blockGame, 8, 6);
-    //addNewBlockToGrid(blockGame, 8, 7);
-
     blockGame->sheep = {};
     blockGame->sheep.row = 6;
     blockGame->sheep.col = 6;
@@ -646,7 +624,7 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
                 if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
                     int gridRow = i + blockGame->nextBlockPieceRow;
                     int gridCol = j + blockGame->nextBlockPieceCol;
-                    addBlockIfUnoccupied(blockGame, gridRow, gridCol);
+                    addBlockIfUnoccupied(blockGame, gridRow, gridCol, nextPiece->color);
                 }
             }
         }
@@ -672,7 +650,7 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
     for (int i = 0; i < blockGame->numBlocks; ++i) {
         grid_block *block = &sortedBlocks[i];
         if (block->active) {
-            addSprite(block->x, block->y, assets, ATLAS_KEY_GAME, "blue_tile", spriteList, 0.5f, 0.5f);
+            addSprite(block->x, block->y, assets, ATLAS_KEY_GAME, block->color, spriteList, 0.5f, 0.5f);
         }
     }
 

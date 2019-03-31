@@ -30,6 +30,7 @@ struct block_sheep {
 };
 
 struct grid_block {
+    char *color;
     int id;
     bool active;
 
