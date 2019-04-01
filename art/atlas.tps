@@ -181,6 +181,20 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
+            <key type="filename">block_blink.png</key>
+            <key type="filename">tile_backing.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,4,8,8</rect>
+                <key>scale9Paddings</key>
+                <rect>4,4,8,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
             <key type="filename">blue_tile.png</key>
             <key type="filename">cyan_tile.png</key>
             <key type="filename">green_tile.png</key>
@@ -197,19 +211,6 @@
                 <rect>8,8,16,16</rect>
                 <key>scale9Paddings</key>
                 <rect>8,8,16,16</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">tile_backing.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>4,4,8,8</rect>
-                <key>scale9Paddings</key>
-                <rect>4,4,8,8</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>

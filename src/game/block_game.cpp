@@ -473,6 +473,9 @@ void initBlockGame (memory_arena *memory, block_game* blockGame) {
     blockGame->timeToSpawnNextPiece = 5.0f;
     blockGame->nextPieceTimer = 5.0f;
 
+    blockGame->blockIndicatorTimer = 0.0f;
+    blockGame->fadingInBlockIndicator = true;
+
     chooseNextBlockPiece(&blockGame->nextPiece);
     chooseNextBlockPieceLocation(blockGame);
 }
@@ -630,6 +633,27 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
         }
         chooseNextBlockPiece(&blockGame->nextPiece);
         chooseNextBlockPieceLocation(blockGame);
+
+        blockGame->blockIndicatorTimer = 0.0f;
+        blockGame->fadingInBlockIndicator = true;
+    }
+
+    // show an indicator of where the next piece will be
+    float blinkRate = (blockGame->timeToSpawnNextPiece - blockGame->nextPieceTimer) * 0.2f;
+    if (blinkRate < 1.0f / 30.0f) { blinkRate = 1.0f / 30.0f; }
+    if (blockGame->fadingInBlockIndicator) {
+        blockGame->blockIndicatorTimer += DELTA_TIME;
+        if (blockGame->blockIndicatorTimer > blinkRate) {
+            blockGame->blockIndicatorTimer = blinkRate - (blockGame->blockIndicatorTimer - blinkRate);
+            blockGame->fadingInBlockIndicator = false;
+        }
+    }
+    else {
+        blockGame->blockIndicatorTimer -= DELTA_TIME;
+        if (blockGame->blockIndicatorTimer <= 0.0f) {
+            blockGame->blockIndicatorTimer = -blockGame->blockIndicatorTimer;
+            blockGame->fadingInBlockIndicator = true;
+        }
     }
 
     pushSpriteTransform(spriteList, Vector2(GAME_WIDTH/2.0f, GAME_HEIGHT/2.0f));
@@ -651,6 +675,23 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
         grid_block *block = &sortedBlocks[i];
         if (block->active) {
             addSprite(block->x, block->y, assets, ATLAS_KEY_GAME, block->color, spriteList, 0.5f, 0.5f);
+        }
+    }
+
+    // indicator
+    float indicatorAlpha = blockGame->blockIndicatorTimer / blinkRate;
+    block_piece *nextPiece = &blockGame->nextPiece;
+    for (int i = -2; i <= 2; ++i) {
+        for (int j = -2; j <= 2; ++j) {
+            if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
+                int gridRow = i + blockGame->nextBlockPieceRow;
+                int gridCol = j + blockGame->nextBlockPieceCol;
+                if (gridRow >= 0 && gridRow < NUM_GRID_ROWS && 
+                    gridCol >= 0 && gridCol < NUM_GRID_COLS) 
+                {
+                    addSprite(gridColStart + GRID_BLOCK_WIDTH * gridCol, gridRowStart + GRID_BLOCK_HEIGHT * gridRow, assets, ATLAS_KEY_GAME, "block_blink", spriteList, 0.5f, 0.5f, 1.0f, 0.0f, indicatorAlpha);
+                }
+            }
         }
     }
 

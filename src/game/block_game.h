@@ -65,6 +65,9 @@ struct block_game {
     block_piece nextPiece;
     int nextBlockPieceRow;
     int nextBlockPieceCol;
+
+    float blockIndicatorTimer;
+    bool fadingInBlockIndicator;
 };
 
 
