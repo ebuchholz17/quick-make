@@ -89,6 +89,9 @@ int sizeof_render_command_sprite_list () {
 int sizeof_render_command_set_camera () {
     return sizeof(render_command_set_camera);
 }
+int sizeof_render_command_background_visualization () {
+    return sizeof(render_command_background_visualization);
+}
 int sizeof_render_command_list () {
     return sizeof(render_command_list);
 }  
@@ -124,6 +127,7 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_render_sprite", &sizeof_render_sprite);
     function ("sizeof_render_command_sprite_list", &sizeof_render_command_sprite_list);
     function ("sizeof_render_command_set_camera", &sizeof_render_command_set_camera);
+    function ("sizeof_render_command_background_visualization", &sizeof_render_command_background_visualization);
     function ("sizeof_render_command_list", &sizeof_render_command_list);
     function ("sizeof_game_input", &sizeof_game_input);
     function ("sizeof_game_memory", &sizeof_game_memory);

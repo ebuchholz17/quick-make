@@ -73,7 +73,8 @@ enum render_command_type {
     RENDER_COMMAND_LINES,
     RENDER_COMMAND_SPRITE,
     RENDER_COMMAND_SPRITE_LIST,
-    RENDER_COMMAND_SET_CAMERA
+    RENDER_COMMAND_SET_CAMERA,
+    RENDER_COMMAND_BACKGROUND_VISUALIZATION
 };
 
 struct render_command_header{
@@ -114,6 +115,10 @@ struct render_command_sprite_list {
 struct render_command_set_camera {
     matrix4x4 viewMatrix;
     matrix4x4 projMatrix;
+};
+
+struct render_command_background_visualization {
+    float t;
 };
 
 struct render_command_list {

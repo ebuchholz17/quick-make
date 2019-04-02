@@ -6,6 +6,8 @@ var lineVertexShaderSource = require("./shaders/lineVertexShader.glsl");
 var lineFragmentShaderSource = require("./shaders/lineFragmentShader.glsl");
 var spriteVertexShaderSource = require("./shaders/spriteVertexShader.glsl");
 var spriteFragmentShaderSource = require("./shaders/spriteFragmentShader.glsl");
+var backgroundVisualizationVertexShaderSource = require("./shaders/backgroundVisualizationVertexShader.glsl");
+var backgroundVisualizationFragmentShaderSource = require("./shaders/backgroundVisualizationFragmentShader.glsl");
 
 var gl = null;
 
@@ -34,7 +36,8 @@ var ShaderProgram = function () {
 var ShaderTypes = {
     DEFAULT: 0,
     LINES: 1,
-    SPRITE: 2
+    SPRITE: 2,
+    BACKGROUND_VISUALIZATION: 3
 };
 
 var WebGLRenderer = function () {
@@ -55,6 +58,7 @@ var WebGLRenderer = function () {
     this.spriteColors;
     this.spriteIndices;
 
+    this.fullScreenQuadBuffer = 0;
     this.debugPositionBuffer = 0;
 };
 
@@ -69,6 +73,7 @@ WebGLRenderer.prototype = {
         this.compileAndLinkShader(defaultVertexShaderSource, defaultFragmentShaderSource, ShaderTypes.DEFAULT);
         this.compileAndLinkShader(lineVertexShaderSource, lineFragmentShaderSource, ShaderTypes.LINES);
         this.compileAndLinkShader(spriteVertexShaderSource, spriteFragmentShaderSource, ShaderTypes.SPRITE);
+        this.compileAndLinkShader(backgroundVisualizationVertexShaderSource, backgroundVisualizationFragmentShaderSource, ShaderTypes.BACKGROUND_VISUALIZATION);
 
         // sprite drawing
         this.spritePositionBuffer = gl.createBuffer();
@@ -96,6 +101,21 @@ WebGLRenderer.prototype = {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndices, gl.STATIC_DRAW);
+
+        this.fullScreenQuadBuffer = gl.createBuffer();
+
+        var floatPositions = [
+            -1.0, 1.0,
+            -1.0, -1.0,
+            1.0, 1.0,
+            -1.0, -1.0,
+            1.0, -1.0,
+            1.0, 1.0
+        ];
+        var quadPositions= new Float32Array(floatPositions);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.fullScreenQuadBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, quadPositions, gl.STATIC_DRAW);
 
         this.debugPositionBuffer = gl.createBuffer();
 
@@ -450,6 +470,28 @@ WebGLRenderer.prototype = {
         gl.drawArrays(gl.LINES, 0, lineCommand.numLines * 2);
     },
 
+    renderBackgroundVisualization: function (game, screenWidth, screenHeight, visualizationCommand) {
+        var program = this.shaders[ShaderTypes.BACKGROUND_VISUALIZATION].program;
+        gl.useProgram(program);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.fullScreenQuadBuffer);
+
+        var positionLocation = gl.getAttribLocation(program, "position");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        var screenWidthLocation = gl.getUniformLocation(program, "screenWidth");
+        gl.uniform1f(screenWidthLocation, screenWidth);
+
+        var screenHeightLocation = gl.getUniformLocation(program, "screenHeight");
+        gl.uniform1f(screenHeightLocation, screenHeight);
+
+        var tLocation = gl.getUniformLocation(program, "t");
+        gl.uniform1f(tLocation, visualizationCommand.t);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    },
+
     renderFrame: function (game, renderCommands) {
         gl.viewport(0, 0, renderCommands.windowWidth, renderCommands.windowHeight);
         //gl.enable(gl.DEPTH_TEST);
@@ -517,6 +559,13 @@ WebGLRenderer.prototype = {
                                                             game.render_command_set_camera);
                     renderCommandOffset += game.sizeof_render_command_set_camera();
                     this.setCamera(setCameraCommand, program);
+                } break;
+                case game.RENDER_COMMAND_BACKGROUND_VISUALIZATION:
+                {
+                    var visualizationCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
+                                                            game.render_command_background_visualization);
+                    renderCommandOffset += game.sizeof_render_command_background_visualization();
+                    this.renderBackgroundVisualization(game, renderCommands.windowWidth, renderCommands.windowHeight, visualizationCommand);
                 } break;
             }
         }

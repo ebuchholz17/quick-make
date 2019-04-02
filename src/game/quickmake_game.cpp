@@ -318,10 +318,15 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         gameOrigin.y = 0.0f;
     }
 
+    gameState->visualizationT += DELTA_TIME;
+    render_command_background_visualization *visualizationCommand = 
+        (render_command_background_visualization *)pushRenderCommand(renderCommands, 
+                                                                     RENDER_COMMAND_BACKGROUND_VISUALIZATION,
+                                                                     sizeof(render_command_background_visualization));
+    visualizationCommand->t = gameState->visualizationT;
+
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
-
     updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
-
     popSpriteMatrix(&spriteList);
 
     render_command_sprite_list *spriteListCommand = 

@@ -19,6 +19,7 @@ struct game_state {
     game_assets assets;
     bool gameInitialized;
 
+    float visualizationT;
     block_game blockGame;
 };
 

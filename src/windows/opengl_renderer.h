@@ -176,6 +176,7 @@ enum shader_type {
     SHADER_TYPE_DEFAULT,
     SHADER_TYPE_LINES,
     SHADER_TYPE_SPRITE,
+    SHADER_TYPE_BACKGROUND_VISUALIZATION,
     SHADER_TYPE_COUNT
 };
 
@@ -229,6 +230,8 @@ struct openGL_renderer {
     float spriteTextureCoords[MAX_SPRITES_PER_BATCH * 4 * 2];
     float spriteColors[MAX_SPRITES_PER_BATCH * 4 * 4]; 
     int spriteIndices[MAX_SPRITES_PER_BATCH * 3 * 2];
+
+    GLuint fullScreenQuadBuffer;
 
     GLuint debugPositionBuffer;
 };

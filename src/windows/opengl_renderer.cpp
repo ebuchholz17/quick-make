@@ -219,6 +219,8 @@ int initOpenGL (HWND window, renderer_memory *memory) {
                         lineVertexShaderSource, lineFragmentShaderSource, memory);
     createShaderProgram(renderer, SHADER_TYPE_SPRITE,
                         spriteVertexShaderSource, spriteFragmentShaderSource, memory);
+    createShaderProgram(renderer, SHADER_TYPE_BACKGROUND_VISUALIZATION,
+                        backgroundVisualizationVertexShaderSource, backgroundVisualizationFragmentShaderSource, memory);
 
     // sprite drawing
     glGenBuffers(1, &renderer->spritePositionBuffer);
@@ -240,6 +242,26 @@ int initOpenGL (HWND window, renderer_memory *memory) {
     }
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->spriteIndexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_SPRITES_PER_BATCH * 3 * 2 * sizeof(int), renderer->spriteIndices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &renderer->fullScreenQuadBuffer);
+
+    float quadPositions[12];
+    quadPositions[0] = -1.0f;
+    quadPositions[1] = 1.0f;
+    quadPositions[2] = -1.0f;
+    quadPositions[3] = -1.0f;
+    quadPositions[4] = 1.0f;
+    quadPositions[5] = 1.0f;
+
+    quadPositions[6] = -1.0f;
+    quadPositions[7] = -1.0f;
+    quadPositions[8] = 1.0f;
+    quadPositions[9] = -1.0f;
+    quadPositions[10] = 1.0f;
+    quadPositions[11] = 1.0f;
+
+    glBindBuffer(GL_ARRAY_BUFFER, renderer->fullScreenQuadBuffer);
+    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), quadPositions, GL_STATIC_DRAW);
 
     // For line drawing, maybe other commands that don't have a buffer ready ahead of time and supply data on demand
     glGenBuffers(1, &renderer->debugPositionBuffer);
@@ -482,10 +504,36 @@ void drawLines (openGL_renderer *renderer, GLuint program, render_command_lines 
     glDrawArrays(GL_LINES, 0, lineCommand->numLines * 2);
 }
 
+void renderBackgroundVisualization (openGL_renderer *renderer, float screenWidth, float screenHeight, 
+                                    render_command_background_visualization *visualizationCommand) 
+{
+    GLuint program = renderer->shaders[SHADER_TYPE_BACKGROUND_VISUALIZATION].program;
+    glUseProgram(program);
+
+    glBindBuffer(GL_ARRAY_BUFFER, renderer->fullScreenQuadBuffer);
+
+    GLint positionLocation = glGetAttribLocation(program, "position");
+    glEnableVertexAttribArray(positionLocation);
+    glVertexAttribPointer(positionLocation, 2, GL_FLOAT, FALSE, 0, 0);
+
+    GLint screenWidthLocation = glGetUniformLocation(program, "screenWidth");
+    glUniform1f(screenWidthLocation, screenWidth);
+
+    GLint screenHeightLocation = glGetUniformLocation(program, "screenHeight");
+    glUniform1f(screenHeightLocation, screenHeight);
+
+    GLint tLocation = glGetUniformLocation(program, "t");
+    glUniform1f(tLocation, visualizationCommand->t);
+
+    // triangles
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
 void renderFrame (renderer_memory *memory, render_command_list *renderCommands) {
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
 
     glViewport(0, 0, renderCommands->windowWidth, renderCommands->windowHeight);
+    //glEnable(GL_DEPTH_TEST); // off for 2d stuff
     //glEnable(GL_DEPTH_TEST); // off for 2d stuff
     //glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.7f, 0.8f, 1.0f);
@@ -557,6 +605,14 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
                                                   renderCommandOffset);
                 setCamera(renderer, setCameraCommand);
                 renderCommandOffset += sizeof(render_command_set_camera);
+            } break;
+            case RENDER_COMMAND_BACKGROUND_VISUALIZATION:
+            {
+                render_command_background_visualization *visualizationCommand = 
+                    (render_command_background_visualization *)((char *)renderCommands->memory.base + 
+                                                                renderCommandOffset);
+                renderBackgroundVisualization(renderer, (float)renderCommands->windowWidth, (float)renderCommands->windowHeight, visualizationCommand);
+                renderCommandOffset += sizeof(render_command_background_visualization);
             } break;
         }
     }
