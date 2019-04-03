@@ -617,4 +617,5 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
     }
 
     SwapBuffers(renderer->deviceContext);
+    glFinish();
 }

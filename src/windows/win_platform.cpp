@@ -150,22 +150,35 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
     if (RegisterClassA(&windowClass)) {
 
+        //DEVMODE dmScreenSettings;                   
+        //memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));  
+        //dmScreenSettings.dmSize = sizeof(dmScreenSettings);     
+        //dmScreenSettings.dmPelsWidth    = 1920;            
+        //dmScreenSettings.dmPelsHeight   = 1080;          
+        //dmScreenSettings.dmBitsPerPel   = 32;           
+        //dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
+        //if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
+        //{
+        //    return 0;
+        //}
+
         RECT targetWindowSize;
         targetWindowSize.left = 0;
         targetWindowSize.top = 0;
         targetWindowSize.right = gameWidth;
         targetWindowSize.bottom = gameHeight;
 
+        //DWORD windowStyle = WS_POPUP | WS_VISIBLE;
         DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE; 
-        AdjustWindowRectEx(&targetWindowSize, windowStyle, false, 0);
+        AdjustWindowRectEx(&targetWindowSize, windowStyle, false, WS_EX_APPWINDOW);
 
         HWND window = CreateWindowExA(
-            0, //WS_EX_TOPMOST,
+            0, //WS_EX_APPWINDOW, //WS_EX_TOPMOST,
             windowClass.lpszClassName, 
             "Quick Make", 
-            windowStyle,
-            CW_USEDEFAULT, 
-            CW_USEDEFAULT, 
+            windowStyle,// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+            0, 
+            0, 
             targetWindowSize.right - targetWindowSize.left, 
             targetWindowSize.bottom - targetWindowSize.top, 
             0, 
@@ -332,4 +345,5 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             }
         }
     }
+    return 0;
 }

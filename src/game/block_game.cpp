@@ -45,7 +45,7 @@ void addBlockIfUnoccupied (block_game *blockGame, int row, int col, char *color)
 }
 
 
-direction tryMoveSheep (block_game *blockGame, game_input *input) {
+direction startMovingSheep (block_game *blockGame, game_input *input) {
     block_sheep *sheep = &blockGame->sheep;
     if (blockGame->nextMoveDirection == DIRECTION_NONE) {
         if (input->turnUpButton) {
@@ -67,7 +67,9 @@ direction tryMoveSheep (block_game *blockGame, game_input *input) {
 void moveSheep (block_game *blockGame, game_input *input) {
     block_sheep *sheep = &blockGame->sheep;
     sheep->moveTime += DELTA_TIME;
-    if (sheep->moveTime > BLOCK_MOVE_SPEED) { sheep->moveTime = BLOCK_MOVE_SPEED; }
+    if (sheep->moveTime > BLOCK_MOVE_SPEED) { 
+        sheep->moveTime = BLOCK_MOVE_SPEED; 
+    }
 
     float prevX = GRID_COL_START + GRID_BLOCK_WIDTH * sheep->prevCol;
     float prevY = GRID_ROW_START + GRID_BLOCK_WIDTH * sheep->prevRow;
@@ -165,6 +167,43 @@ bool tryMoveBlockInDirection (block_game *blockGame, int row, int col, direction
     }
 
     return canMoveBlock;
+}
+
+void tryMoveSheep (block_game *blockGame, block_sheep *sheep, game_input *input) {
+    if (!sheep->moving) {
+        sheep->prevRow = sheep->row;
+        sheep->prevCol = sheep->col;
+
+        sheep->x = GRID_COL_START + GRID_BLOCK_WIDTH * sheep->col;
+        sheep->y = GRID_ROW_START + GRID_BLOCK_HEIGHT * sheep->row;
+
+        direction sheepMoveDir = startMovingSheep(blockGame, input);
+        if (sheepMoveDir != DIRECTION_NONE) {
+            blockGame->nextMoveDirection = DIRECTION_NONE;
+
+            int nextRow = sheep->row;
+            int nextCol = sheep->col;
+
+            bool validMove = true;
+            nextRowCol(nextRow, nextCol, sheepMoveDir, &nextRow, &nextCol);
+
+            if (nextRow < 0 || nextRow >= NUM_GRID_ROWS || 
+                nextCol < 0 || nextCol >= NUM_GRID_COLS) 
+            {
+                validMove = false;
+            }
+            else if (blockGame->grid[nextRow * NUM_GRID_COLS + nextCol] != -1) {
+                validMove = tryMoveBlockInDirection(blockGame, nextRow, nextCol, sheepMoveDir);
+            }
+            
+            if (validMove) {
+                sheep->row = nextRow;
+                sheep->col = nextCol;
+                sheep->moving = true;
+                sheep->moveTime = 0.0f;
+            }
+        }
+    }
 }
 
 void blockBubbleSort (grid_block *blocks, block_game *blockGame) {
@@ -479,65 +518,11 @@ void initBlockGame (memory_arena *memory, block_game* blockGame) {
 
 void updateSheepAndBlocks (block_game *blockGame, game_input* input, float blinkRate) {
     block_sheep *sheep = &blockGame->sheep;
-    if (!sheep->moving) {
-        sheep->prevRow = sheep->row;
-        sheep->prevCol = sheep->col;
-
-        sheep->x = GRID_COL_START + GRID_BLOCK_WIDTH * sheep->col;
-        sheep->y = GRID_ROW_START + GRID_BLOCK_HEIGHT * sheep->row;
-
-        direction sheepMoveDir = tryMoveSheep(blockGame, input);
-        if (sheepMoveDir != DIRECTION_NONE) {
-            blockGame->nextMoveDirection = DIRECTION_NONE;
-
-            int nextRow = sheep->row;
-            int nextCol = sheep->col;
-
-            bool validMove = true;
-            nextRowCol(nextRow, nextCol, sheepMoveDir, &nextRow, &nextCol);
-
-            if (nextRow < 0 || nextRow >= NUM_GRID_ROWS || 
-                nextCol < 0 || nextCol >= NUM_GRID_COLS) 
-            {
-                validMove = false;
-            }
-            else if (blockGame->grid[nextRow * NUM_GRID_COLS + nextCol] != -1) {
-                validMove = tryMoveBlockInDirection(blockGame, nextRow, nextCol, sheepMoveDir);
-            }
-            
-            if (validMove) {
-                sheep->row = nextRow;
-                sheep->col = nextCol;
-                sheep->moving = true;
-                sheep->moveTime = 0.0f;
-            }
-        }
-    }
+    tryMoveSheep(blockGame, sheep, input);
     if (sheep->moving) {
         moveSheep(blockGame, input);
     }
     moveBlocks(blockGame, input);
-
-    blockGame->nextPieceTimer += DELTA_TIME;
-    if (blockGame->nextPieceTimer >= blockGame->timeToSpawnNextPiece) {
-        blockGame->nextPieceTimer -= blockGame->timeToSpawnNextPiece;
-
-        block_piece *nextPiece = &blockGame->nextPiece;
-        for (int i = -2; i <= 2; ++i) {
-            for (int j = -2; j <= 2; ++j) {
-                if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
-                    int gridRow = i + blockGame->nextBlockPieceRow;
-                    int gridCol = j + blockGame->nextBlockPieceCol;
-                    addBlockIfUnoccupied(blockGame, gridRow, gridCol, nextPiece->color);
-                }
-            }
-        }
-        chooseNextBlockPiece(&blockGame->nextPiece);
-        chooseNextBlockPieceLocation(blockGame);
-
-        blockGame->blockIndicatorTimer = 0.0f;
-        blockGame->fadingInBlockIndicator = true;
-    }
 
     // check for lines
     bool clearedLines = false;
@@ -597,9 +582,7 @@ void updateSheepAndBlocks (block_game *blockGame, game_input* input, float blink
         blockGame->clearingBlocksTimer = 0.0f;
     }
 
-
     // show an indicator of where the next piece will be
-    if (blinkRate < 1.0f / 30.0f) { blinkRate = 1.0f / 30.0f; }
     if (blockGame->fadingInBlockIndicator) {
         blockGame->blockIndicatorTimer += DELTA_TIME;
         if (blockGame->blockIndicatorTimer > blinkRate) {
@@ -614,6 +597,28 @@ void updateSheepAndBlocks (block_game *blockGame, game_input* input, float blink
             blockGame->fadingInBlockIndicator = true;
         }
     }
+
+    blockGame->nextPieceTimer += DELTA_TIME;
+    if (blockGame->nextPieceTimer >= blockGame->timeToSpawnNextPiece) {
+        blockGame->nextPieceTimer -= blockGame->timeToSpawnNextPiece;
+
+        block_piece *nextPiece = &blockGame->nextPiece;
+        for (int i = -2; i <= 2; ++i) {
+            for (int j = -2; j <= 2; ++j) {
+                if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
+                    int gridRow = i + blockGame->nextBlockPieceRow;
+                    int gridCol = j + blockGame->nextBlockPieceCol;
+                    addBlockIfUnoccupied(blockGame, gridRow, gridCol, nextPiece->color);
+                }
+            }
+        }
+        chooseNextBlockPiece(&blockGame->nextPiece);
+        chooseNextBlockPieceLocation(blockGame);
+
+        blockGame->blockIndicatorTimer = 0.0f;
+        blockGame->fadingInBlockIndicator = true;
+    }
+
 }
 
 void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_assets *assets, game_input *input, 
@@ -633,6 +638,7 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
     }
 
     float blinkRate = (blockGame->timeToSpawnNextPiece - blockGame->nextPieceTimer) * 0.2f;
+    if (blinkRate < 1.0f / 30.0f) { blinkRate = 1.0f / 30.0f; }
 
     switch (blockGame->gameState) {
         case BLOCK_GAME_STATE_MOVING_BLOCKS: {
@@ -642,7 +648,7 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
             blockGame->clearingBlocksTimer += DELTA_TIME;
             if (blockGame->clearingBlocksTimer > 0.5f) {
                 for (int i = 0; i < NUM_GRID_ROWS; ++i) {
-                    if (rowsToClear[i]) {
+                    if (blockGame->rowsBeingCleared[i]) {
                         for (int j = 0; j < NUM_GRID_COLS; ++j) {
                             int blockID = blockGame->grid[i * NUM_GRID_ROWS + j];
                             grid_block *block = blockGame->blocks + blockID;
@@ -653,7 +659,7 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
                     }
                 }
                 for (int i = 0; i < NUM_GRID_COLS; ++i) {
-                    if (colsToClear[i]) {
+                    if (blockGame->colsBeingCleared[i]) {
                         for (int j = 0; j < NUM_GRID_ROWS; ++j) {
                             int blockID = blockGame->grid[j * NUM_GRID_ROWS + i];
                             // may have been cleared in a row
@@ -697,6 +703,11 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
 
     for (int i = 0; i < blockGame->numBlocks; ++i) {
         grid_block *block = &sortedBlocks[i];
+        if (!blockGame->clearedBlocksVisible && 
+            (blockGame->rowsBeingCleared[block->row] || blockGame->colsBeingCleared[block->col])) 
+        { 
+            continue; 
+        }
         if (block->active) {
             addSprite(block->x, block->y, assets, ATLAS_KEY_GAME, block->color, spriteList, 0.5f, 0.5f);
         }
@@ -704,19 +715,17 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
 
     // indicator
     // TODO(ebuchholz): organize better? draw everything in switch statement?
-    if (blockGame->gameState == BLOCK_GAME_STATE_MOVING_BLOCKS) {
-        float indicatorAlpha = blockGame->blockIndicatorTimer / blinkRate;
-        block_piece *nextPiece = &blockGame->nextPiece;
-        for (int i = -2; i <= 2; ++i) {
-            for (int j = -2; j <= 2; ++j) {
-                if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
-                    int gridRow = i + blockGame->nextBlockPieceRow;
-                    int gridCol = j + blockGame->nextBlockPieceCol;
-                    if (gridRow >= 0 && gridRow < NUM_GRID_ROWS && 
-                        gridCol >= 0 && gridCol < NUM_GRID_COLS) 
-                    {
-                        addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * gridCol, GRID_ROW_START + GRID_BLOCK_HEIGHT * gridRow, assets, ATLAS_KEY_GAME, "block_blink", spriteList, 0.5f, 0.5f, 1.0f, 0.0f, indicatorAlpha);
-                    }
+    float indicatorAlpha = blockGame->blockIndicatorTimer / blinkRate;
+    block_piece *nextPiece = &blockGame->nextPiece;
+    for (int i = -2; i <= 2; ++i) {
+        for (int j = -2; j <= 2; ++j) {
+            if (nextPiece->filledCells[(i+2) * 5 + (j+2)]) {
+                int gridRow = i + blockGame->nextBlockPieceRow;
+                int gridCol = j + blockGame->nextBlockPieceCol;
+                if (gridRow >= 0 && gridRow < NUM_GRID_ROWS && 
+                    gridCol >= 0 && gridCol < NUM_GRID_COLS) 
+                {
+                    addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * gridCol, GRID_ROW_START + GRID_BLOCK_HEIGHT * gridRow, assets, ATLAS_KEY_GAME, "block_blink", spriteList, 0.5f, 0.5f, 1.0f, 0.0f, indicatorAlpha);
                 }
             }
         }
