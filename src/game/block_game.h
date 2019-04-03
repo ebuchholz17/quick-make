@@ -50,6 +50,11 @@ struct block_piece {
     char *color;
 };
 
+enum block_game_state {
+    BLOCK_GAME_STATE_MOVING_BLOCKS,
+    BLOCK_GAME_STATE_CLEARING_LINES
+};
+
 struct block_game {
     grid_block blocks[NUM_GRID_ROWS * NUM_GRID_COLS];
     int numBlocks = 0;
@@ -68,6 +73,15 @@ struct block_game {
 
     float blockIndicatorTimer;
     bool fadingInBlockIndicator;
+
+    block_game_state gameState;
+
+    // TODO(ebuchholz): bit flags?
+    bool rowsBeingCleared[NUM_GRID_ROWS];
+    bool colsBeingCleared[NUM_GRID_COLS];
+    bool clearedBlocksVisible;
+    float clearingBlocksTimer;
+
 };
 
 
