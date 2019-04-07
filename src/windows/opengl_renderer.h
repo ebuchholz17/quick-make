@@ -160,6 +160,8 @@ gl_uniform_matrix_4fv *glUniformMatrix4fv;
 // texture
 typedef void APIENTRY gl_active_texture(GLenum texture);
 gl_active_texture *glActiveTexture;
+typedef void APIENTRY gl_generate_mipmap(GLenum target);
+gl_generate_mipmap *glGenerateMipmap;
 
 
 // renderer things
@@ -198,6 +200,8 @@ struct openGL_mesh {
 
 struct openGL_texture {
     int key;
+    int width;
+    int height;
     GLuint textureID;
 };
 

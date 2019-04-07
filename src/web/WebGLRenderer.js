@@ -197,6 +197,8 @@ WebGLRenderer.prototype = {
     loadTexture: function (game, loadedTexture) {
         var texture = new WebGLTexture();
         texture.key = loadedTexture.key;
+        texture.width = loadedTexture.width;
+        texture.height = loadedTexture.height;
         this.textures[texture.key] = texture;
 
         texture.textureID = gl.createTexture();

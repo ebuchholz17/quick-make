@@ -67,6 +67,7 @@ static void loadOpenGLFunctions () {
     glUniformMatrix4fv = (gl_uniform_matrix_4fv *)wglGetProcAddress("glUniformMatrix4fv");
 
     glActiveTexture = (gl_active_texture *)wglGetProcAddress("glActiveTexture");
+    glGenerateMipmap = (gl_generate_mipmap *)wglGetProcAddress("glGenerateMipmap");
 }
 
 static void loadShader(GLuint *shaderHandle, int shaderType, char *shaderSource, 
@@ -122,12 +123,17 @@ void loadRendererTexture (renderer_memory *memory, loaded_texture_asset *loadedT
     assert(renderer->numTextures < MAX_OPENGL_TEXTURES);
     // TODO(ebuchholz): triple check that the keys will line up this way
     openGL_texture *texture = &renderer->textures[loadedTexture->key];
+    texture->width = loadedTexture->width;
+    texture->height = loadedTexture->height;
     renderer->numTextures++;
 
     glGenTextures(1, &texture->textureID);
     glBindTexture(GL_TEXTURE_2D, texture->textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, loadedTexture->width, loadedTexture->height, 
                  0, GL_RGBA, GL_UNSIGNED_BYTE, loadedTexture->pixels);
+    //glGenerateMipmap(GL_TEXTURE_2D);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -415,6 +421,11 @@ void flushSprites (openGL_renderer *renderer, GLuint program, int numSpritesBatc
     GLint screenHeightLocation = glGetUniformLocation(program, "screenHeight");
     glUniform1f(screenHeightLocation, screenHeight);
 
+    //GLint textureWidthLocation = glGetUniformLocation(program, "textureWidth");
+    //glUniform1f(textureWidthLocation, (float)texture->width);
+    //GLint textureHeightLocation = glGetUniformLocation(program, "textureHeight");
+    //glUniform1f(textureHeightLocation, (float)texture->height);
+
     glActiveTexture(GL_TEXTURE0);
     GLuint textureLocation = glGetUniformLocation(program, "texture");
     glUniform1i(textureLocation, 0);
@@ -617,5 +628,5 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
     }
 
     SwapBuffers(renderer->deviceContext);
-    glFinish();
+    //glFinish();
 }

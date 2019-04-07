@@ -676,11 +676,6 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
             }
             else {
                 blockGame->clearedBlocksVisible = !blockGame->clearedBlocksVisible;
-                // make the right blocks visible/invisible
-                for (int i = 0; i < NUM_GRID_ROWS; ++i) {
-                }
-                for (int i = 0; i < NUM_GRID_COLS; ++i) {
-                }
             }
 
         } break;
@@ -733,5 +728,11 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
 
     addSprite(blockGame->sheep.x, blockGame->sheep.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
 
+
     popSpriteMatrix(spriteList);
+
+    // some kind of pixel art antialiasing test
+    //static float testT = 0.0f;
+    //testT += DELTA_TIME * 0.1f;
+    //addSprite(200.0f + 150.0f * sinf(testT+1.6f), 100.0f, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f, 5.0f + 4.0f * sinf(testT), (testT * 1.0f) / 3.14f);
 }

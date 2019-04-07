@@ -62,6 +62,30 @@ char *spriteVertexShaderSource = R"shader(
     }
 )shader";
 
+//char *spriteFragmentShaderSource = R"shader(
+//    varying vec2 vTexCoord;
+//    varying vec4 vColor;
+//
+//    uniform sampler2D texture;
+//    uniform float textureWidth;
+//    uniform float textureHeight;
+//
+//    vec2 saturate (vec2 value) {
+//        return clamp(value, 0.0, 1.0);
+//    }
+//
+//    void main() {
+//        vec2 screenDimensions = vec2(textureWidth, textureHeight);
+//        vec2 texCoord = vTexCoord;
+//        texCoord *= screenDimensions;
+//        texCoord = (saturate(fract(texCoord) / saturate(fwidth(texCoord))) + floor(texCoord) - 0.5) / screenDimensions;
+//
+//        vec4 baseColor = textureGrad(texture, texCoord, dFdx(texCoord), dFdy(texCoord));
+//
+//        gl_FragColor = vColor * baseColor;
+//    }
+//)shader";
+
 char *spriteFragmentShaderSource = R"shader(
     varying vec2 vTexCoord;
     varying vec4 vColor;

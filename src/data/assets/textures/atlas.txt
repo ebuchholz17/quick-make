@@ -5,63 +5,63 @@ filter: Linear,Linear
 repeat: none
 block_blink
   rotate: false
-  xy: 2, 2
+  xy: 3, 3
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 blue_tile
   rotate: false
-  xy: 70, 36
+  xy: 23, 3
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 cyan_tile
   rotate: false
-  xy: 36, 70
+  xy: 59, 3
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 green_tile
   rotate: false
-  xy: 2, 70
+  xy: 3, 39
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 magenta_tile
   rotate: false
-  xy: 2, 36
+  xy: 39, 39
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 red_tile
   rotate: false
-  xy: 72, 2
+  xy: 75, 39
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 sheep
   rotate: false
-  xy: 38, 2
+  xy: 3, 75
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 tile_backing
   rotate: false
-  xy: 20, 2
+  xy: 39, 75
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 yellow_tile
   rotate: false
-  xy: 36, 36
+  xy: 59, 75
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
