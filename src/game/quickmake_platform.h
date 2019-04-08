@@ -156,6 +156,16 @@ struct game_input {
     int pointer2Y;
 };
 
+struct sound_sample {
+    float value;
+};
+
+struct game_sound_output {
+    int samplesPerSecond;
+    int sampleCount;
+    sound_sample *samples;
+};
+
 struct game_memory {
     void *memory;
     unsigned int memoryCapacity;

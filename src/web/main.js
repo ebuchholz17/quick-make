@@ -3,6 +3,7 @@
 var MobileDetect = require("mobile-detect");
 
 var Game = require("./wasm/game.js");
+var WebAudioSounds = require("./WebAudioSounds");
 var WebGLRenderer = require("./WebGLRenderer");
 
 var Input = function () {
@@ -20,6 +21,8 @@ var WebPlatform = function () {
     this.game = null;
     this.renderer = null;
     this.totalAssetsLoaded = 0;
+    this.webAudioSounds = null;
+    this.lastTime = 0;
 };
 
 
@@ -334,7 +337,15 @@ WebPlatform.prototype = {
             this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
         }
 
+        // sounds
+        this.webAudioSounds = new WebAudioSounds();
+        this.webAudioSounds.audioBufferSize = 1024; // TODO(ebuchholz): tune buffers (windows and web)
+
+        // NOTE(ebuchholz): need to init on first input to work in browsers
+        //this.webAudioSounds.init(this.game);
+
         this.resize();
+        this.lastTime = window.performance.now();
         this.update();
     },
 
@@ -389,6 +400,29 @@ WebPlatform.prototype = {
                 this.game.getPointer(this.renderCommands)
             ]
         );
+
+        // TODO(ebuchholz): handle interruptions due to resizing, switching tabs, losing focues, etc.
+        if (this.webAudioSounds.started) {
+            var numSamples = this.webAudioSounds.getNumSamplesToUpdate();
+
+            if (numSamples > 0) {
+                this.gameSoundOutput.samples = this.soundSamples;
+                this.gameSoundOutput.samplesPerSecond = this.webAudioSounds.samplesPerSecond;
+                this.gameSoundOutput.sampleCount = numSamples;
+
+                this.game.ccall("getGameSoundSamples", 
+                    "null", 
+                    ["number", "number"], 
+                    [
+                        this.game.getPointer(this.gameMemory), 
+                        this.game.getPointer(this.gameSoundOutput)
+                    ]
+                );
+
+                this.webAudioSounds.updateAudio(this.game, this.soundSamples, numSamples);
+            }
+        }
+
         this.renderer.renderFrame(this.game, this.renderCommands);
 
         for (var key in this.input.keyJustPressed) {
@@ -398,6 +432,10 @@ WebPlatform.prototype = {
         }
         this.input.pointerJustDown = false;
         this.input.pointer2JustDown = false;
+
+        var time = window.performance.now();
+        //console.log("frame time: ", time - this.lastTime);
+        this.lastTime = time;
 
         window.requestAnimationFrame(this.updateCallback);
     },
@@ -477,6 +515,17 @@ WebPlatform.prototype = {
             this.input.pointerJustDown = true;
         }
         this.input.pointerDown = true;
+
+        if (!this.webAudioSounds.started) {
+            this.webAudioSounds.init(this.game);
+            this.webAudioSounds.started = true;
+
+            this.soundSamples = 
+                this.game._malloc(this.game.sizeof_sound_sample() * this.webAudioSounds.samplesPerSecond);
+            this.gameSoundOutput = 
+                this.game.wrapPointer(this.game._malloc(this.game.sizeof_game_sound_output()), 
+                                      this.game.game_sound_output);
+        }
     },
 
     onMouseUp: function (e) {

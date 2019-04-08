@@ -2,9 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "win_platform.h"
 #include "../game/quickmake_game.cpp"
 
 #include "opengl_renderer.cpp"
+#include "directsound_audio.cpp"
 
 static bool programRunning = false;
 
@@ -307,10 +309,23 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             renderCommands.memory.size = 0;
             renderCommands.memory.capacity = memoryCapacity;
 
+            game_input input ={};
+
+            // init sound
+            win_sound_output soundOutput = {};
+            soundOutput.samplesPerSecond = 48000;
+            soundOutput.bytesPerSample = 2;
+            soundOutput.secondaryBufferSize = soundOutput.samplesPerSecond * soundOutput.bytesPerSample;
+            initDirectSound(window, &soundOutput);
+            clearSecondaryBuffer(&soundOutput);
+            soundOutput.secondaryBuffer->Play(0, 0, DSBPLAY_LOOPING);
+            soundOutput.soundValid = false;
+
+            sound_sample *soundSamples = (sound_sample *)malloc(soundOutput.samplesPerSecond * 4);
+            assert(soundSamples);
+
             LARGE_INTEGER lastCounter;
             QueryPerformanceCounter(&lastCounter);
-
-            game_input input ={};
 
             while (programRunning) {
                 input.pointerJustDown = false;
@@ -326,6 +341,28 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 memset(renderCommands.memory.base, 0, renderCommands.memory.capacity);
                 memset(gameMemory.tempMemory, 0, gameMemory.tempMemoryCapacity);
                 updateGame(&input, &gameMemory, &renderCommands);
+
+                LARGE_INTEGER audioStartTime;
+                QueryPerformanceCounter(&audioStartTime);
+                float timeFromFrameBeginning = ((float)(audioStartTime.QuadPart - lastCounter.QuadPart) /
+                                                (float)perfCountFrequency);
+
+                int numSoundSampleBytes;
+                DWORD byteToLock;
+                getNumSoundSamples(&soundOutput, &numSoundSampleBytes, &byteToLock, timeFromFrameBeginning);
+                if (numSoundSampleBytes > 0) {
+                    game_sound_output gameSoundOutput = {};
+                    gameSoundOutput.samplesPerSecond = soundOutput.samplesPerSecond;
+                    gameSoundOutput.sampleCount = numSoundSampleBytes / soundOutput.bytesPerSample;
+                    gameSoundOutput.samples = soundSamples;
+
+                    getGameSoundSamples(&gameMemory, &gameSoundOutput);
+                    fillDirectSoundBuffer(&soundOutput, byteToLock, numSoundSampleBytes, &gameSoundOutput);
+                }
+                else {
+                    int t = 6;
+                }
+
                 renderFrame(&rendererMemory, &renderCommands);
 
                 // Sleep for any leftover time

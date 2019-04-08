@@ -214,6 +214,16 @@ interface game_input {
     attribute long pointer2Y;
 };
 
+interface sound_sample {
+    attribute float value;
+};
+
+interface game_sound_output {
+    attribute long samplesPerSecond;
+    attribute long sampleCount;
+    attribute sound_sample samples;
+};
+
 interface game_memory {
     attribute VoidPtr memory;
     attribute unsigned long memoryCapacity;

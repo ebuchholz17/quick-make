@@ -21,6 +21,8 @@ struct game_state {
 
     float visualizationT;
     block_game blockGame;
+
+    float sineT;
 };
 
 #endif

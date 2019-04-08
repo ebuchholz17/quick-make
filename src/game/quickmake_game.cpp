@@ -251,6 +251,8 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
         assets->assetMemory.capacity = 10 * 1024 * 1024; // 1MB of asset data???
         assets->assetMemory.base = allocateMemorySize(&gameState->memory, assets->assetMemory.capacity); 
         assets->numMeshes = 0;
+
+        gameState->sineT = 0.0f;
     } 
     // parse data
     // create/copy stuff into game memory
@@ -382,5 +384,23 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         renderSprite->color[3] = color;
 
         renderSprite->textureKey = sprite->textureKey;
+    }
+}
+
+extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output *soundOutput) { 
+    game_state *gameState = (game_state *)gameMemory->memory;
+
+    float volume = 0.1f;
+
+    sound_sample *sampleOut = soundOutput->samples;
+    for (int i = 0; i < soundOutput->sampleCount; ++i) 
+    {
+        float sampleValue = sinf(gameState->sineT);
+        sampleOut->value = sampleValue * volume;
+        ++sampleOut;
+        gameState->sineT += 2.0f * PI * (400.0f / (float)(soundOutput->samplesPerSecond));
+        if (gameState->sineT > 2.0f*PI) {
+            gameState->sineT -= 2.0f*PI;
+        }
     }
 }

@@ -98,6 +98,12 @@ int sizeof_render_command_list () {
 int sizeof_game_input () {
     return sizeof(game_input);
 }  
+int sizeof_sound_sample () {
+    return sizeof(sound_sample);
+}  
+int sizeof_game_sound_output () {
+    return sizeof(game_sound_output);
+}  
 int sizeof_game_memory () {
     return sizeof(game_memory);
 }  
@@ -130,6 +136,8 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_render_command_background_visualization", &sizeof_render_command_background_visualization);
     function ("sizeof_render_command_list", &sizeof_render_command_list);
     function ("sizeof_game_input", &sizeof_game_input);
+    function ("sizeof_sound_sample", &sizeof_sound_sample);
+    function ("sizeof_game_sound_output", &sizeof_game_sound_output);
     function ("sizeof_game_memory", &sizeof_game_memory);
 }
 
