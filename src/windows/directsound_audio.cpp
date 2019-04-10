@@ -122,12 +122,14 @@ void getNumSoundSamples(win_sound_output *soundOutput, int *numSoundSampleBytes,
 
         bool lowLatency = safeWriteCursor < expectedFrameBoundaryByte;
         DWORD targetCursor;
-        if (lowLatency) {
-            targetCursor = expectedFrameBoundaryByte + expectedBytesPerFrame;
-        }
-        else {
-            targetCursor = writeCursor + expectedBytesPerFrame + safetyBytes;
-        }
+        //if (lowLatency) {
+        //    targetCursor = expectedFrameBoundaryByte + expectedBytesPerFrame;
+        //}
+        //else {
+            // try writing two frames ahead
+            // TODO(ebuchholz): use same method as web build?
+            targetCursor = writeCursor + (2*expectedBytesPerFrame) + safetyBytes;
+        //}
         targetCursor = targetCursor % soundOutput->secondaryBufferSize;
         if (*byteToLock > targetCursor) {
             *numSoundSampleBytes = (soundOutput->secondaryBufferSize - *byteToLock) + targetCursor;

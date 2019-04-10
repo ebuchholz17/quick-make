@@ -445,6 +445,9 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
                 sampleValue += updateSound(sound, instrument, dt);
             }
         }
+        // clamp between -1 and 1
+        sampleValue = sampleValue > 1.0f ? 1.0f : sampleValue;
+        sampleValue = sampleValue < -1.0f ? -1.0f : sampleValue;
         sampleOut->value = sampleValue * volume;
         ++sampleOut;
     }

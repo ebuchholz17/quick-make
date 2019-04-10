@@ -68,7 +68,7 @@ WebAudioSounds.prototype = {
                 bufferSourceNode.buffer = buffer;
 
                 var playTime = Math.max(currentAudioTime + bufferingDelay, this.nextAudioBufferPlayTime);
-                bufferSourceNode.start(this.nextAudioBufferPlayTime);
+                bufferSourceNode.start(playTime);
 
                 this.nextAudioBufferPlayTime = playTime + bufferTime;
             }
