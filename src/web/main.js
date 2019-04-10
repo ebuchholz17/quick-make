@@ -34,6 +34,30 @@ WebPlatform.prototype = {
     },
 
     run: function () {
+        // TODO(ebuchholz): remove
+        //var testElement = document.getElementById("megatest");
+        //var console = (function (oldConsole) {
+        //    return {
+        //        log: function (text) {
+        //            oldConsole.log(text);
+        //            testElement.innerHTML += text + "<br>";
+        //        },
+        //        info: function (text) {
+        //            oldConsole.info(text);
+        //            testElement.innerHTML += text + "<br>";
+        //        },
+        //        warn: function (text) {
+        //            oldConsole.warn(text);
+        //            testElement.innerHTML += text + "<br>";
+        //        },
+        //        error:function (text){
+        //            oldConsole.error(text);
+        //            testElement.innerHTML += text + "<br>";
+        //        }
+        //    };
+        //})(window.console);
+        //window.console = console;
+
         this.viewport = document.getElementById("quickmake");
         this.viewport.style["touch-action"] = "none";
         this.viewport.style["overflow"] = "hidden";
@@ -339,7 +363,7 @@ WebPlatform.prototype = {
 
         // sounds
         this.webAudioSounds = new WebAudioSounds();
-        this.webAudioSounds.audioBufferSize = 512; // TODO(ebuchholz): tune buffers (windows and web)
+        this.webAudioSounds.audioBufferSize = 256; // TODO(ebuchholz): tune buffers (windows and web)
 
         // NOTE(ebuchholz): need to init on first input to work in browsers
         //this.webAudioSounds.init(this.game);
@@ -466,9 +490,8 @@ WebPlatform.prototype = {
             this.input.pointer2Down = true;
             this.setMouseXY2(e.touches[1].clientX, e.touches[1].clientY);
         }
-        e.preventDefault();
-
         this.tryStartAudio();
+        e.preventDefault();
     },
 
     tryStartAudio: function () {
@@ -482,6 +505,8 @@ WebPlatform.prototype = {
                 this.game.wrapPointer(this.game._malloc(this.game.sizeof_game_sound_output()), 
                                       this.game.game_sound_output);
         }
+        // for ios/chrome/etc, whatever browers need touch input to start audio
+        this.webAudioSounds.tryUnlockAudioContext();
     },
 
     onTouchMove: function (e) {

@@ -214,28 +214,24 @@ static void initInstruments (game_sounds *gameSounds) {
     instrument->type = instrumentType;
     envelope = &instrument->envelope;
     envelope->attackTime = 0.01f;
-    envelope->attackVolume = 1.0f;
+    envelope->attackVolume = 0.5f;
     envelope->decayTime = 0.07f;
     envelope->sustain = false;
-    envelope->sustainVolume = 0.7f;
+    envelope->sustainVolume = 0.35f;
     envelope->releaseTime = 0.6f;
     waveform = &instrument->waveforms[0];
     waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.5f;
+    waveform->volume = 0.6f;
     waveform->muliplier = 1.0f;
     waveform = &instrument->waveforms[1];
     waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.25f;
+    waveform->volume = 0.3f;
     waveform->muliplier = 2.0f;
     waveform = &instrument->waveforms[2];
     waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.125f;
+    waveform->volume = 0.1f;
     waveform->muliplier = 3.0f;
-    waveform = &instrument->waveforms[3];
-    waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.0625f;
-    waveform->muliplier = 4.0f;
-    instrument->numWaveForms = 4;
+    instrument->numWaveForms = 3;
 }
 
 //static void growTransformGroupEntryList () {

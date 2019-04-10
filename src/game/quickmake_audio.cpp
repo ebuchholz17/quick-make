@@ -1,15 +1,15 @@
 #include "quickmake_audio.h"
 
-float sineWave (int hz, float t) {
+float sineWave (float hz, float t) {
     return sinf((PI*2.0f*(float)hz) * t);
 }
 
-float squareWave (int hz, float t) {
+float squareWave (float hz, float t) {
     float sine = sineWave(hz, t);
     return sine >= 0.0f ? 1.0f : -1.0f;
 }
 
-float triangleWave (int hz, float t) {
+float triangleWave (float hz, float t) {
     float sine = sineWave(hz, t);
     return (2.0f/PI)*asinf(sine);
 }

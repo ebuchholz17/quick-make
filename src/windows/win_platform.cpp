@@ -363,9 +363,9 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                     int t = 6;
                 }
 
-                char message[1000];
-                sprintf_s(message, "%f\n", randomFloat());
-                OutputDebugString(message);
+                //char message[1000];
+                //sprintf_s(message, "%f\n", randomFloat());
+                //OutputDebugString(message);
 
                 renderFrame(&rendererMemory, &renderCommands);
 
