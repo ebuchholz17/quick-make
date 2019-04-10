@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Web platform for quickmake",
   "scripts": {
-    "start": "webpack-dev-server --content-base ../../build/web --colors --progress",
+    "start": "webpack-dev-server --content-base ../../build/web --colors --progress --host 0.0.0.0",
     "build": "webpack --config webpack_build.config.js"
   },
   "author": "Erik Buchholz",

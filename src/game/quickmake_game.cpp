@@ -203,6 +203,41 @@ static void debugCameraMovement (debug_camera *debugCamera, game_input *input) {
 }
 #endif
 
+static void initInstruments (game_sounds *gameSounds) {
+    instrument_type instrumentType;
+    sound_instrument *instrument;
+    sound_envelope *envelope;
+    sound_waveform *waveform;
+
+    instrumentType = INSTRUMENT_TYPE_PIANO;
+    instrument = &gameSounds->instruments[instrumentType];
+    instrument->type = instrumentType;
+    envelope = &instrument->envelope;
+    envelope->attackTime = 0.01f;
+    envelope->attackVolume = 1.0f;
+    envelope->decayTime = 0.07f;
+    envelope->sustain = false;
+    envelope->sustainVolume = 0.7f;
+    envelope->releaseTime = 0.6f;
+    waveform = &instrument->waveforms[0];
+    waveform->waveType = OSCILLATOR_TYPE_SINE;
+    waveform->volume = 0.5f;
+    waveform->muliplier = 1.0f;
+    waveform = &instrument->waveforms[1];
+    waveform->waveType = OSCILLATOR_TYPE_SINE;
+    waveform->volume = 0.25f;
+    waveform->muliplier = 2.0f;
+    waveform = &instrument->waveforms[2];
+    waveform->waveType = OSCILLATOR_TYPE_SINE;
+    waveform->volume = 0.125f;
+    waveform->muliplier = 3.0f;
+    waveform = &instrument->waveforms[3];
+    waveform->waveType = OSCILLATOR_TYPE_SINE;
+    waveform->volume = 0.0625f;
+    waveform->muliplier = 4.0f;
+    instrument->numWaveForms = 4;
+}
+
 //static void growTransformGroupEntryList () {
 //
 //}
@@ -278,7 +313,11 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->gameInitialized) {
         gameState->gameInitialized = true;
-        initBlockGame(&gameState->memory, &gameState->blockGame);
+        gameState->sounds = {};
+        initInstruments(&gameState->sounds);
+
+        //initBlockGame(&gameState->memory, &gameState->blockGame);
+        initPianoGame(&gameState->pianoGame);
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -328,7 +367,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     //visualizationCommand->t = gameState->visualizationT;
 
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
-    updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
+    //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
+    updatePianoGame(&gameState->sounds, input, &gameState->pianoGame);
     popSpriteMatrix(&spriteList);
 
     render_command_sprite_list *spriteListCommand = 
@@ -389,18 +429,23 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
 extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output *soundOutput) { 
     game_state *gameState = (game_state *)gameMemory->memory;
+    game_sounds *gameSounds = &gameState->sounds;
 
-    float volume = 0.1f;
-
+    float volume = 1.0f;
+    float dt = 1.0f / (float)soundOutput->samplesPerSecond;
+    
     sound_sample *sampleOut = soundOutput->samples;
     for (int i = 0; i < soundOutput->sampleCount; ++i) 
     {
-        float sampleValue = sinf(gameState->sineT);
+        float sampleValue = 0.0f;
+        for (int soundIndex = 0; soundIndex < MAX_SOUNDS; ++soundIndex) {
+            synth_sound *sound = gameSounds->sounds + soundIndex;
+            sound_instrument *instrument = gameSounds->instruments + sound->instrumentType;
+            if (sound->active) {
+                sampleValue += updateSound(sound, instrument, dt);
+            }
+        }
         sampleOut->value = sampleValue * volume;
         ++sampleOut;
-        gameState->sineT += 2.0f * PI * (400.0f / (float)(soundOutput->samplesPerSecond));
-        if (gameState->sineT > 2.0f*PI) {
-            gameState->sineT -= 2.0f*PI;
-        }
     }
 }

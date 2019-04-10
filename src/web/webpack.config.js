@@ -3,6 +3,7 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 var WriteFileWebpackPlugin = require('write-file-webpack-plugin');
 var path = require('path');
 
+// TODO(ebuchholz): run in data folder when debugging, only copy assets on build
 module.exports = {
     entry: './main.js',
     output: { 

@@ -10,57 +10,71 @@ var WebAudioSounds = function () {
     this.sampleBufferSize = 0;
 
     this.started = false;
+    this.frameStartAudioTime = 0.0;
+    this.nextAudioBufferPlayTime = 0.0;
 };
 
 WebAudioSounds.prototype = {
 
-    init: function (game) {
+    init: function () {
         var audioContextClass = window.AudioContext || window.webkitAudioContext;
-        audioContext = new audioContextClass();
-        var audioProcessor = audioContext.createScriptProcessor(this.audioBufferSize, 1, 1);
-        audioProcessor.onaudioprocess = (e) => this.bufferAudio(e);
-        this.samplesPerSecond = audioContext.sampleRate;
+        this.audioContext = new audioContextClass();
+        //var audioProcessor = audioContext.createScriptProcessor(this.audioBufferSize, 1, 1);
+        //audioProcessor.onaudioprocess = (e) => this.bufferAudio(e);
+        this.samplesPerSecond = this.audioContext.sampleRate;
         this.sampleBufferSize = this.samplesPerSecond;
 
         this.samples = new Float32Array(this.sampleBufferSize);
         this.writeCursor = 0;
         this.dataCursor = (1.0/60.0) * this.samplesPerSecond;
+        this.playTime = this.audioContext.currentTime;
 
-        audioProcessor.connect(audioContext.destination);
+        //audioProcessor.connect(audioContext.destination);
     },
 
-    getNumSamplesToUpdate: function () {
-        var samplesPerFrame = (1.0/60.0) * this.samplesPerSecond;
+    updateAudio: function (game, gameMemory, gameSoundOutput, soundSamples) {
+        var currentAudioTime = this.audioContext.currentTime;
+        var bufferingDelay = 50/1000;
+        var bufferTime = this.audioBufferSize / this.samplesPerSecond;
+        var numSamples = this.audioBufferSize;
+        var maxNumQueuedBuffers = 4;
 
-        var unwrappedDataCursor = this.dataCursor < this.writeCursor ? 
-                                  this.dataCursor + this.sampleBufferSize : this.dataCursor;
-        var targetIndex = this.writeCursor + this.audioBufferSize*3;
-        var numSamples = targetIndex - unwrappedDataCursor;
-        return numSamples;
-    },
+        for (var i = 0; i < maxNumQueuedBuffers; ++i) {
+            var secsLeftTilNextAudio = this.nextAudioBufferPlayTime - currentAudioTime;
+            if (secsLeftTilNextAudio < bufferingDelay + bufferTime * maxNumQueuedBuffers) {
 
-    updateAudio: function (game, soundSamples, numSamples) {
-        var floatBuffer = new Float32Array(game.buffer, soundSamples, numSamples);
-        for (var i = 0; i < numSamples; ++i) {
-            this.samples[this.dataCursor] = floatBuffer[i];
-            this.dataCursor = (this.dataCursor+1) % this.sampleBufferSize;
+                gameSoundOutput.samples = soundSamples;
+                gameSoundOutput.samplesPerSecond = this.samplesPerSecond;
+                gameSoundOutput.sampleCount = numSamples;
 
-            //if (this.writeCursor == this.dataCursor) {
-            //    console.log("running overlaps write");
-            //}
-        }
-    },
+                game.ccall("getGameSoundSamples", 
+                    "null", 
+                    ["number", "number"], 
+                    [
+                        game.getPointer(gameMemory), 
+                        game.getPointer(gameSoundOutput)
+                    ]
+                );
 
-    bufferAudio: function (e)  {
-        var output = e.outputBuffer.getChannelData(0);
-        var runningStart = this.dataCursor;
-        var writeStart = this.writeCursor;
-        for (var i = 0; i < this.audioBufferSize; ++i) {
-            output[i] = this.samples[this.writeCursor];
-            this.writeCursor = (this.writeCursor + 1) % this.sampleBufferSize;
-            //if (this.writeCursor == this.dataCursor) {
-            //    console.log("write overlaps running");
-            //}
+                var floatBuffer = new Float32Array(game.buffer, soundSamples, numSamples);
+                var buffer = this.audioContext.createBuffer(1, numSamples, this.samplesPerSecond);
+                var output = buffer.getChannelData(0);
+                for (var sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
+                    output[sampleIndex] = floatBuffer[sampleIndex];
+                }
+
+                var bufferSourceNode = this.audioContext.createBufferSource();
+                bufferSourceNode.connect(this.audioContext.destination);
+                bufferSourceNode.buffer = buffer;
+
+                var playTime = Math.max(currentAudioTime + bufferingDelay, this.nextAudioBufferPlayTime);
+                bufferSourceNode.start(this.nextAudioBufferPlayTime);
+
+                this.nextAudioBufferPlayTime = playTime + bufferTime;
+            }
+            else { 
+                break;
+            }
         }
     }
 

@@ -339,7 +339,7 @@ WebPlatform.prototype = {
 
         // sounds
         this.webAudioSounds = new WebAudioSounds();
-        this.webAudioSounds.audioBufferSize = 1024; // TODO(ebuchholz): tune buffers (windows and web)
+        this.webAudioSounds.audioBufferSize = 512; // TODO(ebuchholz): tune buffers (windows and web)
 
         // NOTE(ebuchholz): need to init on first input to work in browsers
         //this.webAudioSounds.init(this.game);
@@ -350,7 +350,6 @@ WebPlatform.prototype = {
     },
 
     update: function () {
-
         this.gameInput.forwardButton = this.input.keyDown["w"];
         this.gameInput.backButton = this.input.keyDown["s"];
         this.gameInput.leftButton = this.input.keyDown["a"];
@@ -403,24 +402,7 @@ WebPlatform.prototype = {
 
         // TODO(ebuchholz): handle interruptions due to resizing, switching tabs, losing focues, etc.
         if (this.webAudioSounds.started) {
-            var numSamples = this.webAudioSounds.getNumSamplesToUpdate();
-
-            if (numSamples > 0) {
-                this.gameSoundOutput.samples = this.soundSamples;
-                this.gameSoundOutput.samplesPerSecond = this.webAudioSounds.samplesPerSecond;
-                this.gameSoundOutput.sampleCount = numSamples;
-
-                this.game.ccall("getGameSoundSamples", 
-                    "null", 
-                    ["number", "number"], 
-                    [
-                        this.game.getPointer(this.gameMemory), 
-                        this.game.getPointer(this.gameSoundOutput)
-                    ]
-                );
-
-                this.webAudioSounds.updateAudio(this.game, this.soundSamples, numSamples);
-            }
+            this.webAudioSounds.updateAudio(this.game, this.gameMemory, this.gameSoundOutput, this.soundSamples);
         }
 
         this.renderer.renderFrame(this.game, this.renderCommands);
@@ -485,6 +467,21 @@ WebPlatform.prototype = {
             this.setMouseXY2(e.touches[1].clientX, e.touches[1].clientY);
         }
         e.preventDefault();
+
+        this.tryStartAudio();
+    },
+
+    tryStartAudio: function () {
+        if (!this.webAudioSounds.started) {
+            this.webAudioSounds.init(this.game);
+            this.webAudioSounds.started = true;
+
+            this.soundSamples = 
+                this.game._malloc(this.game.sizeof_sound_sample() * this.webAudioSounds.samplesPerSecond);
+            this.gameSoundOutput = 
+                this.game.wrapPointer(this.game._malloc(this.game.sizeof_game_sound_output()), 
+                                      this.game.game_sound_output);
+        }
     },
 
     onTouchMove: function (e) {
@@ -516,16 +513,7 @@ WebPlatform.prototype = {
         }
         this.input.pointerDown = true;
 
-        if (!this.webAudioSounds.started) {
-            this.webAudioSounds.init(this.game);
-            this.webAudioSounds.started = true;
-
-            this.soundSamples = 
-                this.game._malloc(this.game.sizeof_sound_sample() * this.webAudioSounds.samplesPerSecond);
-            this.gameSoundOutput = 
-                this.game.wrapPointer(this.game._malloc(this.game.sizeof_game_sound_output()), 
-                                      this.game.game_sound_output);
-        }
+        this.tryStartAudio();
     },
 
     onMouseUp: function (e) {
