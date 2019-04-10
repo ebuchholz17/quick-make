@@ -55,46 +55,106 @@ static void processWindowsMessages (HWND window, game_input *input, render_comma
                 bool keyDown = (message.lParam & (1 << 31)) == 0;
                 // NOTE(ebuchholz): don't care whether the button was just pressed for now
                 if (keyCode == 'W') {
-                    input->forwardButton = keyDown;
+                    if (!input->wKey.down && keyDown) {
+                        input->wKey.justPressed = true;
+                    }
+                    input->wKey.down = keyDown;
                 }
-                else if (keyCode == 'S') {
-                    input->backButton = keyDown;
+                else if (keyCode == 'E') {
+                    if (!input->eKey.down && keyDown) {
+                        input->eKey.justPressed = true;
+                    }
+                    input->eKey.down = keyDown;
                 }
-                else if (keyCode == 'A') {
-                    input->leftButton = keyDown;
+                else if (keyCode == 'T') {
+                    if (!input->tKey.down && keyDown) {
+                        input->tKey.justPressed = true;
+                    }
+                    input->tKey.down = keyDown;
+                }
+                else if (keyCode == 'Y') {
+                    if (!input->yKey.down && keyDown) {
+                        input->yKey.justPressed = true;
+                    }
+                    input->yKey.down = keyDown;
+                }
+                else if (keyCode == 'U') {
+                    if (!input->uKey.down && keyDown) {
+                        input->uKey.justPressed = true;
+                    }
+                    input->uKey.down = keyDown;
+                }
+                else if (keyCode == 'K') {
+                    if (!input->kKey.down && keyDown) {
+                        input->kKey.justPressed = true;
+                    }
+                    input->kKey.down = keyDown;
+                }
+                else if (keyCode == 'J') {
+                    if (!input->jKey.down && keyDown) {
+                        input->jKey.justPressed = true;
+                    }
+                    input->jKey.down = keyDown;
+                }
+                else if (keyCode == 'H') {
+                    if (!input->hKey.down && keyDown) {
+                        input->hKey.justPressed = true;
+                    }
+                    input->hKey.down = keyDown;
+                }
+                else if (keyCode == 'G') {
+                    if (!input->gKey.down && keyDown) {
+                        input->gKey.justPressed = true;
+                    }
+                    input->gKey.down = keyDown;
+                }
+                else if (keyCode == 'F') {
+                    if (!input->fKey.down && keyDown) {
+                        input->fKey.justPressed = true;
+                    }
+                    input->fKey.down = keyDown;
                 }
                 else if (keyCode == 'D') {
-                    input->rightButton = keyDown;
+                    if (!input->dKey.down && keyDown) {
+                        input->dKey.justPressed = true;
+                    }
+                    input->dKey.down = keyDown;
+                }
+                else if (keyCode == 'S') {
+                    if (!input->sKey.down && keyDown) {
+                        input->sKey.justPressed = true;
+                    }
+                    input->sKey.down = keyDown;
+                }
+                else if (keyCode == 'A') {
+                    if (!input->aKey.down && keyDown) {
+                        input->aKey.justPressed = true;
+                    }
+                    input->aKey.down = keyDown;
                 }
                 else if (keyCode == VK_UP) {
-                    if (!input->turnUpButton && keyDown) {
-                        input->turnUpButtonJustPressed = true;
+                    if (!input->upKey.down && keyDown) {
+                        input->upKey.justPressed = true;
                     }
-                    input->turnUpButton = keyDown;
+                    input->upKey.down = keyDown;
                 }
                 else if (keyCode == VK_DOWN) {
-                    if (!input->turnDownButton && keyDown) {
-                        input->turnDownButtonJustPressed = true;
+                    if (!input->downKey.down && keyDown) {
+                        input->downKey.justPressed = true;
                     }
-                    input->turnDownButton = keyDown;
+                    input->downKey.down = keyDown;
                 }
                 else if (keyCode == VK_LEFT) {
-                    if (!input->turnLeftButton && keyDown) {
-                        input->turnLeftButtonJustPressed = true;
+                    if (!input->leftKey.down && keyDown) {
+                        input->leftKey.justPressed = true;
                     }
-                    input->turnLeftButton = keyDown;
+                    input->leftKey.down = keyDown;
                 }
                 else if (keyCode == VK_RIGHT) {
-                    if (!input->turnRightButton && keyDown) {
-                        input->turnRightButtonJustPressed = true;
+                    if (!input->rightKey.down && keyDown) {
+                        input->rightKey.justPressed = true;
                     }
-                    input->turnRightButton = keyDown;
-                }
-                else if (keyCode == VK_SPACE) {
-                    input->upButton = keyDown;
-                }
-                else if (keyCode == VK_SHIFT) {
-                    input->downButton = keyDown;
+                    input->rightKey.down = keyDown;
                 }
             } break;
             case WM_MOUSEMOVE: {
@@ -329,10 +389,23 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             while (programRunning) {
                 input.pointerJustDown = false;
-                input.turnUpButtonJustPressed = false;
-                input.turnDownButtonJustPressed = false;
-                input.turnLeftButtonJustPressed = false;
-                input.turnRightButtonJustPressed = false;
+                input.aKey.justPressed = false;
+                input.sKey.justPressed = false;
+                input.dKey.justPressed = false;
+                input.fKey.justPressed = false;
+                input.gKey.justPressed = false;
+                input.hKey.justPressed = false;
+                input.jKey.justPressed = false;
+                input.kKey.justPressed = false;
+                input.wKey.justPressed = false;
+                input.eKey.justPressed = false;
+                input.tKey.justPressed = false;
+                input.yKey.justPressed = false;
+                input.uKey.justPressed = false;
+                input.upKey.justPressed = false;
+                input.downKey.justPressed = false;
+                input.leftKey.justPressed = false;
+                input.rightKey.justPressed = false;
                 processWindowsMessages(window, &input, &renderCommands);
 
                 renderCommands.windowWidth = gameWidth;

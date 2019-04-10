@@ -445,6 +445,7 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
         sampleValue = sampleValue > 1.0f ? 1.0f : sampleValue;
         sampleValue = sampleValue < -1.0f ? -1.0f : sampleValue;
         sampleOut->value = sampleValue * volume;
+        assert(sampleOut->value >= -1.0f && sampleOut->value <= 1.0f);
         ++sampleOut;
     }
 }

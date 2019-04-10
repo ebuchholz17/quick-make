@@ -127,23 +127,31 @@ struct render_command_list {
     memory_arena memory;
 };
 
+struct input_key {
+    bool down;
+    bool justPressed;
+};
+
 struct game_input {
-    bool forwardButton;
-    bool backButton;
-    bool leftButton;
-    bool rightButton;
-    bool upButton;
-    bool downButton;
+    input_key upKey;
+    input_key downKey;
+    input_key leftKey;
+    input_key rightKey;
 
     // TODO(ebuchholz): add just pressed for other buttons, maybe button struct
-    bool turnUpButton;
-    bool turnUpButtonJustPressed;
-    bool turnDownButton;
-    bool turnDownButtonJustPressed;
-    bool turnLeftButton;
-    bool turnLeftButtonJustPressed;
-    bool turnRightButton;
-    bool turnRightButtonJustPressed;
+    input_key aKey;
+    input_key sKey;
+    input_key dKey;
+    input_key fKey;
+    input_key gKey;
+    input_key hKey;
+    input_key jKey;
+    input_key kKey;
+    input_key wKey;
+    input_key eKey;
+    input_key tKey;
+    input_key yKey;
+    input_key uKey;
 
     bool pointerDown;
     bool pointerJustDown;

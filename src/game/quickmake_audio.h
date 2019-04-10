@@ -53,6 +53,7 @@ struct synth_sound {
     sound_state state;
     float t;
     float releaseTime;
+    float hz;
 
     bool pressed;
     bool active;
