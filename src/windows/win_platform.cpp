@@ -359,9 +359,6 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                     getGameSoundSamples(&gameMemory, &gameSoundOutput);
                     fillDirectSoundBuffer(&soundOutput, byteToLock, numSoundSampleBytes, &gameSoundOutput);
                 }
-                else {
-                    int t = 6;
-                }
 
                 //char message[1000];
                 //sprintf_s(message, "%f\n", randomFloat());
