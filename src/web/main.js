@@ -374,20 +374,41 @@ WebPlatform.prototype = {
     },
 
     update: function () {
-        this.gameInput.forwardButton = this.input.keyDown["w"];
-        this.gameInput.backButton = this.input.keyDown["s"];
-        this.gameInput.leftButton = this.input.keyDown["a"];
-        this.gameInput.rightButton = this.input.keyDown["d"];
-        this.gameInput.upButton = this.input.keyDown[" "];
-        this.gameInput.downButton = this.input.keyDown["shift"];
-        this.gameInput.turnUpButton = this.input.keyDown["arrowup"];
-        this.gameInput.turnUpButtonJustPressed = this.input.keyJustPressed["arrowup"];
-        this.gameInput.turnDownButton = this.input.keyDown["arrowdown"];
-        this.gameInput.turnDownButtonJustPressed = this.input.keyJustPressed["arrowdown"];
-        this.gameInput.turnLeftButton = this.input.keyDown["arrowleft"];
-        this.gameInput.turnLeftButtonJustPressed = this.input.keyJustPressed["arrowleft"];
-        this.gameInput.turnRightButton = this.input.keyDown["arrowright"];
-        this.gameInput.turnRightButtonJustPressed = this.input.keyJustPressed["arrowright"];
+        this.gameInput.upKey.down = this.input.keyDown["arrowup"];
+        this.gameInput.upKey.justPressed = this.input.keyJustPressed["arrowup"];
+        this.gameInput.downKey.down = this.input.keyDown["arrowdown"];
+        this.gameInput.downKey.justPressed = this.input.keyJustPressed["arrowdown"];
+        this.gameInput.leftKey.down = this.input.keyDown["arrowleft"];
+        this.gameInput.leftKey.justPressed = this.input.keyJustPressed["arrowleft"];
+        this.gameInput.rightKey.down = this.input.keyDown["arrowright"];
+        this.gameInput.rightKey.justPressed = this.input.keyJustPressed["arrowright"];
+
+        this.gameInput.aKey.down = this.input.keyDown["a"];
+        this.gameInput.aKey.justPressed = this.input.keyJustPressed["a"];
+        this.gameInput.sKey.down = this.input.keyDown["s"];
+        this.gameInput.sKey.justPressed = this.input.keyJustPressed["s"];
+        this.gameInput.dKey.down = this.input.keyDown["d"];
+        this.gameInput.dKey.justPressed = this.input.keyJustPressed["d"];
+        this.gameInput.fKey.down = this.input.keyDown["f"];
+        this.gameInput.fKey.justPressed = this.input.keyJustPressed["f"];
+        this.gameInput.gKey.down = this.input.keyDown["g"];
+        this.gameInput.gKey.justPressed = this.input.keyJustPressed["g"];
+        this.gameInput.hKey.down = this.input.keyDown["h"];
+        this.gameInput.hKey.justPressed = this.input.keyJustPressed["h"];
+        this.gameInput.jKey.down = this.input.keyDown["j"];
+        this.gameInput.jKey.justPressed = this.input.keyJustPressed["j"];
+        this.gameInput.kKey.down = this.input.keyDown["k"];
+        this.gameInput.kKey.justPressed = this.input.keyJustPressed["k"];
+        this.gameInput.wKey.down = this.input.keyDown["w"];
+        this.gameInput.wKey.justPressed = this.input.keyJustPressed["w"];
+        this.gameInput.eKey.down = this.input.keyDown["e"];
+        this.gameInput.eKey.justPressed = this.input.keyJustPressed["e"];
+        this.gameInput.tKey.down = this.input.keyDown["t"];
+        this.gameInput.tKey.justPressed = this.input.keyJustPressed["t"];
+        this.gameInput.yKey.down = this.input.keyDown["y"];
+        this.gameInput.yKey.justPressed = this.input.keyJustPressed["y"];
+        this.gameInput.uKey.down = this.input.keyDown["u"];
+        this.gameInput.uKey.justPressed = this.input.keyJustPressed["u"];
 
         this.gameInput.pointerDown = this.input.pointerDown;
         this.gameInput.pointerJustDown = this.input.pointerJustDown;

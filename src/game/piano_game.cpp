@@ -8,8 +8,9 @@ void initPianoGame (piano_game *pianoGame) {
 
 bool keyJustPressedForNote (game_input *input, sound_note soundNote) {
     switch (soundNote) {
+    // NOTE(ebuchholz): special case for testing touch
     case SOUND_NOTE_C:
-        return input->aKey.justPressed;
+        return input->aKey.justPressed || input->pointerJustDown;
     case SOUND_NOTE_C_SHARP:
         return input->wKey.justPressed;
     case SOUND_NOTE_D:
@@ -40,8 +41,9 @@ bool keyJustPressedForNote (game_input *input, sound_note soundNote) {
 
 bool keyPressedForNote (game_input *input, sound_note soundNote) {
     switch (soundNote) {
+    // NOTE(ebuchholz): special case for testing touch
     case SOUND_NOTE_C:
-        return input->aKey.down;
+        return input->aKey.down || input->pointerDown;
     case SOUND_NOTE_C_SHARP:
         return input->wKey.down;
     case SOUND_NOTE_D:

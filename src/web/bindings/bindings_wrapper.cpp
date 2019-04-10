@@ -95,6 +95,9 @@ int sizeof_render_command_background_visualization () {
 int sizeof_render_command_list () {
     return sizeof(render_command_list);
 }  
+int sizeof_input_key () {
+    return sizeof(input_key);
+}  
 int sizeof_game_input () {
     return sizeof(game_input);
 }  
@@ -135,6 +138,7 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_render_command_set_camera", &sizeof_render_command_set_camera);
     function ("sizeof_render_command_background_visualization", &sizeof_render_command_background_visualization);
     function ("sizeof_render_command_list", &sizeof_render_command_list);
+    function ("sizeof_input_key", &sizeof_input_key);
     function ("sizeof_game_input", &sizeof_game_input);
     function ("sizeof_sound_sample", &sizeof_sound_sample);
     function ("sizeof_game_sound_output", &sizeof_game_sound_output);

@@ -186,22 +186,30 @@ interface render_command_list {
     [Value] attribute memory_arena memory;
 };
 
-interface game_input {
-    attribute boolean forwardButton;
-    attribute boolean backButton;
-    attribute boolean leftButton;
-    attribute boolean rightButton;
-    attribute boolean upButton;
-    attribute boolean downButton;
+interface input_key {
+    attribute boolean down;
+    attribute boolean justPressed;
+};
 
-    attribute boolean turnUpButton;
-    attribute boolean turnUpButtonJustPressed;
-    attribute boolean turnDownButton;
-    attribute boolean turnDownButtonJustPressed;
-    attribute boolean turnLeftButton;
-    attribute boolean turnLeftButtonJustPressed;
-    attribute boolean turnRightButton;
-    attribute boolean turnRightButtonJustPressed;
+interface game_input {
+    [Value] attribute input_key upKey;
+    [Value] attribute input_key downKey;
+    [Value] attribute input_key leftKey;
+    [Value] attribute input_key rightKey;
+
+    [Value] attribute input_key aKey;
+    [Value] attribute input_key sKey;
+    [Value] attribute input_key dKey;
+    [Value] attribute input_key fKey;
+    [Value] attribute input_key gKey;
+    [Value] attribute input_key hKey;
+    [Value] attribute input_key jKey;
+    [Value] attribute input_key kKey;
+    [Value] attribute input_key wKey;
+    [Value] attribute input_key eKey;
+    [Value] attribute input_key tKey;
+    [Value] attribute input_key yKey;
+    [Value] attribute input_key uKey;
 
     attribute boolean pointerDown;
     attribute boolean pointerJustDown;
