@@ -1,15 +1,15 @@
 #include "quickmake_audio.h"
 
-float sineWave (int hz, float t) {
+float sineWave (float hz, float t) {
     return sinf((PI*2.0f*(float)hz) * t);
 }
 
-float squareWave (int hz, float t) {
+float squareWave (float hz, float t) {
     float sine = sineWave(hz, t);
     return sine >= 0.0f ? 1.0f : -1.0f;
 }
 
-float triangleWave (int hz, float t) {
+float triangleWave (float hz, float t) {
     float sine = sineWave(hz, t);
     return (2.0f/PI)*asinf(sine);
 }
@@ -21,7 +21,7 @@ float noiseWave () {
 }
 
 // TODO(ebuchholz): specify sound type
-int playSound (game_sounds *gameSounds, instrument_type instrumentType) {
+int playSound (game_sounds *gameSounds, instrument_type instrumentType, float hz) {
     synth_sound *sound = 0;
     int soundIndex = -1;
     for (int i = 0; i < MAX_SOUNDS; ++i) {
@@ -36,6 +36,7 @@ int playSound (game_sounds *gameSounds, instrument_type instrumentType) {
         sound->instrumentType = instrumentType;
         sound->active = true;
         sound->pressed = true;
+        sound->hz = hz;
     }
     return soundIndex;
 }
@@ -76,9 +77,10 @@ float updateSound (synth_sound *sound, sound_instrument *instrument, float dt) {
             }
         } break;
     }
+    volume *= 0.2f; // QQQ
 
     float tone = 0.0f;
-    int pitch = 440;
+    float pitch = sound->hz;
     for (int i = 0; i < instrument->numWaveForms; ++i) {
         sound_waveform *waveform = &instrument->waveforms[i];
         switch (waveform->waveType) {

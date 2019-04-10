@@ -221,21 +221,17 @@ static void initInstruments (game_sounds *gameSounds) {
     envelope->releaseTime = 0.6f;
     waveform = &instrument->waveforms[0];
     waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.5f;
+    waveform->volume = 0.6f;
     waveform->muliplier = 1.0f;
     waveform = &instrument->waveforms[1];
     waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.25f;
+    waveform->volume = 0.3f;
     waveform->muliplier = 2.0f;
     waveform = &instrument->waveforms[2];
     waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.125f;
+    waveform->volume = 0.1f;
     waveform->muliplier = 3.0f;
-    waveform = &instrument->waveforms[3];
-    waveform->waveType = OSCILLATOR_TYPE_SINE;
-    waveform->volume = 0.0625f;
-    waveform->muliplier = 4.0f;
-    instrument->numWaveForms = 4;
+    instrument->numWaveForms = 3;
 }
 
 //static void growTransformGroupEntryList () {
@@ -445,7 +441,10 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
                 sampleValue += updateSound(sound, instrument, dt);
             }
         }
+        sampleValue = sampleValue > 1.0f ? 1.0f : sampleValue;
+        sampleValue = sampleValue < -1.0f ? -1.0f : sampleValue;
         sampleOut->value = sampleValue * volume;
+        assert(sampleOut->value >= -1.0f && sampleOut->value <= 1.0f);
         ++sampleOut;
     }
 }
