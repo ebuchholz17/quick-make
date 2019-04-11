@@ -10,8 +10,8 @@
 
 static bool programRunning = false;
 
-static int gameWidth = 1152;
-static int gameHeight = 648;
+static int gameWidth = 1920;
+static int gameHeight = 1080;
 static float targetMSPerFrame = 1000.0f / 60.0f;
 
 void DEBUGPrintString (char *string) {
@@ -156,6 +156,13 @@ static void processWindowsMessages (HWND window, game_input *input, render_comma
                     }
                     input->rightKey.down = keyDown;
                 }
+
+                if (keyDown) {
+                    int altDown = (message.lParam & (1 << 29));
+                    if((keyCode == VK_F4) && altDown) {
+                        programRunning = false;
+                    }
+                }
             } break;
             case WM_MOUSEMOVE: {
                 POINT newMousePos;
@@ -212,17 +219,17 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
     if (RegisterClassA(&windowClass)) {
 
-        //DEVMODE dmScreenSettings;                   
-        //memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));  
-        //dmScreenSettings.dmSize = sizeof(dmScreenSettings);     
-        //dmScreenSettings.dmPelsWidth    = 1920;            
-        //dmScreenSettings.dmPelsHeight   = 1080;          
-        //dmScreenSettings.dmBitsPerPel   = 32;           
-        //dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
-        //if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
-        //{
-        //    return 0;
-        //}
+        DEVMODE dmScreenSettings;                   
+        memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));  
+        dmScreenSettings.dmSize = sizeof(dmScreenSettings);     
+        dmScreenSettings.dmPelsWidth    = 1920;            
+        dmScreenSettings.dmPelsHeight   = 1080;          
+        dmScreenSettings.dmBitsPerPel   = 32;           
+        dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
+        if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
+        {
+            return 0;
+        }
 
         RECT targetWindowSize;
         targetWindowSize.left = 0;
@@ -230,15 +237,15 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
         targetWindowSize.right = gameWidth;
         targetWindowSize.bottom = gameHeight;
 
-        //DWORD windowStyle = WS_POPUP | WS_VISIBLE;
-        DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE; 
+        DWORD windowStyle = WS_POPUP | WS_VISIBLE;
+        //DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE; 
         AdjustWindowRectEx(&targetWindowSize, windowStyle, false, WS_EX_APPWINDOW);
 
         HWND window = CreateWindowExA(
-            0, //WS_EX_APPWINDOW, //WS_EX_TOPMOST,
+            WS_EX_APPWINDOW, //WS_EX_TOPMOST,
             windowClass.lpszClassName, 
             "Quick Make", 
-            windowStyle,// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+            windowStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
             0, 
             0, 
             targetWindowSize.right - targetWindowSize.left, 

@@ -10,7 +10,7 @@ bool keyJustPressedForNote (game_input *input, sound_note soundNote) {
     switch (soundNote) {
     // NOTE(ebuchholz): special case for testing touch
     case SOUND_NOTE_C:
-        return input->aKey.justPressed || input->pointerJustDown;
+        return input->aKey.justPressed;
     case SOUND_NOTE_C_SHARP:
         return input->wKey.justPressed;
     case SOUND_NOTE_D:
@@ -43,7 +43,7 @@ bool keyPressedForNote (game_input *input, sound_note soundNote) {
     switch (soundNote) {
     // NOTE(ebuchholz): special case for testing touch
     case SOUND_NOTE_C:
-        return input->aKey.down || input->pointerDown;
+        return input->aKey.down;
     case SOUND_NOTE_C_SHARP:
         return input->wKey.down;
     case SOUND_NOTE_D:
@@ -104,38 +104,96 @@ float noteHz (sound_note soundNote) {
     return 0;
 }
 
-void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *input, piano_game *pianoGame, sprite_list *spriteList) {
-    for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
-        piano_game_note *pianoNote = pianoGame->notes + i;
+int noteTappedByPointer (float pointerX, float pointerY) {
+    // black keys
+    sound_note blackKeys[] = {
+        SOUND_NOTE_C_SHARP,
+        SOUND_NOTE_D_SHARP,
+        SOUND_NOTE_F_SHARP,
+        SOUND_NOTE_G_SHARP,
+        SOUND_NOTE_A_SHARP
+    };
+    for (int i = 0; i < 5; ++i) {
+        int offset = 36;
+        if (i > 1) { offset += 48; }
+        float startX = i * 48.0f + offset;
 
-        if (!pianoNote->playing) {
-            if (keyPressedForNote(input, (sound_note)i)) {
-                int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz((sound_note)i));
+        if (pointerX >= startX && pointerX < startX + 24.0f && pointerY >= 0.0f && pointerY < 129.0f) {
+            return blackKeys[i];
+        }
+    }
+
+    sound_note whiteKeys[] = {
+        SOUND_NOTE_C,
+        SOUND_NOTE_D,
+        SOUND_NOTE_E,
+        SOUND_NOTE_F,
+        SOUND_NOTE_G,
+        SOUND_NOTE_A,
+        SOUND_NOTE_B,
+        SOUND_NOTE_C_2
+    };
+    for (int i = 0; i < 8; ++i) {
+        float startX = i * 48.0f;
+        if (pointerX >= startX && pointerX < startX + 48.0f && pointerY >= 0.0f && pointerY < 216.0f) {
+            return whiteKeys[i];
+        }
+    }
+    return -1;
+}
+
+void processKey (piano_game_note *pianoNote, sound_note noteIndex, game_sounds *gameSounds, bool keyPressed) {
+    if (!pianoNote->playing) {
+        if (keyPressed) {
+            int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz(noteIndex));
+            if (soundIndex != -1) {
+                pianoNote->playing = true;
+                pianoNote->playingSoundIndex = soundIndex;
+            }
+        }
+    }
+    else {
+        synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
+        if (!sound->active) {
+            pianoNote->playing = false;
+            pianoNote->playingSoundIndex = -1;
+        }
+        else {
+            if (!sound->pressed && keyPressed) {
+                sound->pressed = false;
+                int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz(noteIndex));
                 if (soundIndex != -1) {
                     pianoNote->playing = true;
                     pianoNote->playingSoundIndex = soundIndex;
                 }
             }
+            if (!keyPressed) {
+                sound->pressed = false;
+            }
         }
-        else {
-            synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
-            if (!sound->active) {
-                pianoNote->playing = false;
-                pianoNote->playingSoundIndex = -1;
-            }
-            else {
-                if (keyJustPressedForNote(input, (sound_note)i)) {
-                    sound->pressed = false;
-                    int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz((sound_note)i));
-                    if (soundIndex != -1) {
-                        pianoNote->playing = true;
-                        pianoNote->playingSoundIndex = soundIndex;
-                    }
-                }
-                if (!keyPressedForNote(input, (sound_note)i)) {
-                    sound->pressed = false;
-                }
-            }
+    }
+}
+
+void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *input, piano_game *pianoGame, sprite_list *spriteList) {
+    matrix3x3 gameTransform = peekSpriteMatrix(spriteList);
+    vector3 localPointerPos = Vector3((float)input->pointerX, (float)input->pointerY, 1.0f);
+    localPointerPos = inverse(gameTransform) * localPointerPos;
+
+    // avoid processing keys twice
+    bool keysTappedByPointer[SOUND_NOTE_COUNT] = {};
+    if (input->pointerDown) {
+        int pianoNoteIndex = noteTappedByPointer(localPointerPos.x, localPointerPos.y);
+        if (pianoNoteIndex != -1) {
+            keysTappedByPointer[pianoNoteIndex] = true;
+            piano_game_note *pianoNote = pianoGame->notes + pianoNoteIndex;
+            processKey(pianoNote, (sound_note)pianoNoteIndex, gameSounds, true);
+        }
+    }
+    for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
+        if (!keysTappedByPointer[i]) {
+            piano_game_note *pianoNote = pianoGame->notes + i;
+            bool keyPressed = keyPressedForNote(input, (sound_note)i);
+            processKey(pianoNote, (sound_note)i, gameSounds, keyPressed);
         }
     }
 
@@ -152,7 +210,7 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
     };
     for (int i = 0; i < 8; ++i) {
         piano_game_note *pianoNote = pianoGame->notes + whiteKeys[i];
-        char *frameName = 0;
+        const char *frameName = 0;
         if (pianoNote->playing) {
             synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
             frameName = sound->pressed ? "white_key_pressed" : "white_key";
@@ -160,7 +218,7 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
         else {
             frameName = "white_key";
         }
-        addSprite(i * 48.0f, 0.0f, assets, ATLAS_KEY_GAME, frameName, spriteList);
+        addSprite(i * 48.0f, 0.0f, assets, ATLAS_KEY_GAME, (char *)frameName, spriteList);
     }
 
     sound_note blackKeys[] = {
@@ -172,7 +230,7 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
     };
     for (int i = 0; i < 5; ++i) {
         piano_game_note *pianoNote = pianoGame->notes + blackKeys[i];
-        char *frameName = 0;
+        const char *frameName = 0;
         if (pianoNote->playing) {
             synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
             frameName = sound->pressed ? "black_key_pressed" : "black_key";
@@ -182,33 +240,7 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
         }
         int offset = 36;
         if (i > 1) { offset += 48; }
-        addSprite(i * 48.0f + offset, 0.0f, assets, ATLAS_KEY_GAME, frameName, spriteList);
+        addSprite(i * 48.0f + offset, 0.0f, assets, ATLAS_KEY_GAME, (char *)frameName, spriteList);
     }
-    //addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * j, GRID_ROW_START + GRID_BLOCK_HEIGHT * i, assets, ATLAS_KEY_GAME, "tile_backing", spriteList, 0.5f, 0.5f);
-    //if (pianoGame->playingSoundIndex == -1) {
-    //    if (input->pointerJustDown) {
-    //        int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, 440);
-    //        if (soundIndex != -1) {
-    //            pianoGame->playingSoundIndex = soundIndex;
-    //        }
-    //    }
-    //}
-    //else {
-    //    synth_sound *sound = gameSounds->sounds + pianoGame->playingSoundIndex;
-    //    if (!sound->active) {
-    //        pianoGame->playingSoundIndex = -1;
-    //    }
-    //    else {
-    //        if (input->pointerJustDown) {
-    //            sound->pressed = false;
-    //            int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, 440);
-    //            if (soundIndex != -1) {
-    //                pianoGame->playingSoundIndex = soundIndex;
-    //            }
-    //        }
-    //        if (!input->pointerDown) {
-    //            sound->pressed = false;
-    //        }
-    //    }
-    //}
+    //addSprite(localPointerPos.x, localPointerPos.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
 }
