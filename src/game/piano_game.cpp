@@ -104,7 +104,7 @@ float noteHz (sound_note soundNote) {
     return 0;
 }
 
-void updatePianoGame (game_sounds *gameSounds, game_input *input, piano_game *pianoGame) {
+void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *input, piano_game *pianoGame, sprite_list *spriteList) {
     for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
         piano_game_note *pianoNote = pianoGame->notes + i;
 
@@ -138,6 +138,53 @@ void updatePianoGame (game_sounds *gameSounds, game_input *input, piano_game *pi
             }
         }
     }
+
+    // draw keys
+    sound_note whiteKeys[] = {
+        SOUND_NOTE_C,
+        SOUND_NOTE_D,
+        SOUND_NOTE_E,
+        SOUND_NOTE_F,
+        SOUND_NOTE_G,
+        SOUND_NOTE_A,
+        SOUND_NOTE_B,
+        SOUND_NOTE_C_2
+    };
+    for (int i = 0; i < 8; ++i) {
+        piano_game_note *pianoNote = pianoGame->notes + whiteKeys[i];
+        char *frameName = 0;
+        if (pianoNote->playing) {
+            synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
+            frameName = sound->pressed ? "white_key_pressed" : "white_key";
+        }
+        else {
+            frameName = "white_key";
+        }
+        addSprite(i * 48.0f, 0.0f, assets, ATLAS_KEY_GAME, frameName, spriteList);
+    }
+
+    sound_note blackKeys[] = {
+        SOUND_NOTE_C_SHARP,
+        SOUND_NOTE_D_SHARP,
+        SOUND_NOTE_F_SHARP,
+        SOUND_NOTE_G_SHARP,
+        SOUND_NOTE_A_SHARP
+    };
+    for (int i = 0; i < 5; ++i) {
+        piano_game_note *pianoNote = pianoGame->notes + blackKeys[i];
+        char *frameName = 0;
+        if (pianoNote->playing) {
+            synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
+            frameName = sound->pressed ? "black_key_pressed" : "black_key";
+        }
+        else {
+            frameName = "black_key";
+        }
+        int offset = 36;
+        if (i > 1) { offset += 48; }
+        addSprite(i * 48.0f + offset, 0.0f, assets, ATLAS_KEY_GAME, frameName, spriteList);
+    }
+    //addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * j, GRID_ROW_START + GRID_BLOCK_HEIGHT * i, assets, ATLAS_KEY_GAME, "tile_backing", spriteList, 0.5f, 0.5f);
     //if (pianoGame->playingSoundIndex == -1) {
     //    if (input->pointerJustDown) {
     //        int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, 440);
