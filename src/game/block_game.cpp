@@ -48,16 +48,16 @@ void addBlockIfUnoccupied (block_game *blockGame, int row, int col, char *color)
 direction startMovingSheep (block_game *blockGame, game_input *input) {
     block_sheep *sheep = &blockGame->sheep;
     if (blockGame->nextMoveDirection == DIRECTION_NONE) {
-        if (input->turnUpButton) {
+        if (input->upKey.down) {
             blockGame->nextMoveDirection = DIRECTION_UP;
         }
-        else if (input->turnDownButton) {
+        else if (input->downKey.down) {
             blockGame->nextMoveDirection = DIRECTION_DOWN;
         }
-        else if (input->turnLeftButton) {
+        else if (input->leftKey.down) {
             blockGame->nextMoveDirection = DIRECTION_LEFT;
         }
-        else if (input->turnRightButton) {
+        else if (input->rightKey.down) {
             blockGame->nextMoveDirection = DIRECTION_RIGHT;
         }
     }
@@ -624,16 +624,16 @@ void updateSheepAndBlocks (block_game *blockGame, game_input* input, float blink
 void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_assets *assets, game_input *input, 
                       block_game *blockGame, sprite_list *spriteList) 
 {
-    if (input->turnUpButtonJustPressed) {
+    if (input->upKey.justPressed) {
         blockGame->nextMoveDirection = DIRECTION_UP;
     }
-    else if (input->turnDownButtonJustPressed) {
+    else if (input->downKey.justPressed) {
         blockGame->nextMoveDirection = DIRECTION_DOWN;
     }
-    else if (input->turnLeftButtonJustPressed) {
+    else if (input->leftKey.justPressed) {
         blockGame->nextMoveDirection = DIRECTION_LEFT;
     }
-    else if (input->turnRightButtonJustPressed) {
+    else if (input->rightKey.justPressed) {
         blockGame->nextMoveDirection = DIRECTION_RIGHT;
     }
 

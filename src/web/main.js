@@ -363,7 +363,7 @@ WebPlatform.prototype = {
 
         // sounds
         this.webAudioSounds = new WebAudioSounds();
-        this.webAudioSounds.audioBufferSize = 256; // TODO(ebuchholz): tune buffers (windows and web)
+        this.webAudioSounds.audioBufferSize = 512; // TODO(ebuchholz): tune buffers (windows and web)
 
         // NOTE(ebuchholz): need to init on first input to work in browsers
         //this.webAudioSounds.init(this.game);

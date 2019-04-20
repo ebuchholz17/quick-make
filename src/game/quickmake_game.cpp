@@ -345,26 +345,28 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     if (actualAspectRatio < normalAspectRatio) {
         float widthRatio = screenWidth / GAME_WIDTH;
         gameScale = widthRatio;
-        gameOrigin.x = 0.0f;
+        gameScale *= 0.5f;
+        gameOrigin.x = (screenWidth - (GAME_WIDTH * gameScale)) / 2.0f;
         gameOrigin.y = (screenHeight - (GAME_HEIGHT * gameScale)) / 2.0f;
     }
     else {
-		float heightRatio = screenHeight / GAME_HEIGHT;
+        float heightRatio = screenHeight / GAME_HEIGHT;
         gameScale = heightRatio;
+        gameScale *= 0.5f;
         gameOrigin.x = (screenWidth - (GAME_WIDTH * gameScale)) / 2.0f;
-        gameOrigin.y = 0.0f;
+        gameOrigin.y = (screenHeight - (GAME_HEIGHT * gameScale)) / 2.0f;
     }
 
-    //gameState->visualizationT += DELTA_TIME;
-    //render_command_background_visualization *visualizationCommand = 
-    //    (render_command_background_visualization *)pushRenderCommand(renderCommands, 
-    //                                                                 RENDER_COMMAND_BACKGROUND_VISUALIZATION,
-    //                                                                 sizeof(render_command_background_visualization));
-    //visualizationCommand->t = gameState->visualizationT;
+    gameState->visualizationT += DELTA_TIME;
+    render_command_background_visualization *visualizationCommand = 
+        (render_command_background_visualization *)pushRenderCommand(renderCommands, 
+                                                                     RENDER_COMMAND_BACKGROUND_VISUALIZATION,
+                                                                     sizeof(render_command_background_visualization));
+    visualizationCommand->t = gameState->visualizationT;
 
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
     //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
-    updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
+    //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
     popSpriteMatrix(&spriteList);
 
     render_command_sprite_list *spriteListCommand = 

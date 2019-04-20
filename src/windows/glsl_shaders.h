@@ -161,7 +161,7 @@ char *backgroundVisualizationFragmentShaderSource = R"shader(
         float dist = doRay(rayDir);
         vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
         if (dist <= 0.0001) {
-            color = vec4(1.0, 0.0, 1.0, 1.0);
+            color = vec4(0.0, 1.0, 1.0, 1.0);
         }
 
         gl_FragColor = color;
