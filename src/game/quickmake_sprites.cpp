@@ -406,8 +406,10 @@ void initLetterCoords () {
 
 void addText (float x, float y, char *text, game_assets *assets, texture_key fontTextureKey, sprite_list *spriteList) {
     char *currentLetter = text;
-    float letterTexWidth = 8.0f / 140.0f;
-    float letterTexHeight = 8.0f / 50.0f;
+    texture_asset *texAsset = assets->textures[fontTextureKey];
+    float letterTexWidth = 8.0f / (float)texAsset->width;
+    float letterTexHeight = 8.0f / (float)texAsset->height;
+
     float xOffset = 0.0f;
     float yOffset = 0.0f;
     while (*currentLetter != 0) {
@@ -422,14 +424,13 @@ void addText (float x, float y, char *text, game_assets *assets, texture_key fon
             sprite *nextSprite = createSpriteAndSetProperties(x + xOffset, y + yOffset, assets, spriteList);
 
             // TODO(ebuchholz): maybe pointer to texture info instead of copying?
-            texture_asset *texAsset = assets->textures[fontTextureKey];
             nextSprite->textureKey = fontTextureKey;
             nextSprite->width = 8.0f;//(float)texAsset->width;
             nextSprite->height = 8.0f;//(float)texAsset->height;
 
             bitmap_font_letter_coord *coord = fontLetterCoords + letter;
-            float coordX = coord->x / 140.0f;
-            float coordY = ((50.0f - coord->y) / 50.0f);
+            float coordX = coord->x / (float)texAsset->width;
+            float coordY = (((float)texAsset->height - coord->y) / (float)texAsset->height);
             
             nextSprite->frameCorners[0] = Vector2(coordX, coordY);
             nextSprite->frameCorners[1] = Vector2(coordX + letterTexWidth, coordY);
