@@ -504,6 +504,8 @@ void initBlockGame (memory_arena *memory, block_game* blockGame) {
     blockGame->sheep.row = 6;
     blockGame->sheep.col = 6;
 
+    blockGame->score = 0;
+
     blockGame->timeToSpawnNextPiece = 5.0f;
     blockGame->nextPieceTimer = 5.0f;
 
@@ -580,6 +582,7 @@ void updateSheepAndBlocks (block_game *blockGame, game_input* input, float blink
         blockGame->gameState = BLOCK_GAME_STATE_CLEARING_LINES;
         blockGame->clearedBlocksVisible = true;
         blockGame->clearingBlocksTimer = 0.0f;
+        blockGame->score += 100;
     }
 
     // show an indicator of where the next piece will be
@@ -622,8 +625,13 @@ void updateSheepAndBlocks (block_game *blockGame, game_input* input, float blink
 }
 
 void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_assets *assets, game_input *input, 
-                      block_game *blockGame, sprite_list *spriteList) 
+                      block_game *blockGame, sprite_list *spriteList)
 {
+    // memory for dynamically created strings
+    memory_arena stringMemory = {};
+    stringMemory.capacity = 512 * 1024;
+    stringMemory.base = allocateMemorySize(tempMemory, stringMemory.capacity);
+
     if (input->upKey.justPressed) {
         blockGame->nextMoveDirection = DIRECTION_UP;
     }
@@ -728,6 +736,11 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
 
     addSprite(blockGame->sheep.x, blockGame->sheep.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
 
+    addText(-184, -100, appendString("score: ", numToString(blockGame->score, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
+
+    //pushSpriteTransform(spriteList, Vector2(blockGame->sheep.x, blockGame->sheep.y), 1.0f, blockGame->sheep.y / 100.0f);
+    //addSprite(0, 0, assets, TEXTURE_KEY_FONT, spriteList);
+    //popSpriteMatrix(spriteList);
 
     popSpriteMatrix(spriteList);
 

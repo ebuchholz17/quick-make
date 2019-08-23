@@ -95,6 +95,78 @@ float stringToFloat (char *start, char *end) {
     return integerPart + fractionalPart;
 }
 
+//copied from webassembly prototype
+char *numToString (int num, memory_arena *memory) {
+    const int maxStringLength = 20;
+    char numberBuffer[maxStringLength] = {};
+
+    char *currentDigit = numberBuffer + (maxStringLength - 1);
+    char *stringEnd = currentDigit;
+
+    bool isNegative = false;
+    if (num < 0) {
+        isNegative = true;
+        num = -num;
+    }
+
+    do {
+        --currentDigit;
+        *currentDigit = '0' + num % 10;
+        num /= 10;
+    } while (num != 0);
+
+    if (isNegative) {
+        --currentDigit;
+        *currentDigit = '-';
+    }
+
+    unsigned int stringLength = (unsigned int)(stringEnd - currentDigit);
+    char *string = (char *)allocateMemorySize(memory, stringLength + 1);
+
+    for (unsigned int i = 0; i < stringLength; ++i) {
+        string[i] = *currentDigit;
+        ++currentDigit;
+    }
+    string[stringLength] = 0;
+
+    return string;
+}
+
+char *appendString (char *first, char *second, memory_arena *memory) {
+    char *a = first;
+    char *b = second;
+
+    unsigned int firstLength = 0;
+    unsigned int secondLength = 0;
+
+    while (*a != 0) {
+        ++a;
+        ++firstLength;
+    }
+    while (*b != 0) {
+        ++b;
+        ++secondLength;
+    }
+
+    char *result = (char *)allocateMemorySize(memory, firstLength + secondLength + 1);
+    char *currentLetter = result;
+    for (unsigned int i = 0; i < firstLength; ++i) {
+        *currentLetter = first[i];
+        ++currentLetter;
+    }
+    for (unsigned int i = 0; i < secondLength; ++i) {
+        *currentLetter = second[i];
+        ++currentLetter;
+    }
+    *currentLetter = 0;
+
+    return result;
+}
+
+//void numToString (float num, char *buffer, int maxLength = -1) {
+//
+//}
+
 //float stringToFloat (char *string) {
 //    char *end = string;
 //    while (*end != 0) {

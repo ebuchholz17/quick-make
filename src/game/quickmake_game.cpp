@@ -256,10 +256,12 @@ static void initInstruments (game_sounds *gameSounds) {
 //
 //}
 
+
 // TODO(ebuchholz): Maybe pack everything into a single file and load that?
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
 
+    pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
     pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
 }
 
@@ -312,8 +314,10 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         gameState->sounds = {};
         initInstruments(&gameState->sounds);
 
-        //initBlockGame(&gameState->memory, &gameState->blockGame);
-        initPianoGame(&gameState->pianoGame);
+        initLetterCoords();
+
+        initBlockGame(&gameState->memory, &gameState->blockGame);
+        //initPianoGame(&gameState->pianoGame);
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -345,27 +349,27 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     if (actualAspectRatio < normalAspectRatio) {
         float widthRatio = screenWidth / GAME_WIDTH;
         gameScale = widthRatio;
-        gameScale *= 0.5f;
+        //gameScale *= 0.5f;
         gameOrigin.x = (screenWidth - (GAME_WIDTH * gameScale)) / 2.0f;
         gameOrigin.y = (screenHeight - (GAME_HEIGHT * gameScale)) / 2.0f;
     }
     else {
         float heightRatio = screenHeight / GAME_HEIGHT;
         gameScale = heightRatio;
-        gameScale *= 0.5f;
+        //gameScale *= 0.5f;
         gameOrigin.x = (screenWidth - (GAME_WIDTH * gameScale)) / 2.0f;
         gameOrigin.y = (screenHeight - (GAME_HEIGHT * gameScale)) / 2.0f;
     }
 
-    gameState->visualizationT += DELTA_TIME;
-    render_command_background_visualization *visualizationCommand = 
-        (render_command_background_visualization *)pushRenderCommand(renderCommands, 
-                                                                     RENDER_COMMAND_BACKGROUND_VISUALIZATION,
-                                                                     sizeof(render_command_background_visualization));
-    visualizationCommand->t = gameState->visualizationT;
+    //gameState->visualizationT += DELTA_TIME;
+    //render_command_background_visualization *visualizationCommand = 
+    //    (render_command_background_visualization *)pushRenderCommand(renderCommands, 
+    //                                                                 RENDER_COMMAND_BACKGROUND_VISUALIZATION,
+    //                                                                 sizeof(render_command_background_visualization));
+    //visualizationCommand->t = gameState->visualizationT;
 
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
-    //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
+    updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
     //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
     popSpriteMatrix(&spriteList);
 

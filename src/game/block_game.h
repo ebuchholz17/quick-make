@@ -64,6 +64,8 @@ struct block_game {
     block_sheep sheep;
     direction nextMoveDirection;
 
+    int score;
+
     float timeToSpawnNextPiece;
     float nextPieceTimer;
 
