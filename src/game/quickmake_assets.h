@@ -12,7 +12,7 @@ struct mesh_asset {
 };
 
 enum texture_key {
-    TEXTURE_KEY_GOLFMAN,
+    TEXTURE_KEY_BLUE,
     TEXTURE_KEY_FONT,
     TEXTURE_KEY_GAME_ATLAS
 };

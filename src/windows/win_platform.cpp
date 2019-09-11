@@ -10,8 +10,8 @@
 
 static bool programRunning = false;
 
-static int gameWidth = 768;
-static int gameHeight = 432;
+static int gameWidth = 1152;
+static int gameHeight = 648;
 static float targetMSPerFrame = 1000.0f / 60.0f;
 
 void DEBUGPrintString (char *string) {
