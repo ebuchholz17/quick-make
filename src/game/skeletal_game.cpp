@@ -1,4 +1,5 @@
 #include "skeletal_game.h"
+#include "skeletal_pose_setup.cpp"
 
 
 void debugCameraMovement (debug_camera *debugCamera, game_input *input) {
@@ -64,147 +65,31 @@ void initSkeletalGame (memory_arena *memory, skeletal_game* skeletalGame) {
         bone->parentID = -1;
     }
 
-    // define parents/children for test elbow
-    skeletalGame->numBones = 10;
-    skeleton_bone *bone = &skeletalGame->bones[0];
-    bone->parentID = -1;
-
-    bone = &skeletalGame->bones[1];
-    bone->parentID = 0;
-
-    bone = &skeletalGame->bones[2];
-    bone->parentID = 1;
-
-    bone = &skeletalGame->bones[3];
-    bone->parentID = 2;
-
-    bone = &skeletalGame->bones[4];
-    bone->parentID = 3;
-
-    bone = &skeletalGame->bones[5];
-    bone->parentID = 4;
-
-    bone = &skeletalGame->bones[6];
-    bone->parentID = 5;
-
-    bone = &skeletalGame->bones[7];
-    bone->parentID = 6;
-
-    bone = &skeletalGame->bones[8];
-    bone->parentID = 7;
-
-    bone = &skeletalGame->bones[9];
-    bone->parentID = 8;
-
-    // define rest post, straight arm
-    skeleton_pose *restPose = &skeletalGame->poses[0];
-    skeleton_bone_pose *bonePose = &restPose->bonePoses[0];
-    bonePose->boneID = 0;
-    bonePose->localPos = Vector3(0.0f, 1.0f, 0.0f);
-    bonePose->localRotation = Quaternion();
-
-    bonePose = &restPose->bonePoses[1];
-    bonePose->boneID = 1;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
+    setupSkeleton(skeletalGame);
     
-    bonePose = &restPose->bonePoses[2];
-    bonePose->boneID = 2;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-    
-    bonePose = &restPose->bonePoses[3];
-    bonePose->boneID = 3;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-    
-    bonePose = &restPose->bonePoses[4];
-    bonePose->boneID = 4;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-    
-    bonePose = &restPose->bonePoses[5];
-    bonePose->boneID = 5;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-    
-    bonePose = &restPose->bonePoses[6];
-    bonePose->boneID = 6;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-    
-    bonePose = &restPose->bonePoses[7];
-    bonePose->boneID = 7;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-    
-    bonePose = &restPose->bonePoses[8];
-    bonePose->boneID = 8;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-    
-    bonePose = &restPose->bonePoses[9];
-    bonePose->boneID = 9;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = Quaternion();
-
     // define curled up pose
-    skeleton_pose *curledPose = &skeletalGame->poses[1];
-    bonePose = &curledPose->bonePoses[0];
-    bonePose->boneID = 0;
-    bonePose->localPos = Vector3(0.0f, 1.0f, 0.0f);
-    bonePose->localRotation = Quaternion();
+    //skeleton_pose *curledPose = &skeletalGame->poses[1];
+    //bonePose = &curledPose->bonePoses[0];
+    //bonePose->boneID = 0;
+    //bonePose->localPos = Vector3(0.0f, 1.0f, 0.0f);
+    //bonePose->localRotation = Quaternion();
 
-    bonePose = &curledPose->bonePoses[1];
-    bonePose->boneID = 1;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
+    //bonePose = &curledPose->bonePoses[1];
+    //bonePose->boneID = 1;
+    //bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+    //bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f));
+    //
+    //bonePose = &curledPose->bonePoses[2];
+    //bonePose->boneID = 2;
+    //bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+    //bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f));
     
-    bonePose = &curledPose->bonePoses[2];
-    bonePose->boneID = 2;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-    
-    bonePose = &curledPose->bonePoses[3];
-    bonePose->boneID = 3;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-    
-    bonePose = &curledPose->bonePoses[4];
-    bonePose->boneID = 4;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-    
-    bonePose = &curledPose->bonePoses[5];
-    bonePose->boneID = 5;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-    
-    bonePose = &curledPose->bonePoses[6];
-    bonePose->boneID = 6;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-    
-    bonePose = &curledPose->bonePoses[7];
-    bonePose->boneID = 7;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-    
-    bonePose = &curledPose->bonePoses[8];
-    bonePose->boneID = 8;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-    
-    bonePose = &curledPose->bonePoses[9];
-    bonePose->boneID = 9;
-    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 2.5f);
-
     // calculate inverse rest transforms
     // TODO(ebuchholz): determine if bones should have their own rotation/position properties
+    skeleton_pose *currentPose = &skeletalGame->poses[0]; // assume 0 is rest pose
     for (int i = 0; i < skeletalGame->numBones; ++i) {
         skeleton_bone *currentBone = &skeletalGame->bones[i];
-        skeleton_bone_pose *currentBonePose = &restPose->bonePoses[i];
+        skeleton_bone_pose *currentBonePose = &currentPose->bonePoses[i];
         assert(i == currentBonePose->boneID);
 
         matrix4x4 localTransform = matrix4x4FromQuaternion(currentBonePose->localRotation);
@@ -238,6 +123,12 @@ void calculateBoneTransforms (skeletal_game *skeletalGame) {
     }
 }
 
+void playAnimation (int animationID, animation_state *animationState, skeleton_bone *bones, 
+                    skeleton_animation *animations, skeleton_pose *poses) 
+{
+
+} 
+
 void updateSkeletalGame (memory_arena *memory, memory_arena *tempMemory, game_assets *assets, game_input *input, 
                          skeletal_game *skeletalGame, sprite_list *spriteList, render_command_list * renderCommands)
 {
@@ -265,22 +156,52 @@ void updateSkeletalGame (memory_arena *memory, memory_arena *tempMemory, game_as
 
     // hack together an arm animation
     static float t = 0.0f;
-    t += DELTA_TIME;
+    t += DELTA_TIME * 1.7f;
 
     float blendT = 0.0f;
     skeleton_pose *currentPose;
     skeleton_pose *nextPose;
 
     if (t > 2.0f) { t -= 2.0f; }
-    if (t < 1.0f) {
-        blendT = t;
-        currentPose = &skeletalGame->poses[0];
-        nextPose = &skeletalGame->poses[1];
-    }
-    else {
-        blendT = t - 1.0f;
+    if (t < 0.25f) {
+        blendT = t / 0.25f;
         currentPose = &skeletalGame->poses[1];
-        nextPose = &skeletalGame->poses[0];
+        nextPose = &skeletalGame->poses[2];
+    }
+    else if (t >= 0.25f && t < 0.5f) {
+        blendT = (t - 0.25f) / 0.25f;
+        currentPose = &skeletalGame->poses[2];
+        nextPose = &skeletalGame->poses[3];
+    }
+    else if (t >= 0.5f && t < 0.75f) {
+        blendT = (t - 0.5f) / 0.25f;
+        currentPose = &skeletalGame->poses[3];
+        nextPose = &skeletalGame->poses[4];
+    }
+    else if (t >= 0.75f && t < 1.0f) {
+        blendT = (t - 0.75f) / 0.25f;
+        currentPose = &skeletalGame->poses[4];
+        nextPose = &skeletalGame->poses[5];
+    }
+    else if (t >= 1.0f && t < 1.25f) {
+        blendT = (t - 1.0f) / 0.25f;
+        currentPose = &skeletalGame->poses[5];
+        nextPose = &skeletalGame->poses[6];
+    }
+    else if (t >= 1.25f && t < 1.5f) {
+        blendT = (t - 1.25f) / 0.25f;
+        currentPose = &skeletalGame->poses[6];
+        nextPose = &skeletalGame->poses[7];
+    }
+    else if (t >= 1.5f && t < 1.75f) {
+        blendT = (t - 1.5f) / 0.25f;
+        currentPose = &skeletalGame->poses[7];
+        nextPose = &skeletalGame->poses[8];
+    }
+    else {//if (t >= 1.75f && t < 2.0f) {
+        blendT = (t - 1.75f) / 0.25f;
+        currentPose = &skeletalGame->poses[8];
+        nextPose = &skeletalGame->poses[1];
     }
 
     // calculate interpolated positions/rotations
@@ -291,7 +212,7 @@ void updateSkeletalGame (memory_arena *memory, memory_arena *tempMemory, game_as
         assert(i == currentBonePose->boneID);
         assert(i == nextBonePose->boneID);
 
-        bone->localPos = currentBonePose->localPos + blendT * (nextBonePose->localPos - currentBonePose->localPos);
+        bone->localPos = currentBonePose->localPos * (1.0f - blendT) + blendT * (nextBonePose->localPos);
         bone->localRotation = lerp(currentBonePose->localRotation, nextBonePose->localRotation, blendT);
     }
 
@@ -301,7 +222,8 @@ void updateSkeletalGame (memory_arena *memory, memory_arena *tempMemory, game_as
     matrix4x4 lengthMatrix = scaleMatrix4x4(0.125f, 0.125f, 0.5f);
     lengthMatrix = translationMatrix(0.0f, 0.0f, 0.5f) * lengthMatrix;
 
-    for (int i = 0; i < skeletalGame->numBones; ++i) {
+    // NOTE(ebuchholz): skip root for now so it doesn't look... suggestive
+    for (int i = 1; i < skeletalGame->numBones; ++i) {
         skeleton_bone *bone = &skeletalGame->bones[i];
         matrix4x4 boneTransform = bone->transform;
 
