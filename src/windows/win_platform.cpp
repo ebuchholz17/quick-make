@@ -295,6 +295,15 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 asset_to_load *assetToLoad = assetList.assetsToLoad + i;
                 workingAssetMemory.size = 0;
                 switch (assetToLoad->type){
+                    // catch-all for text files? no work to be done on platform except reading the file
+                    case ASSET_TYPE_ANIMATION_DATA: {
+                        // TODO(ebuchholz): define real skeleton+animations file format define real skeleton+animations file format define real skeleton+animations file format define real skeleton+animations file format define real skeleton+animations file format
+                        char *fileData = 0;
+                        //char *fileData = readEntireTextFile(assetToLoad->path);
+                        parseGameAsset(fileData, 0, assetToLoad->type, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory);
+                        //free(fileData);
+                    } break;
                     case ASSET_TYPE_OBJ: {
                         char *fileData = readEntireTextFile(assetToLoad->path);
                         parseGameAsset(fileData, 0, ASSET_TYPE_OBJ, assetToLoad->key, assetToLoad->secondKey, 

@@ -1,5 +1,15 @@
 void setupSkeleton (skeletal_game *skeletalGame) {
     // TODO(ebuchholz): load from a file
+
+//         0
+//        1|2
+//       o-o-o 
+//     3 |   | 4
+//       o   o 
+//     5 |   | 6
+//     --o   o--
+//       7   8
+
     skeletalGame->numBones = 9;
     skeleton_bone *bone = &skeletalGame->bones[0];
     bone->parentID = -1;
@@ -517,38 +527,38 @@ void setupSkeleton (skeletal_game *skeletalGame) {
 
     // walking
     skeleton_animation *walkingAnimation = &skeletalGame->animations[1];
-    idleAnimation->numKeyFrames = 8;
-    idleAnimation->duration = 1.2f;
+    walkingAnimation->numKeyFrames = 8;
+    walkingAnimation->duration = 0.72f;
 
     keyframe = &walkingAnimation->keyframes[0];
     keyframe->t = 0.0f;
     keyframe->poseID = 1;
 
     keyframe = &walkingAnimation->keyframes[1];
-    keyframe->t = 0.15f;
+    keyframe->t = 0.09f;
     keyframe->poseID = 2;
 
     keyframe = &walkingAnimation->keyframes[2];
-    keyframe->t = 0.3f;
+    keyframe->t = 0.18f;
     keyframe->poseID = 3;
 
     keyframe = &walkingAnimation->keyframes[3];
-    keyframe->t = 0.45f;
+    keyframe->t = 0.27f;
     keyframe->poseID = 4;
 
     keyframe = &walkingAnimation->keyframes[4];
-    keyframe->t = 0.6f;
+    keyframe->t = 0.36f;
     keyframe->poseID = 5;
 
     keyframe = &walkingAnimation->keyframes[5];
-    keyframe->t = 0.75f;
+    keyframe->t = 0.45f;
     keyframe->poseID = 6;
 
     keyframe = &walkingAnimation->keyframes[6];
-    keyframe->t = 0.9f;
+    keyframe->t = 0.54f;
     keyframe->poseID = 7;
 
     keyframe = &walkingAnimation->keyframes[7];
-    keyframe->t = 0.105f;
+    keyframe->t = 0.63f;
     keyframe->poseID = 8;
 }

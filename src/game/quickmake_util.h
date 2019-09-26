@@ -8,6 +8,11 @@ void *allocateMemorySize (memory_arena *memory, unsigned int size) {
     return result;
 }
 
+void freeMemorySize (memory_arena *memory, unsigned int size) {
+    assert(memory->size - size >= 0);
+    memory->size -= size;
+}
+
 void readLine (char *data, char **start, char **end) {
     *start = data;
     int index = 0;
@@ -130,6 +135,22 @@ char *numToString (int num, memory_arena *memory) {
     string[stringLength] = 0;
 
     return string;
+}
+
+char *allocateString (char *string, memory_arena *memory) {
+    int length = 0;
+    char *letter = string;
+    while(*letter != 0) {
+        ++letter;
+        ++length;
+    }
+    char *newString = (char *)allocateMemorySize(memory, sizeof(char) * (length+1));
+
+    for (int i = 0; i < length; ++i) {
+        newString[i] = string[i];
+    }
+    newString[length] = 0;
+    return newString;
 }
 
 char *appendString (char *first, char *second, memory_arena *memory) {

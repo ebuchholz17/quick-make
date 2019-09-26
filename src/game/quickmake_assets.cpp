@@ -205,7 +205,6 @@ void parseOBJ (void *objData, game_assets *assets, int key, memory_arena *workin
     //}
 }
 
-// parses .obj but also makes a copy of some of the data to use for level data
 void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
     int numTextures = assets->numTextures;
     assert(numTextures < MAX_NUM_TEXTURES);
@@ -260,6 +259,768 @@ void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *wo
         numBitmapValues += 4;
     }
 }
+
+void parseAnimationData (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
+    // ignore file data for now
+    int numAnimationData = assets->numAnimationData;
+    assert(numAnimationData < MAX_NUM_ANIMATION_DATA);
+
+    animation_data *animationDataAsset = (animation_data *)allocateMemorySize(&assets->assetMemory, sizeof(animation_data)); 
+    assets->animationData[key] = animationDataAsset;
+    assets->numAnimationData++;
+    animationDataAsset->key = (animation_data_key)key;
+
+    // TODO(ebuchholz): replace with actual file parsing
+    switch (key) {
+        case ANIMATION_DATA_KEY_LEGS: {
+            // set up bone hierarchy
+            int numBones = 9;
+            animationDataAsset->numBones = numBones;
+            animationDataAsset->boneHierarchy = (int *)allocateMemorySize(&assets->assetMemory, sizeof(int) * numBones);
+
+            int *boneHierarchy = animationDataAsset->boneHierarchy;
+            boneHierarchy[0] = -1;
+            boneHierarchy[1] = 0;
+            boneHierarchy[2] = 0;
+            boneHierarchy[3] = 1;
+            boneHierarchy[4] = 2;
+            boneHierarchy[5] = 3;
+            boneHierarchy[6] = 4;
+            boneHierarchy[7] = 5;
+            boneHierarchy[8] = 6;
+
+            // set up poses, t-pose and walking animation poses
+            int numPoses = 9;
+            animationDataAsset->numPoses = numPoses;
+            animationDataAsset->poses = (skeleton_pose *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_pose) * numPoses);
+
+            skeleton_pose *poses = animationDataAsset->poses;
+            for (int i = 0; i < numPoses; ++i) {
+                skeleton_pose *pose = &poses[i];
+                pose->numBones = numBones;
+                pose->bonePoses = (skeleton_bone_pose *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_bone_pose) * numBones);
+            }
+
+            // rest pose
+            skeleton_pose *restPose = &poses[0];
+            skeleton_bone_pose *bonePose = &restPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.5f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &restPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &restPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &restPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f);
+
+            bonePose = &restPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f);
+            
+            // shins
+            bonePose = &restPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+            
+            bonePose = &restPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            // feet
+            bonePose = &restPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f);
+
+            bonePose = &restPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f);
+
+            // left foot passing right
+            // root
+            skeleton_pose *currentPose = &poses[1];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.5f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.1f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.25f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), 1.25f);
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.1f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f + 0.3f);
+
+            // left foot up frame
+            currentPose = &poses[2];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.6f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.4f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.55f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), 0.8f);
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.1f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f + 0.1f);
+            // left foot contact
+            currentPose = &poses[3];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.5f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.65f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.65f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f);
+
+            // left foot down
+            currentPose = &poses[4];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.4f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.6f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.7f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +1.1f);
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +0.8f);
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.2f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.1f);
+
+            // right foot passing left
+            // root
+            currentPose = &poses[5];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.5f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.25f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.1f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), 1.2f);
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f + 0.3f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.1f);
+
+            // right foot up frame
+            currentPose = &poses[6];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.6f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.55f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.4f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), 0.8f);
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f + 0.1f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.1f);
+            // right foot contact
+            currentPose = &poses[7];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.5f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.65f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.65f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f);
+
+            // right foot down
+            currentPose = &poses[8];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.4f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            // hips
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f);
+            
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f);
+
+            // thighs
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), +PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f - 0.7f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), -PI/2.0f) *
+                                      quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +PI/2.0f + 0.6f);
+            
+            // shins
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +0.8f);
+            
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), +1.1f);
+
+            // feet
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.1f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f - 0.2f);
+
+            // set up animations, idle and walking
+            int numAnimations = 2;
+            animationDataAsset->numAnimations = numAnimations;
+            animationDataAsset->animations = (skeleton_animation *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_animation) * numAnimations);
+
+            skeleton_animation *animations = animationDataAsset->animations;
+
+            // idle
+            skeleton_animation *animation = &animations[0];
+            animation->numKeyFrames = 1;
+            animation->keyframes = (skeleton_keyframe *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_keyframe) * animation->numKeyFrames);
+            animation->duration = 0.0f;
+            animation->key = allocateString("idle", &assets->assetMemory);
+            animation->id = 0;
+
+            skeleton_keyframe *keyframe = &animation->keyframes[0];
+            keyframe->t = 0.0f;
+            keyframe->poseID = 0;
+
+            // walking
+            animation = &animations[1];
+            animation->numKeyFrames = 8;
+            animation->keyframes = (skeleton_keyframe *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_keyframe) * animation->numKeyFrames);
+            animation->duration = 0.72f;
+            animation->key = allocateString("walking", &assets->assetMemory);
+            animation->id = 1;
+
+            keyframe = &animation->keyframes[0];
+            keyframe->t = 0.0f;
+            keyframe->poseID = 1;
+
+            keyframe = &animation->keyframes[1];
+            keyframe->t = 0.09f;
+            keyframe->poseID = 2;
+
+            keyframe = &animation->keyframes[2];
+            keyframe->t = 0.18f;
+            keyframe->poseID = 3;
+
+            keyframe = &animation->keyframes[3];
+            keyframe->t = 0.27f;
+            keyframe->poseID = 4;
+
+            keyframe = &animation->keyframes[4];
+            keyframe->t = 0.36f;
+            keyframe->poseID = 5;
+
+            keyframe = &animation->keyframes[5];
+            keyframe->t = 0.45f;
+            keyframe->poseID = 6;
+
+            keyframe = &animation->keyframes[6];
+            keyframe->t = 0.54f;
+            keyframe->poseID = 7;
+
+            keyframe = &animation->keyframes[7];
+            keyframe->t = 0.63f;
+            keyframe->poseID = 8;
+
+        } break;
+        case ANIMATION_DATA_KEY_MULTI_ELBOW: {
+            // set up bone hierarchy
+            int numBones = 10;
+            animationDataAsset->numBones = numBones;
+            animationDataAsset->boneHierarchy = (int *)allocateMemorySize(&assets->assetMemory, sizeof(int) * numBones);
+
+            int *boneHierarchy = animationDataAsset->boneHierarchy;
+            boneHierarchy[0] = -1;
+            boneHierarchy[1] = 0;
+            boneHierarchy[2] = 1;
+            boneHierarchy[3] = 2;
+            boneHierarchy[4] = 3;
+            boneHierarchy[5] = 4;
+            boneHierarchy[6] = 5;
+            boneHierarchy[7] = 6;
+            boneHierarchy[8] = 7;
+            boneHierarchy[9] = 8;
+
+            // set up poses, t-pose and walking animation poses
+            int numPoses = 2;
+            animationDataAsset->numPoses = numPoses;
+            animationDataAsset->poses = (skeleton_pose *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_pose) * numPoses);
+
+            skeleton_pose *poses = animationDataAsset->poses;
+            for (int i = 0; i < numPoses; ++i) {
+                skeleton_pose *pose = &poses[i];
+                pose->numBones = numBones;
+                pose->bonePoses = (skeleton_bone_pose *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_bone_pose) * numBones);
+            }
+
+            // rest pose
+            skeleton_pose *restPose = &poses[0];
+            skeleton_bone_pose *bonePose = &restPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            bonePose = &restPose->bonePoses[9];
+            bonePose->boneID = 9;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = Quaternion();
+
+            // curled
+            // root
+            skeleton_pose *currentPose = &poses[1];
+            bonePose = &currentPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[1];
+            bonePose->boneID = 1;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[2];
+            bonePose->boneID = 2;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[3];
+            bonePose->boneID = 3;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[4];
+            bonePose->boneID = 4;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[5];
+            bonePose->boneID = 5;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[6];
+            bonePose->boneID = 6;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[7];
+            bonePose->boneID = 7;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[8];
+            bonePose->boneID = 8;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            bonePose = &currentPose->bonePoses[9];
+            bonePose->boneID = 9;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+
+            // set up animations, idle and walking
+            int numAnimations = 1;
+            animationDataAsset->numAnimations = numAnimations;
+            animationDataAsset->animations = (skeleton_animation *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_animation) * numAnimations);
+
+            skeleton_animation *animations = animationDataAsset->animations;
+
+            // curling
+            skeleton_animation *animation = &animations[0];
+            animation->numKeyFrames = 2;
+            animation->keyframes = (skeleton_keyframe *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_keyframe) * animation->numKeyFrames);
+            animation->duration = 2.0f;
+            animation->key = allocateString("curling", &assets->assetMemory);
+            animation->id = 0;
+
+            skeleton_keyframe *keyframe = &animation->keyframes[0];
+            keyframe->t = 0.0f;
+            keyframe->poseID = 0;
+
+            keyframe = &animation->keyframes[1];
+            keyframe->t = 1.0f;
+            keyframe->poseID = 1;
+        } break;
+    }
+}
+
+animation_data *getAnimationData (animation_data_key animationDataKey, game_assets *assets) {
+    assert(animationDataKey < assets->numAnimationData);
+    animation_data *animationDataAsset = assets->animationData[animationDataKey]; 
+    return animationDataAsset;
+}
+
+skeleton_animation *getAnimationFromData (animation_data *animationData, char *animationKey) {
+    skeleton_animation *result = 0;
+    for (int i = 0; i < animationData->numAnimations; ++i) {
+        skeleton_animation *animation = &animationData->animations[i];
+        char *currentKey = animation->key;
+        if (stringsAreEqual(animationKey, currentKey)) {
+            result = animation;
+            break;
+        }
+    }
+
+    assert(result != 0);
+    return result;
+}
+
+// get animation function
 
 // djb2
 // http://www.cse.yorku.ca/~oz/hash.html

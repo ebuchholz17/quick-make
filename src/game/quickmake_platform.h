@@ -16,7 +16,8 @@ struct memory_arena {
 enum asset_type {
     ASSET_TYPE_OBJ,
     ASSET_TYPE_BMP,
-    ASSET_TYPE_ATLAS
+    ASSET_TYPE_ATLAS,
+    ASSET_TYPE_ANIMATION_DATA
 };
 
 struct asset_to_load {
