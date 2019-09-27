@@ -118,6 +118,36 @@ void loadRendererMesh (renderer_memory *memory, loaded_mesh_asset *loadedMesh) {
     mesh->numIndices = loadedMesh->indices.count;
 }
 
+void loadRendererAnimatedMesh (renderer_memory *memory, loaded_animated_mesh_asset *loadedMesh) {
+    openGL_renderer *renderer = (openGL_renderer *)memory->memory;
+    assert(renderer->numMeshes < MAX_OPENGL_MESHES);
+    // TODO(ebuchholz): triple check that the keys will line up this way
+    openGL_animated_mesh *mesh = &renderer->animatedMeshes[loadedMesh->key];
+    renderer->numMeshes++;
+
+    glGenBuffers(1, &mesh->positionBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->positionBuffer);
+    glBufferData(GL_ARRAY_BUFFER, loadedMesh->positions.count * sizeof(float), loadedMesh->positions.values, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &mesh->texCoordBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->texCoordBuffer);
+    glBufferData(GL_ARRAY_BUFFER, loadedMesh->texCoords.count * sizeof(float), loadedMesh->texCoords.values, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &mesh->normalBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->normalBuffer);
+    glBufferData(GL_ARRAY_BUFFER, loadedMesh->normals.count * sizeof(float), loadedMesh->normals.values, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &mesh->boneIndexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->boneIndexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, loadedMesh->boneIndices.count * sizeof(int), loadedMesh->boneIndices.values, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &mesh->indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, loadedMesh->indices.count * sizeof(int), loadedMesh->indices.values, GL_STATIC_DRAW);
+
+    mesh->numIndices = loadedMesh->indices.count;
+}
+
 void loadRendererTexture (renderer_memory *memory, loaded_texture_asset *loadedTexture) {
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
     assert(renderer->numTextures < MAX_OPENGL_TEXTURES);
@@ -324,6 +354,66 @@ void drawModel (openGL_renderer *renderer, GLuint program, render_command_model 
 
     GLint projMatrixLocation = glGetUniformLocation(program, "projMatrix");
     glUniformMatrix4fv(projMatrixLocation, 1, true, renderer->projMatrix.m);
+
+    openGL_texture *texture = &renderer->textures[modelCommand->textureKey];
+
+    glActiveTexture(GL_TEXTURE0);
+    GLuint textureLocation = glGetUniformLocation(program, "texture");
+    glUniform1i(textureLocation, 0);
+    glBindTexture(GL_TEXTURE_2D, texture->textureID);
+
+    glDrawElements(GL_TRIANGLES, mesh->numIndices, GL_UNSIGNED_INT, 0);
+}
+
+void drawAnimatedModel (openGL_renderer *renderer, GLuint program, render_command_animated_model *modelCommand) {
+    openGL_animated_mesh *mesh = &renderer->animatedMeshes[modelCommand->animatedMeshKey];
+
+    // TODO(ebuchholz): have a way to avoid finding and settings attributes/uniforms for each
+    // time we draw a mesh
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->positionBuffer);
+    GLint positionLocation = glGetAttribLocation(program, "position");
+    glEnableVertexAttribArray(positionLocation);
+    glVertexAttribPointer(positionLocation, 3, GL_FLOAT, FALSE, 0, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->texCoordBuffer);
+    GLint texCoordLocation = glGetAttribLocation(program, "texCoord");
+    glEnableVertexAttribArray(texCoordLocation);
+    glVertexAttribPointer(texCoordLocation, 2, GL_FLOAT, FALSE, 0, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->normalBuffer);
+    GLint normalLocation = glGetAttribLocation(program, "normal");
+    glEnableVertexAttribArray(normalLocation);
+    glVertexAttribPointer(normalLocation, 3, GL_FLOAT, FALSE, 0, 0);
+
+    // TODO(ebuchholz): implement this
+    //glBindBuffer(GL_ARRAY_BUFFER, mesh->boneIndexBuffer);
+    //GLint boneIndexLocation = glGetAttribLocation(program, "boneIndex");
+    //glEnableVertexAttribArray(boneIndexLocation);
+    //glVertexAttribPointer(boneIndexLocation, 1, GL_UNSIGNED_INT, FALSE, 0, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer);
+
+    // NOTE(ebuchholz): run_around_math matrices memory-order is
+    // x0 y0 z0 
+    // x1 y1 z1
+    // x2 y2 z2
+    // but OpenGL memory-order is
+    // x0 x1 x2
+    // y0 y1 y2
+    // z0 z1 z2
+    // so glUniformMatrixNfv calls are transposed, and both in the run_around_game code and 
+    // opengl shaders, matrices are multiplied like column major matrices (proj * view * model)
+    // TODO(ebuchholz): better to multiply these ahead of time
+    GLint modelMatrixLocation = glGetUniformLocation(program, "modelMatrix");
+    glUniformMatrix4fv(modelMatrixLocation, 1, true, modelCommand->modelMatrix.m);
+
+    GLint viewMatrixLocation = glGetUniformLocation(program, "viewMatrix");
+    glUniformMatrix4fv(viewMatrixLocation, 1, true, renderer->viewMatrix.m);
+
+    GLint projMatrixLocation = glGetUniformLocation(program, "projMatrix");
+    glUniformMatrix4fv(projMatrixLocation, 1, true, renderer->projMatrix.m);
+
+    // TODO(ebuchholz): load up some bones
 
     openGL_texture *texture = &renderer->textures[modelCommand->textureKey];
 
@@ -595,6 +685,19 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
                                             renderCommandOffset);
                 drawModel(renderer, program, modelCommand);
                 renderCommandOffset += sizeof(render_command_model);
+            } break;
+            case RENDER_COMMAND_ANIMATED_MODEL: 
+            {
+                // TODO(ebuchholz): have a way to not have to set the program for command
+                GLuint program = renderer->shaders[SHADER_TYPE_DEFAULT].program;
+                glUseProgram(program);
+
+                render_command_animated_model *animatedModelCommand = 
+                    (render_command_animated_model *)((char *)renderCommands->memory.base + 
+                                                      renderCommandOffset);
+                drawAnimatedModel(renderer, program, animatedModelCommand);
+                renderCommandOffset += sizeof(render_command_animated_model);
+                renderCommandOffset += sizeof(matrix4x4) * animatedModelCommand->numBones; // also account for the bone Data
             } break;
             case RENDER_COMMAND_LINES: 
             {

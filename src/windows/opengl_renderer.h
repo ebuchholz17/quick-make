@@ -198,6 +198,17 @@ struct openGL_mesh {
     int numIndices;
 };
 
+// TODO(ebuchholz): unify animated and regular meshes?
+struct openGL_animated_mesh {
+    int key;
+    GLuint positionBuffer;
+    GLuint texCoordBuffer;
+    GLuint normalBuffer;
+    GLuint boneIndexBuffer;
+    GLuint indexBuffer;
+    int numIndices;
+};
+
 struct openGL_texture {
     int key;
     int width;
@@ -206,6 +217,7 @@ struct openGL_texture {
 };
 
 #define MAX_OPENGL_MESHES 100
+#define MAX_OPENGL_ANIMATED_MESHES 100
 #define MAX_OPENGL_TEXTURES 100
 #define MAX_SPRITES_PER_BATCH 1000
 
@@ -218,9 +230,12 @@ struct openGL_renderer {
 
     int numMeshes;
     openGL_mesh meshes[MAX_OPENGL_MESHES];
+    int numAnimatedMeshes;
+    openGL_animated_mesh animatedMeshes[MAX_OPENGL_ANIMATED_MESHES];
     int numTextures;
     openGL_texture textures[MAX_OPENGL_TEXTURES];
 
+    // TODO(ebuchholz): push/pop matrix style api, instead of setting these matrices
     matrix4x4 viewMatrix;
     matrix4x4 projMatrix;
 

@@ -312,6 +312,15 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
                         loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
                     } break;
+                    case ASSET_TYPE_QMM: {
+                        char *fileData = 0;
+                        //char *fileData = readEntireTextFile(assetToLoad->path);
+                        parseGameAsset(fileData, 0, ASSET_TYPE_QMM, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory);
+                        //free(fileData);
+
+                        loadRendererAnimatedMesh(&rendererMemory, (loaded_animated_mesh_asset *)workingAssetMemory.base);
+                    } break;
                     case ASSET_TYPE_BMP: {
                         FILE *bmpFile; 
                         fopen_s(&bmpFile, assetToLoad->path, "rb");

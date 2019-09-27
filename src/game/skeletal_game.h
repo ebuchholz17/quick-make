@@ -13,14 +13,6 @@ struct debug_camera {
     vector3 up;
 };
 
-struct skeleton_bone {
-    matrix4x4 transform;
-    matrix4x4 inverseRestTransform;
-    quaternion localRotation;
-    vector3 localPos;
-    int parentID;
-};
-
 struct animation_state {
     int animationID;
     int currentKeyframe;
@@ -51,6 +43,8 @@ struct skeletal_game {
 
     walking_legs walkingLegs[6];
     curling_elbows curlingElbows[6];
+
+    combined_animation_state snakeAnimationState;
 };
 
 #endif

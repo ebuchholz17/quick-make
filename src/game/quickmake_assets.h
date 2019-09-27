@@ -11,8 +11,18 @@ struct mesh_asset {
     // maybe save a copy of vertices and things like that
 };
 
+enum animated_mesh_key {
+    ANIM_MESH_KEY_TUBE_SNAKE
+};
+
+struct animated_mesh_asset {
+    animated_mesh_key key;
+    // maybe save a copy of vertices and things like that
+};
+
 enum texture_key {
     TEXTURE_KEY_BLUE,
+    TEXTURE_KEY_SNAKE_PATTERN,
     TEXTURE_KEY_FONT,
     TEXTURE_KEY_GAME_ATLAS
 };
@@ -47,6 +57,15 @@ struct atlas_asset {
     int width;
     int height;
 };
+
+// TODO(ebuchholz): maybe pack just the transforms together separately?
+struct skeleton_bone {
+    matrix4x4 transform;
+    quaternion localRotation;
+    vector3 localPos;
+    int parentID;
+};
+
 
 struct skeleton_bone_pose {
     quaternion localRotation;
@@ -85,9 +104,9 @@ enum animation_data_key {
 
 struct animation_data {
     int *boneHierarchy; // parent IDs, should be something like: [-1, 0, 0, 1, 2, 3, 4]
+    matrix4x4 *inverseRestTransforms;
     int numBones;
 
-    // TODO(ebuchholz): maybe just store the bones directly
     skeleton_pose *poses;
     int numPoses;
 
@@ -128,6 +147,7 @@ struct bitmap_header {
 
 // TODO(ebuchholz): pick reasonable numbers, or make it more dynamic
 #define MAX_NUM_MESHES 100
+#define MAX_NUM_ANIMATED_MESHES 30
 #define MAX_NUM_TEXTURES 100
 #define MAX_NUM_ATLASES 20
 
@@ -140,6 +160,9 @@ struct game_assets {
     // TODO(ebuchholz): remove pointer arrays, make them regular arrays, don't remember why they are pointers
     mesh_asset *meshes[MAX_NUM_MESHES];
     int numMeshes;
+
+    animated_mesh_asset *animatedMeshes[MAX_NUM_ANIMATED_MESHES];
+    int numAnimatedMeshes;
 
     texture_asset *textures[MAX_NUM_TEXTURES];
     int numTextures;

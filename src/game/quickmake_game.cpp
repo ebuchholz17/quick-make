@@ -57,7 +57,9 @@ static void initInstruments (game_sounds *gameSounds) {
 // TODO(ebuchholz): Maybe pack everything into a single file and load that?
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
+    pushAsset(assetList, "fakeFile", ASSET_TYPE_QMM, ANIM_MESH_KEY_TUBE_SNAKE);
     pushAsset(assetList, "assets/textures/blue.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_BLUE);
+    pushAsset(assetList, "assets/textures/snake_pattern.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_SNAKE_PATTERN);
     pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
     pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_LEGS);
     pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_MULTI_ELBOW);
@@ -97,6 +99,9 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
         break;
     case ASSET_TYPE_OBJ:
         parseOBJ(assetData, &gameState->assets, key, workingMemory);
+        break;
+    case ASSET_TYPE_QMM:
+        parseQMM(assetData, &gameState->assets, key, workingMemory);
         break;
     case ASSET_TYPE_BMP:
         parseBitmap(assetData, &gameState->assets, key, workingMemory);

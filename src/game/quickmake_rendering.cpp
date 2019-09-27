@@ -91,6 +91,31 @@ static void drawModel (mesh_key meshKey, texture_key textureKey,
     modelCommand->modelMatrix = modelMatrix;
 }
 
+static void drawAnimatedModel (animated_mesh_key meshKey, texture_key textureKey, 
+                               matrix4x4 modelMatrix, 
+                               skeleton_bone *bones, matrix4x4 *inverseTransforms, int numBones, 
+                               render_command_list *renderCommands) 
+{
+    render_command_animated_model *animatedModelCommand = 
+        (render_command_animated_model *)pushRenderCommand(renderCommands,
+                                                 RENDER_COMMAND_ANIMATED_MODEL,
+                                                 sizeof(render_command_animated_model));
+    animatedModelCommand->animatedMeshKey = meshKey;
+    animatedModelCommand->textureKey = textureKey;
+    animatedModelCommand->modelMatrix = modelMatrix;
+
+    assert(renderCommands->memory.size + sizeof(matrix4x4) * numBones < renderCommands->memory.capacity);
+
+    matrix4x4 *boneMatrices = (matrix4x4 *)((char *)renderCommands->memory.base + renderCommands->memory.size);
+    renderCommands->memory.size += sizeof(matrix4x4) * numBones;
+    animatedModelCommand->boneMatrices = boneMatrices;
+    animatedModelCommand->numBones = numBones;
+
+    for (int i = 0; i < numBones; ++i) {
+        animatedModelCommand->boneMatrices[i] = inverseTransforms[i] * bones[i].transform;
+    }
+}
+
 #if 0
 
 static render_command_lines *startLines (render_command_list *renderCommands) {

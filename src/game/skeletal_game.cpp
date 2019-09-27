@@ -1,5 +1,4 @@
 #include "skeletal_game.h"
-//#include "skeletal_pose_setup.cpp"
 
 
 void debugCameraMovement (debug_camera *debugCamera, game_input *input) {
@@ -59,28 +58,7 @@ void initSkeletalGame (memory_arena *memory, skeletal_game* skeletalGame) {
     debugCamera->lastPointerX = 0;
     debugCamera->lastPointerY = 0;
 
-    // TODO(ebuchholz): dynamically allocate some skeletones, poses, animations
-    // calculate transforms for skeletons
-    // move to asset system- load some hardcoded assets instead of files for now
-    //setupSkeleton(skeletalGame, memory);
-    
-    // define curled up pose
-    //skeleton_pose *curledPose = &skeletalGame->poses[1];
-    //bonePose = &curledPose->bonePoses[0];
-    //bonePose->boneID = 0;
-    //bonePose->localPos = Vector3(0.0f, 1.0f, 0.0f);
-    //bonePose->localRotation = Quaternion();
-
-    //bonePose = &curledPose->bonePoses[1];
-    //bonePose->boneID = 1;
-    //bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    //bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f));
-    //
-    //bonePose = &curledPose->bonePoses[2];
-    //bonePose->boneID = 2;
-    //bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-    //bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f));
-
+    // state for animated models
     for (int i = 0; i < 6; ++i) {
         skeletalGame->walkingLegs[i] = {};
         skeletalGame->walkingLegs[i].animState.animationState.animationID = -1;
@@ -112,28 +90,10 @@ void initSkeletalGame (memory_arena *memory, skeletal_game* skeletalGame) {
     skeletalGame->curlingElbows[3].x = 9.0f;
     skeletalGame->curlingElbows[4].x = 12.0f;
     skeletalGame->curlingElbows[5].x = 15.0f;
-    
-    
-    // calculate inverse rest transforms
-    // TODO(ebuchholz): determine if bones should have their own rotation/position properties
-    //skeleton_pose *currentPose = &skeletalGame->poses[0]; // assume 0 is rest pose
-    //for (int i = 0; i < skeletalGame->numBones; ++i) {
-    //    skeleton_bone *currentBone = &skeletalGame->bones[i];
-    //    skeleton_bone_pose *currentBonePose = &currentPose->bonePoses[i];
-    //    assert(i == currentBonePose->boneID);
 
-    //    matrix4x4 localTransform = matrix4x4FromQuaternion(currentBonePose->localRotation);
-    //    localTransform = translationMatrix(currentBonePose->localPos) * localTransform;
-
-    //    if (currentBone->parentID == -1) {
-    //        currentBone->transform = localTransform;
-    //    }
-    //    else {
-    //        skeleton_bone *parentBone = &skeletalGame->bones[currentBone->parentID];
-    //        currentBone->transform = parentBone->transform * localTransform;
-    //    }
-    //    currentBone->inverseRestTransform = inverse(currentBone->transform);
-    //}
+    skeletalGame->snakeAnimationState = {};
+    skeletalGame->snakeAnimationState.animationState.animationID = -1;
+    skeletalGame->snakeAnimationState.prevAnimationState.animationID = -1;
 }
 
 void calculateBoneTransforms (skeleton_bone *bones, int numBones) {
@@ -272,6 +232,7 @@ bool playAnimation (animation_data_key animationDataKey, char *animationKey, com
     }
 
     // allocate some bones from temporary memory
+    // TODO(ebuchholz): should probably remove this bit
     unsigned int skeletonSize = sizeof(skeleton_bone) * numBones;
     skeleton_bone *bones = (skeleton_bone *)allocateMemorySize(tempMemory, skeletonSize);
     for (int i = 0; i < numBones; ++i) {
@@ -361,7 +322,7 @@ void updateWalkingLegs (walking_legs *walkingLegs, memory_arena *tempMemory, gam
     matrix4x4 jointMatrix = scaleMatrix4x4(0.25f);
     matrix4x4 lengthMatrix = scaleMatrix4x4(0.125f, 0.125f, 0.5f);
     lengthMatrix = translationMatrix(0.0f, 0.0f, 0.5f) * lengthMatrix;
-    matrix4x4 wholeModelTranslate = translationMatrix(walkingLegs->x, 0.0f, 0.0f);
+    matrix4x4 wholeModelTranslate = translationMatrix(walkingLegs->x + 15.0f, 0.0f, 0.0f);
 
     // NOTE(ebuchholz): skip root for now so it doesn't look... suggestive
     for (int i = 1; i < numBones; ++i) {
@@ -390,7 +351,7 @@ void updateCurlingElbows (curling_elbows *curlingElbows, memory_arena *tempMemor
     matrix4x4 jointMatrix = scaleMatrix4x4(0.25f);
     matrix4x4 lengthMatrix = scaleMatrix4x4(0.125f, 0.125f, 0.5f);
     lengthMatrix = translationMatrix(0.0f, 0.0f, 0.5f) * lengthMatrix;
-    matrix4x4 wholeModelTranslate = translationMatrix(curlingElbows->x, 0.0f, -10.0f);
+    matrix4x4 wholeModelTranslate = translationMatrix(curlingElbows->x + 15.0f, 0.0f, -10.0f);
 
     for (int i = 0; i < numBones; ++i) {
         skeleton_bone *bone = &bones[i];
@@ -435,4 +396,15 @@ void updateSkeletalGame (memory_arena *memory, memory_arena *tempMemory, game_as
     for (int i = 0; i < 6; ++i) {
         updateCurlingElbows(&skeletalGame->curlingElbows[i], tempMemory, assets, renderCommands);
     }
+
+    matrix4x4 *inverseRestTransforms = getInverseTransformsForAnimatedModel(ANIMATION_DATA_KEY_MULTI_ELBOW, assets);
+
+    skeleton_bone *bones = 0;
+    int numBones = 0;
+
+    playAnimation(ANIMATION_DATA_KEY_MULTI_ELBOW, "curling", &skeletalGame->snakeAnimationState,
+                  true, assets, tempMemory, &bones, &numBones);
+
+    calculateBoneTransforms(bones, numBones);
+    drawAnimatedModel(ANIM_MESH_KEY_TUBE_SNAKE, TEXTURE_KEY_SNAKE_PATTERN, translationMatrix(0.0f, 0.0f, -9.0f), bones, inverseRestTransforms, numBones, renderCommands);
 }

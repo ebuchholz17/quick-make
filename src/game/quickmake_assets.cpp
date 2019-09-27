@@ -205,6 +205,99 @@ void parseOBJ (void *objData, game_assets *assets, int key, memory_arena *workin
     //}
 }
 
+// TODO(ebuchholz): actually parse a custom file type, rather than this hard coded stuff
+void parseQMM (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
+    int numAnimatedMeshes = assets->numAnimatedMeshes;
+    assert(numAnimatedMeshes < MAX_NUM_ANIMATED_MESHES);
+
+    animated_mesh_asset *animatedMeshAsset = (animated_mesh_asset *)allocateMemorySize(&assets->assetMemory, sizeof(animated_mesh_asset));
+    assets->animatedMeshes[key] = animatedMeshAsset;
+    assets->numAnimatedMeshes++;
+    animatedMeshAsset->key = (animated_mesh_key)key;
+
+    loaded_animated_mesh_asset *loadedMesh = (loaded_animated_mesh_asset *)allocateMemorySize(workingMemory, sizeof(loaded_animated_mesh_asset));
+    loadedMesh->key = key;
+
+    switch (key) {
+        default: {
+            assert(false);
+        } break;
+        case ANIM_MESH_KEY_TUBE_SNAKE: {
+            // generate a long cylindrical tube
+            int numSegments = 10;
+            float segmentLength = 1.0f;
+            float totalLength = numSegments * segmentLength;
+            int numRingsPerSegment = 4;
+            float distBetweenRings = segmentLength / (float)numRingsPerSegment;
+
+            int numVerticesPerRing = 8; // +1, duplicated on bottom
+            int numRings = numRingsPerSegment * (1 + numSegments);
+
+            loadedMesh->positions.count = (numVerticesPerRing + 1) * 3 * numRings;
+            loadedMesh->texCoords.count = (numVerticesPerRing + 1) * 2 * numRings;
+            loadedMesh->normals.count = (numVerticesPerRing + 1) * 3 * numRings;
+            loadedMesh->boneIndices.count =  (numVerticesPerRing + 1) * numRings;
+            loadedMesh->indices.count =  6 * numVerticesPerRing * (numRings-1);
+
+            loadedMesh->positions.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->positions.count);
+            loadedMesh->texCoords.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->texCoords.count);
+            loadedMesh->normals.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->normals.count);
+            loadedMesh->boneIndices.values = allocateMemorySize(workingMemory, sizeof(int) * loadedMesh->boneIndices.count);
+            loadedMesh->indices.values = allocateMemorySize(workingMemory, sizeof(int) * loadedMesh->indices.count);
+
+            for (int ringIndex = 0; ringIndex < numRings; ++ringIndex) {
+                for (int vertexIndex = 0; vertexIndex < numVerticesPerRing + 1; ++vertexIndex) {
+                    float angle = 2.0f * PI * ((float)vertexIndex / (float)numVerticesPerRing);
+                    vector3 pos = Vector3();
+                    pos.x = -sinf(angle) * 0.25f;
+                    pos.y = -cosf(angle) * 0.25f;
+                    pos.z = ((float)ringIndex / (float)numRingsPerSegment) * segmentLength;
+
+                    float u = (float)ringIndex / (float)(numRings-1);
+                    float v = (float)vertexIndex / (float)numVerticesPerRing;
+
+                    vector3 normal = pos;
+                    normal.z = 0.0f;
+                    normal = normalize(normal);
+
+                    int boneIndex = ringIndex / numRingsPerSegment;
+
+                    float *positions = (float *)loadedMesh->positions.values + 3 * (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
+                    positions[0] = pos.x;
+                    positions[1] = pos.y;
+                    positions[2] = pos.z;
+
+                    float *texCoords = (float *)loadedMesh->texCoords.values + 2 * (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
+                    texCoords[0] = u;
+                    texCoords[1] = v;
+
+                    float *normals = (float *)loadedMesh->normals.values + 3 * (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
+                    normals[0] = normal.x;
+                    normals[1] = normal.y;
+                    normals[2] = normal.z;
+
+                    int *boneIndices = (int *)loadedMesh->boneIndices.values + (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
+                    boneIndices[0] = boneIndex;
+                }
+            }
+            
+            int numIndices = 0;
+            int *indices = (int *)loadedMesh->indices.values;
+            for (int ringIndex = 0; ringIndex < numRings - 1; ++ringIndex) {
+                for (int vertexIndex = 0; vertexIndex < numVerticesPerRing; ++vertexIndex) {
+                    int vertexNum = (numVerticesPerRing + 1) * ringIndex + vertexIndex;
+                    indices[numIndices++] = vertexNum;
+                    indices[numIndices++] = vertexNum + 10;
+                    indices[numIndices++] = vertexNum + 1;
+                    indices[numIndices++] = vertexNum + 0;
+                    indices[numIndices++] = vertexNum + 9;
+                    indices[numIndices++] = vertexNum + 10;
+                }
+            }
+        } break;
+    }
+}
+
 void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
     int numTextures = assets->numTextures;
     assert(numTextures < MAX_NUM_TEXTURES);
@@ -277,6 +370,7 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             int numBones = 9;
             animationDataAsset->numBones = numBones;
             animationDataAsset->boneHierarchy = (int *)allocateMemorySize(&assets->assetMemory, sizeof(int) * numBones);
+            animationDataAsset->inverseRestTransforms = (matrix4x4 *)allocateMemorySize(&assets->assetMemory, sizeof(matrix4x4) * numBones);
 
             int *boneHierarchy = animationDataAsset->boneHierarchy;
             boneHierarchy[0] = -1;
@@ -353,6 +447,28 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             bonePose->boneID = 8;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
             bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -PI/2.0f);
+
+            // calculate inverse rest transforms for bones
+            // TODO(ebuchholz): determine if bones should have their own rotation/position properties
+            matrix4x4 *boneTransforms = (matrix4x4 *)allocateMemorySize(workingMemory, sizeof(matrix4x4) * numBones);
+            for (int i = 0; i < numBones; ++i) {
+                matrix4x4 *currentBoneMatrix = &boneTransforms[i];
+                skeleton_bone_pose *currentBonePose = &restPose->bonePoses[i];
+                assert(i == currentBonePose->boneID);
+
+                matrix4x4 localTransform = matrix4x4FromQuaternion(currentBonePose->localRotation);
+                localTransform = translationMatrix(currentBonePose->localPos) * localTransform;
+
+                int parentID = boneHierarchy[i];
+                if (parentID == -1) {
+                    *currentBoneMatrix = localTransform;
+                }
+                else {
+                    matrix4x4 *parentMatrix = &boneTransforms[parentID];
+                    *currentBoneMatrix = *parentMatrix * localTransform;
+                }
+                animationDataAsset->inverseRestTransforms[i] = inverse(*currentBoneMatrix);
+            }
 
             // left foot passing right
             // root
@@ -843,6 +959,7 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             int numBones = 10;
             animationDataAsset->numBones = numBones;
             animationDataAsset->boneHierarchy = (int *)allocateMemorySize(&assets->assetMemory, sizeof(int) * numBones);
+            animationDataAsset->inverseRestTransforms = (matrix4x4 *)allocateMemorySize(&assets->assetMemory, sizeof(matrix4x4) * numBones);
 
             int *boneHierarchy = animationDataAsset->boneHierarchy;
             boneHierarchy[0] = -1;
@@ -919,6 +1036,26 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             bonePose->boneID = 9;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
             bonePose->localRotation = Quaternion();
+
+            matrix4x4 *boneTransforms = (matrix4x4 *)allocateMemorySize(workingMemory, sizeof(matrix4x4) * numBones);
+            for (int i = 0; i < numBones; ++i) {
+                matrix4x4 *currentBoneMatrix = &boneTransforms[i];
+                skeleton_bone_pose *currentBonePose = &restPose->bonePoses[i];
+                assert(i == currentBonePose->boneID);
+
+                matrix4x4 localTransform = matrix4x4FromQuaternion(currentBonePose->localRotation);
+                localTransform = translationMatrix(currentBonePose->localPos) * localTransform;
+
+                int parentID = boneHierarchy[i];
+                if (parentID == -1) {
+                    *currentBoneMatrix = localTransform;
+                }
+                else {
+                    matrix4x4 *parentMatrix = &boneTransforms[parentID];
+                    *currentBoneMatrix = *parentMatrix * localTransform;
+                }
+                animationDataAsset->inverseRestTransforms[i] = inverse(*currentBoneMatrix);
+            }
 
             // curled
             // root
@@ -1003,6 +1140,11 @@ animation_data *getAnimationData (animation_data_key animationDataKey, game_asse
     assert(animationDataKey < assets->numAnimationData);
     animation_data *animationDataAsset = assets->animationData[animationDataKey]; 
     return animationDataAsset;
+}
+
+matrix4x4 *getInverseTransformsForAnimatedModel (animation_data_key animationDataKey, game_assets *assets) {
+    animation_data *animationDataAsset = getAnimationData(animationDataKey, assets);
+    return animationDataAsset->inverseRestTransforms;
 }
 
 skeleton_animation *getAnimationFromData (animation_data *animationData, char *animationKey) {

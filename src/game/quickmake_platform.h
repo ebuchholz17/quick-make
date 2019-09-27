@@ -17,7 +17,8 @@ enum asset_type {
     ASSET_TYPE_OBJ,
     ASSET_TYPE_BMP,
     ASSET_TYPE_ATLAS,
-    ASSET_TYPE_ANIMATION_DATA
+    ASSET_TYPE_ANIMATION_DATA,
+    ASSET_TYPE_QMM
 };
 
 struct asset_to_load {
@@ -54,6 +55,16 @@ struct loaded_mesh_asset {
     int_mesh_attribute indices;
 };
 
+struct loaded_animated_mesh_asset {
+    int key;
+    float_mesh_attribute positions;
+    float_mesh_attribute texCoords;
+    float_mesh_attribute normals;
+    // TODO(ebuchholz): multiple bone indices per vertex + weights
+    int_mesh_attribute boneIndices;
+    int_mesh_attribute indices;
+};
+
 struct loaded_texture_asset {
     int key;
     int width;
@@ -71,6 +82,7 @@ struct loaded_atlas_asset {
 
 enum render_command_type {
     RENDER_COMMAND_MODEL,
+    RENDER_COMMAND_ANIMATED_MODEL,
     RENDER_COMMAND_LINES,
     RENDER_COMMAND_SPRITE,
     RENDER_COMMAND_SPRITE_LIST,
@@ -86,6 +98,15 @@ struct render_command_model {
     int meshKey;
     int textureKey;
     matrix4x4 modelMatrix;
+};
+
+// TODO(ebuchholz): bone matrices
+struct render_command_animated_model {
+    matrix4x4 modelMatrix;
+    matrix4x4 *boneMatrices;
+    int animatedMeshKey;
+    int textureKey;
+    int numBones;
 };
 
 struct render_command_lines {
