@@ -402,7 +402,7 @@ void updateSkeletalGame (memory_arena *memory, memory_arena *tempMemory, game_as
     skeleton_bone *bones = 0;
     int numBones = 0;
 
-    playAnimation(ANIMATION_DATA_KEY_MULTI_ELBOW, "curling", &skeletalGame->snakeAnimationState,
+    playAnimation(ANIMATION_DATA_KEY_SNAKE, "snaking", &skeletalGame->snakeAnimationState,
                   true, assets, tempMemory, &bones, &numBones);
 
     calculateBoneTransforms(bones, numBones);

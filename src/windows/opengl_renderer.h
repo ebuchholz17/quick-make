@@ -176,6 +176,7 @@ struct renderer_memory {
 
 enum shader_type {
     SHADER_TYPE_DEFAULT,
+    SHADER_TYPE_ANIMATED_MODEL,
     SHADER_TYPE_LINES,
     SHADER_TYPE_SPRITE,
     SHADER_TYPE_BACKGROUND_VISUALIZATION,
@@ -205,6 +206,7 @@ struct openGL_animated_mesh {
     GLuint texCoordBuffer;
     GLuint normalBuffer;
     GLuint boneIndexBuffer;
+    GLuint boneWeightBuffer;
     GLuint indexBuffer;
     int numIndices;
 };

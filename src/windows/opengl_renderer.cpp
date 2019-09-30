@@ -139,7 +139,11 @@ void loadRendererAnimatedMesh (renderer_memory *memory, loaded_animated_mesh_ass
 
     glGenBuffers(1, &mesh->boneIndexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->boneIndexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, loadedMesh->boneIndices.count * sizeof(int), loadedMesh->boneIndices.values, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, loadedMesh->boneIndices.count * sizeof(float), loadedMesh->boneIndices.values, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &mesh->boneWeightBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->boneWeightBuffer);
+    glBufferData(GL_ARRAY_BUFFER, loadedMesh->boneWeights.count * sizeof(float), loadedMesh->boneWeights.values, GL_STATIC_DRAW);
 
     glGenBuffers(1, &mesh->indexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer);
@@ -251,6 +255,8 @@ int initOpenGL (HWND window, renderer_memory *memory) {
 
     createShaderProgram(renderer, SHADER_TYPE_DEFAULT,
                         defaultVertexShaderSource, defaultFragmentShaderSource, memory);
+    createShaderProgram(renderer, SHADER_TYPE_ANIMATED_MODEL,
+                        animatedModelVertexShaderSource, defaultFragmentShaderSource, memory);
     createShaderProgram(renderer, SHADER_TYPE_LINES,
                         lineVertexShaderSource, lineFragmentShaderSource, memory);
     createShaderProgram(renderer, SHADER_TYPE_SPRITE,
@@ -386,10 +392,15 @@ void drawAnimatedModel (openGL_renderer *renderer, GLuint program, render_comman
     glVertexAttribPointer(normalLocation, 3, GL_FLOAT, FALSE, 0, 0);
 
     // TODO(ebuchholz): implement this
-    //glBindBuffer(GL_ARRAY_BUFFER, mesh->boneIndexBuffer);
-    //GLint boneIndexLocation = glGetAttribLocation(program, "boneIndex");
-    //glEnableVertexAttribArray(boneIndexLocation);
-    //glVertexAttribPointer(boneIndexLocation, 1, GL_UNSIGNED_INT, FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->boneIndexBuffer);
+    GLint boneIndexLocation = glGetAttribLocation(program, "boneIndices");
+    glEnableVertexAttribArray(boneIndexLocation);
+    glVertexAttribPointer(boneIndexLocation, 4, GL_FLOAT, FALSE, 0, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->boneWeightBuffer);
+    GLint boneWeightLocation = glGetAttribLocation(program, "boneWeights");
+    glEnableVertexAttribArray(boneWeightLocation);
+    glVertexAttribPointer(boneWeightLocation, 4, GL_FLOAT, FALSE, 0, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer);
 
@@ -412,6 +423,11 @@ void drawAnimatedModel (openGL_renderer *renderer, GLuint program, render_comman
 
     GLint projMatrixLocation = glGetUniformLocation(program, "projMatrix");
     glUniformMatrix4fv(projMatrixLocation, 1, true, renderer->projMatrix.m);
+
+    int numBones = modelCommand->numBones;
+    assert(numBones < 32);
+    GLint boneMatrixLocation = glGetUniformLocation(program, "boneTransforms");
+    glUniformMatrix4fv(boneMatrixLocation, numBones, true, modelCommand->boneMatrices[0].m);
 
     // TODO(ebuchholz): load up some bones
 
@@ -689,7 +705,7 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
             case RENDER_COMMAND_ANIMATED_MODEL: 
             {
                 // TODO(ebuchholz): have a way to not have to set the program for command
-                GLuint program = renderer->shaders[SHADER_TYPE_DEFAULT].program;
+                GLuint program = renderer->shaders[SHADER_TYPE_ANIMATED_MODEL].program;
                 glUseProgram(program);
 
                 render_command_animated_model *animatedModelCommand = 

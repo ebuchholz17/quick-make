@@ -99,6 +99,7 @@ struct skeleton_animation {
 
 enum animation_data_key {
     ANIMATION_DATA_KEY_LEGS,
+    ANIMATION_DATA_KEY_SNAKE,
     ANIMATION_DATA_KEY_MULTI_ELBOW
 };
 

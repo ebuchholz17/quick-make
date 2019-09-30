@@ -112,7 +112,7 @@ static void drawAnimatedModel (animated_mesh_key meshKey, texture_key textureKey
     animatedModelCommand->numBones = numBones;
 
     for (int i = 0; i < numBones; ++i) {
-        animatedModelCommand->boneMatrices[i] = inverseTransforms[i] * bones[i].transform;
+        animatedModelCommand->boneMatrices[i] = bones[i].transform * inverseTransforms[i];
     }
 }
 

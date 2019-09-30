@@ -63,6 +63,7 @@ extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
     pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_LEGS);
     pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_MULTI_ELBOW);
+    pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_SNAKE);
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,

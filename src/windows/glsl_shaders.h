@@ -23,6 +23,40 @@ char *defaultVertexShaderSource = R"shader(
     }
 )shader";
 
+char *animatedModelVertexShaderSource = R"shader(
+    attribute vec3 position;
+    attribute vec2 texCoord;
+    attribute vec3 normal;
+    attribute vec4 boneIndices;
+    attribute vec4 boneWeights;
+
+    uniform mat4 modelMatrix;
+    uniform mat4 viewMatrix;
+    uniform mat4 projMatrix;
+
+    uniform mat4 boneTransforms[32];
+
+    varying vec2 vTexCoord;
+    varying float vLighting;
+
+    void main() {
+        mat4 boneMatrix0 = boneTransforms[int(boneIndices[0])];
+        mat4 boneMatrix1 = boneTransforms[int(boneIndices[1])];
+        mat4 boneMatrix2 = boneTransforms[int(boneIndices[2])];
+        mat4 boneMatrix3 = boneTransforms[int(boneIndices[3])];
+        mat4 boneMatrix = boneWeights[0] * boneMatrix0 + 
+                          boneWeights[1] * boneMatrix1 + 
+                          boneWeights[2] * boneMatrix2 + 
+                          boneWeights[3] * boneMatrix3;
+        gl_Position = projMatrix * viewMatrix * modelMatrix * boneMatrix * vec4(position, 1.0); 
+        vTexCoord = texCoord;
+        vec4 newNormal = normalize(modelMatrix * boneMatrix * vec4(normal, 0.0));
+        vec3 lightDir = normalize(vec3(0.0, 1.0, 0.0));
+        float lighting = dot(newNormal, vec4(lightDir, 0.0));
+        vLighting = lighting;
+    }
+)shader";
+
 char *defaultFragmentShaderSource = R"shader(
     varying vec2 vTexCoord;
     varying float vLighting;

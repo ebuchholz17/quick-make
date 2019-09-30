@@ -61,7 +61,8 @@ struct loaded_animated_mesh_asset {
     float_mesh_attribute texCoords;
     float_mesh_attribute normals;
     // TODO(ebuchholz): multiple bone indices per vertex + weights
-    int_mesh_attribute boneIndices;
+    float_mesh_attribute boneIndices;
+    float_mesh_attribute boneWeights;
     int_mesh_attribute indices;
 };
 

@@ -231,26 +231,28 @@ void parseQMM (void *fileData, game_assets *assets, int key, memory_arena *worki
             float distBetweenRings = segmentLength / (float)numRingsPerSegment;
 
             int numVerticesPerRing = 8; // +1, duplicated on bottom
-            int numRings = numRingsPerSegment * (1 + numSegments);
+            int numRings = numRingsPerSegment * numSegments + 1;
 
             loadedMesh->positions.count = (numVerticesPerRing + 1) * 3 * numRings;
             loadedMesh->texCoords.count = (numVerticesPerRing + 1) * 2 * numRings;
             loadedMesh->normals.count = (numVerticesPerRing + 1) * 3 * numRings;
-            loadedMesh->boneIndices.count =  (numVerticesPerRing + 1) * numRings;
+            loadedMesh->boneIndices.count =  (numVerticesPerRing + 1) * 4 * numRings;
+            loadedMesh->boneWeights.count =  (numVerticesPerRing + 1) * 4 * numRings;
             loadedMesh->indices.count =  6 * numVerticesPerRing * (numRings-1);
 
             loadedMesh->positions.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->positions.count);
             loadedMesh->texCoords.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->texCoords.count);
             loadedMesh->normals.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->normals.count);
-            loadedMesh->boneIndices.values = allocateMemorySize(workingMemory, sizeof(int) * loadedMesh->boneIndices.count);
+            loadedMesh->boneIndices.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->boneIndices.count);
+            loadedMesh->boneWeights.values = allocateMemorySize(workingMemory, sizeof(float) * loadedMesh->boneWeights.count);
             loadedMesh->indices.values = allocateMemorySize(workingMemory, sizeof(int) * loadedMesh->indices.count);
 
             for (int ringIndex = 0; ringIndex < numRings; ++ringIndex) {
                 for (int vertexIndex = 0; vertexIndex < numVerticesPerRing + 1; ++vertexIndex) {
                     float angle = 2.0f * PI * ((float)vertexIndex / (float)numVerticesPerRing);
                     vector3 pos = Vector3();
-                    pos.x = -sinf(angle) * 0.25f;
-                    pos.y = -cosf(angle) * 0.25f;
+                    pos.x = -sinf(angle) * 0.125f;
+                    pos.y = -cosf(angle) * 0.125f;
                     pos.z = ((float)ringIndex / (float)numRingsPerSegment) * segmentLength;
 
                     float u = (float)ringIndex / (float)(numRings-1);
@@ -260,7 +262,23 @@ void parseQMM (void *fileData, game_assets *assets, int key, memory_arena *worki
                     normal.z = 0.0f;
                     normal = normalize(normal);
 
-                    int boneIndex = ringIndex / numRingsPerSegment;
+                    vector4 boneIndices;
+                    float floatBoneIndex = (float)ringIndex / (float)numRingsPerSegment;
+                    boneIndices.x = floorf(floatBoneIndex - 0.5f);
+                    boneIndices.y = ceilf(floatBoneIndex - 0.5f);
+
+                    if (boneIndices.x < 0.0f) { boneIndices.x = 0.0f; }
+                    if (boneIndices.x > (float)(numSegments - 1)) { boneIndices.x = (float)(numSegments - 1); }
+                    if (boneIndices.y > (float)(numSegments - 1)) { boneIndices.y = (float)(numSegments - 1); }
+                    boneIndices.z = 0.0f;
+                    boneIndices.w = 0.0f;
+
+                    vector4 boneWeights;
+                    boneWeights.y = (floatBoneIndex - 0.5f) - boneIndices.x;
+                    if (boneWeights.y < 0.0f) { boneWeights.y = 0.0f; }
+                    boneWeights.x = 1.0f - boneWeights.y;
+                    boneWeights.z = 0.0f;
+                    boneWeights.w = 0.0f;
 
                     float *positions = (float *)loadedMesh->positions.values + 3 * (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
                     positions[0] = pos.x;
@@ -276,8 +294,17 @@ void parseQMM (void *fileData, game_assets *assets, int key, memory_arena *worki
                     normals[1] = normal.y;
                     normals[2] = normal.z;
 
-                    int *boneIndices = (int *)loadedMesh->boneIndices.values + (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
-                    boneIndices[0] = boneIndex;
+                    float *boneIndexArray = (float *)loadedMesh->boneIndices.values + 4 * (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
+                    boneIndexArray[0] = (float)boneIndices.x;
+                    boneIndexArray[1] = (float)boneIndices.y;
+                    boneIndexArray[2] = (float)boneIndices.z;
+                    boneIndexArray[3] = (float)boneIndices.w;
+
+                    float *boneWeightArray = (float *)loadedMesh->boneWeights.values + 4 * (ringIndex * (numVerticesPerRing + 1) + vertexIndex);
+                    boneWeightArray[0] = (float)boneWeights.x;
+                    boneWeightArray[1] = (float)boneWeights.y;
+                    boneWeightArray[2] = (float)boneWeights.z;
+                    boneWeightArray[3] = (float)boneWeights.w;
                 }
             }
             
@@ -1059,56 +1086,58 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
 
             // curled
             // root
+            quaternion r = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), (-PI / 2.0f) / 1.5f) *
+                           quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 1.5f);
             skeleton_pose *currentPose = &poses[1];
             bonePose = &currentPose->bonePoses[0];
             bonePose->boneID = 0;
             bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[1];
             bonePose->boneID = 1;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[2];
             bonePose->boneID = 2;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[3];
             bonePose->boneID = 3;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[4];
             bonePose->boneID = 4;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[5];
             bonePose->boneID = 5;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[6];
             bonePose->boneID = 6;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[7];
             bonePose->boneID = 7;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[8];
             bonePose->boneID = 8;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             bonePose = &currentPose->bonePoses[9];
             bonePose->boneID = 9;
             bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
-            bonePose->localRotation = quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), (-PI / 2.0f) / 5.0f);
+            bonePose->localRotation = r;
 
             // set up animations, idle and walking
             int numAnimations = 1;
@@ -1121,7 +1150,7 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             skeleton_animation *animation = &animations[0];
             animation->numKeyFrames = 2;
             animation->keyframes = (skeleton_keyframe *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_keyframe) * animation->numKeyFrames);
-            animation->duration = 2.0f;
+            animation->duration = 10.0f;
             animation->key = allocateString("curling", &assets->assetMemory);
             animation->id = 0;
 
@@ -1130,8 +1159,111 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             keyframe->poseID = 0;
 
             keyframe = &animation->keyframes[1];
-            keyframe->t = 1.0f;
+            keyframe->t = 5.0f;
             keyframe->poseID = 1;
+        } break;
+        case ANIMATION_DATA_KEY_SNAKE: {
+            // set up bone hierarchy
+            int numBones = 10;
+            animationDataAsset->numBones = numBones;
+            animationDataAsset->boneHierarchy = (int *)allocateMemorySize(&assets->assetMemory, sizeof(int) * numBones);
+            animationDataAsset->inverseRestTransforms = (matrix4x4 *)allocateMemorySize(&assets->assetMemory, sizeof(matrix4x4) * numBones);
+
+            int *boneHierarchy = animationDataAsset->boneHierarchy;
+            boneHierarchy[0] = -1;
+            boneHierarchy[1] = 0;
+            boneHierarchy[2] = 1;
+            boneHierarchy[3] = 2;
+            boneHierarchy[4] = 3;
+            boneHierarchy[5] = 4;
+            boneHierarchy[6] = 5;
+            boneHierarchy[7] = 6;
+            boneHierarchy[8] = 7;
+            boneHierarchy[9] = 8;
+
+            // set up poses 
+            int numPoses = 5;
+            animationDataAsset->numPoses = numPoses;
+            animationDataAsset->poses = (skeleton_pose *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_pose) * numPoses);
+
+            skeleton_pose *poses = animationDataAsset->poses;
+            for (int i = 0; i < numPoses; ++i) {
+                skeleton_pose *pose = &poses[i];
+                pose->numBones = numBones;
+                pose->bonePoses = (skeleton_bone_pose *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_bone_pose) * numBones);
+            }
+
+            // rest pose
+            skeleton_pose *restPose = &poses[0];
+            skeleton_bone_pose *bonePose = &restPose->bonePoses[0];
+            bonePose->boneID = 0;
+            bonePose->localPos = Vector3(0.0f, 0.0f, 0.0f);
+            bonePose->localRotation = Quaternion();
+            for (int i = 1; i < numBones; ++i) {
+                bonePose = &restPose->bonePoses[i];
+                bonePose->boneID = i;
+                bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+                bonePose->localRotation = Quaternion();
+            }
+
+            matrix4x4 *boneTransforms = (matrix4x4 *)allocateMemorySize(workingMemory, sizeof(matrix4x4) * numBones);
+            for (int i = 0; i < numBones; ++i) {
+                matrix4x4 *currentBoneMatrix = &boneTransforms[i];
+                skeleton_bone_pose *currentBonePose = &restPose->bonePoses[i];
+                assert(i == currentBonePose->boneID);
+
+                matrix4x4 localTransform = matrix4x4FromQuaternion(currentBonePose->localRotation);
+                localTransform = translationMatrix(currentBonePose->localPos) * localTransform;
+
+                int parentID = boneHierarchy[i];
+                if (parentID == -1) {
+                    *currentBoneMatrix = localTransform;
+                }
+                else {
+                    matrix4x4 *parentMatrix = &boneTransforms[parentID];
+                    *currentBoneMatrix = *parentMatrix * localTransform;
+                }
+                animationDataAsset->inverseRestTransforms[i] = inverse(*currentBoneMatrix);
+            }
+
+            // curled
+            // root
+            for (int poseIndex = 1; poseIndex < numPoses; ++poseIndex) {
+                skeleton_pose *currentPose = &poses[poseIndex];
+                for (int boneIndex = 0; boneIndex < numBones; ++boneIndex) {
+                    bonePose = &currentPose->bonePoses[boneIndex];
+                    bonePose->boneID = boneIndex;
+                    bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+                    bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 
+                            sinf((float)(poseIndex-1)/4.0f * 2.0f * PI + 
+                                 (((float)boneIndex / (float)(numBones-1)) * 2.0f * PI)) * (PI/4.0f));
+                }
+                currentPose->bonePoses[0].localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 
+                            -sinf((float)(poseIndex-1)/4.0f * 2.0f * PI) * (PI/32.0f))
+                    * currentPose->bonePoses[0].localRotation;
+                currentPose->bonePoses[0].localPos.x = -cosf((float)(poseIndex-1)/4.0f * 2.0f * PI) * 2.0f;
+                currentPose->bonePoses[0].localPos.z = 0.0f;
+            }
+            // set up animations, idle and walking
+            int numAnimations = 1;
+            animationDataAsset->numAnimations = numAnimations;
+            animationDataAsset->animations = (skeleton_animation *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_animation) * numAnimations);
+
+            skeleton_animation *animations = animationDataAsset->animations;
+
+            // curling
+            skeleton_animation *animation = &animations[0];
+            animation->numKeyFrames = 4;
+            animation->keyframes = (skeleton_keyframe *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_keyframe) * animation->numKeyFrames);
+            animation->duration = 2.0f;
+            animation->key = allocateString("snaking", &assets->assetMemory);
+            animation->id = 0;
+
+            for (int i = 0; i < animation->numKeyFrames; ++i) {
+                skeleton_keyframe *keyframe = &animation->keyframes[i];
+                keyframe->t = ((float)i/ 4.0f) * 2.0f;
+                keyframe->poseID = i+1;
+            }
         } break;
     }
 }
