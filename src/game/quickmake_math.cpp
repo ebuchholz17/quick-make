@@ -700,6 +700,17 @@ inline quaternion normalize (quaternion a) {
     return result;
 }
 
+inline quaternion operator+ (quaternion a, quaternion b) {
+    quaternion result;
+
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    result.w = a.w + b.w;
+
+    return result;
+}
+
 // TODO(ebuchholz): triple check this one
 inline quaternion operator* (quaternion a, quaternion b) {
     quaternion result;
@@ -708,6 +719,33 @@ inline quaternion operator* (quaternion a, quaternion b) {
     result.x = a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y;
     result.y = a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x;
     result.z = a.w*b.z + a.x*b.y - a.y*b.x + a.z*b.w;
+
+    return result;
+}
+
+inline quaternion operator* (float a, quaternion b) {
+    quaternion result;
+
+    result.x = a * b.x;
+    result.y = a * b.y;
+    result.z = a * b.z;
+    result.w = a * b.w;
+
+    return result;
+}
+
+inline quaternion operator* (quaternion a, float b) {
+    quaternion result = b * a;
+    return result;
+}
+
+inline quaternion operator- (quaternion a) {
+    quaternion result;
+
+    result.x = -a.x;
+    result.y = -a.y;
+    result.z = -a.z;
+    result.w = -a.w;
 
     return result;
 }
@@ -798,6 +836,31 @@ inline quaternion lerp (quaternion a, quaternion b, float t) {
     result = normalize(result);
     return result;
 }
+
+// from wikipedia: quadruple check
+//inline quaternion slerp (quaternion a, quaternion b, float t) {
+//    // assume quaternions are normalized
+//
+//    float dot = dotProduct(a, b);
+//    if (dot < 0.0f) {
+//        a = -a;
+//        dot = -dot;
+//    }
+//
+//    if (dot > 0.9995f) {
+//        return lerp(a, b, t);
+//    }
+//
+//    float theta0 = acosf(dot);
+//    float theta = theta0 * t;
+//    float sinTheta = sinf(theta);
+//    float sinTheta0 = sinf(theta0);
+//
+//    float s0 = cosf(theta) - dot * sinTheta / sinTheta0;
+//    float s1 = sinTheta / sinTheta0;
+//
+//    return (s0 * a) + (s1 * b);
+//}
 
 inline quaternion quaternionFromRotationMatrix (matrix4x4 m) {
     quaternion result;

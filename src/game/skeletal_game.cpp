@@ -51,9 +51,9 @@ void initSkeletalGame (memory_arena *memory, skeletal_game* skeletalGame) {
     debugCamera->pos = {};
     debugCamera->pos.x = 3.0f;
     debugCamera->pos.y = 3.0f;
-    debugCamera->pos.z = 3.0f;
+    debugCamera->pos.z = 4.0f;
     debugCamera->rotation = 
-        quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 45.0f * (PI / 180.0f)) *
+        quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 40.0f * (PI / 180.0f)) *
         quaternionFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), -33.0f * (PI / 180.0f));
     debugCamera->lastPointerX = 0;
     debugCamera->lastPointerY = 0;
@@ -406,5 +406,5 @@ void updateSkeletalGame (memory_arena *memory, memory_arena *tempMemory, game_as
                   true, assets, tempMemory, &bones, &numBones);
 
     calculateBoneTransforms(bones, numBones);
-    drawAnimatedModel(ANIM_MESH_KEY_TUBE_SNAKE, TEXTURE_KEY_SNAKE_PATTERN, translationMatrix(0.0f, 0.0f, -9.0f), bones, inverseRestTransforms, numBones, renderCommands);
+    drawAnimatedModel(ANIM_MESH_KEY_TUBE_SNAKE, TEXTURE_KEY_SNAKE_PATTERN, translationMatrix(0.0f, 0.0f, -6.0f), bones, inverseRestTransforms, numBones, renderCommands);
 }

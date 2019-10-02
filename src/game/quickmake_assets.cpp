@@ -1182,7 +1182,7 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             boneHierarchy[9] = 8;
 
             // set up poses 
-            int numPoses = 5;
+            int numPoses = 9;
             animationDataAsset->numPoses = numPoses;
             animationDataAsset->poses = (skeleton_pose *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_pose) * numPoses);
 
@@ -1229,20 +1229,29 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
             // curled
             // root
             for (int poseIndex = 1; poseIndex < numPoses; ++poseIndex) {
+                int tempPose = 1;
                 skeleton_pose *currentPose = &poses[poseIndex];
                 for (int boneIndex = 0; boneIndex < numBones; ++boneIndex) {
                     bonePose = &currentPose->bonePoses[boneIndex];
                     bonePose->boneID = boneIndex;
                     bonePose->localPos = Vector3(0.0f, 0.0f, 1.0f);
+
                     bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 
-                            sinf((float)(poseIndex-1)/4.0f * 2.0f * PI + 
-                                 (((float)boneIndex / (float)(numBones-1)) * 2.0f * PI)) * (PI/4.0f));
+                            sinf((float)(poseIndex-1)/8.0f * 2.0f * PI + (((float)(boneIndex) / (float)(numBones)) * 2.0f * PI)) * (PI/4.0f));
+                    /*
+                    bonePose->localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 
+                            sinf((float)(poseIndex-1)/8.0f * 2.0f * PI + 
+                                 (((float)boneIndex / (float)(numBones-1)) * 2.0f * PI)) * (PI/8.0f));
+                    */
+
                 }
-                currentPose->bonePoses[0].localRotation = quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 
-                            -sinf((float)(poseIndex-1)/4.0f * 2.0f * PI) * (PI/32.0f))
-                    * currentPose->bonePoses[0].localRotation;
-                currentPose->bonePoses[0].localPos.x = -cosf((float)(poseIndex-1)/4.0f * 2.0f * PI) * 2.0f;
-                currentPose->bonePoses[0].localPos.z = 0.0f;
+                currentPose->bonePoses[0].localRotation = 
+                    quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 
+                            sinf((float)(poseIndex-1)/8.0f * 2.0f * PI) * 0.3f) *
+                    quaternionFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), 
+                            -cosf((float)(poseIndex-1)/8.0f * 2.0f * PI) * 1.2f);
+                currentPose->bonePoses[0].localPos.x = -sinf((float)(poseIndex-1)/8.0f * 2.0f * PI) * 2.0f;
+                //currentPose->bonePoses[0].localPos.z = -cosf((float)(poseIndex-1)/8.0f * 2.0f * PI * 4.0f) * 0.4f;
             }
             // set up animations, idle and walking
             int numAnimations = 1;
@@ -1253,7 +1262,7 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
 
             // curling
             skeleton_animation *animation = &animations[0];
-            animation->numKeyFrames = 4;
+            animation->numKeyFrames = 8;
             animation->keyframes = (skeleton_keyframe *)allocateMemorySize(&assets->assetMemory, sizeof(skeleton_keyframe) * animation->numKeyFrames);
             animation->duration = 2.0f;
             animation->key = allocateString("snaking", &assets->assetMemory);
@@ -1261,7 +1270,7 @@ void parseAnimationData (void *fileData, game_assets *assets, int key, memory_ar
 
             for (int i = 0; i < animation->numKeyFrames; ++i) {
                 skeleton_keyframe *keyframe = &animation->keyframes[i];
-                keyframe->t = ((float)i/ 4.0f) * 2.0f;
+                keyframe->t = ((float)i/ 8.0f) * 2.0f;
                 keyframe->poseID = i+1;
             }
         } break;
