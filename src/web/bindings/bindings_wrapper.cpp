@@ -62,17 +62,23 @@ int sizeof_int_mesh_attribute () {
 int sizeof_loaded_mesh_asset () {
     return sizeof(loaded_mesh_asset);
 }  
+int sizeof_loaded_animated_mesh_asset () {
+    return sizeof(loaded_animated_mesh_asset);
+}  
 int sizeof_loaded_texture_asset () {
-    return sizeof(loaded_mesh_asset);
+    return sizeof(loaded_texture_asset);
 }  
 int sizeof_loaded_atlas_asset () {
-    return sizeof(loaded_mesh_asset);
+    return sizeof(loaded_atlas_asset);
 }  
 int sizeof_render_command_header () {
     return sizeof(render_command_header);
 }  
 int sizeof_render_command_model () {
     return sizeof(render_command_model);
+}  
+int sizeof_render_command_animated_model () {
+    return sizeof(render_command_animated_model);
 }  
 int sizeof_render_command_lines () {
     return sizeof(render_command_lines);
@@ -127,10 +133,12 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_float_mesh_attribute", &sizeof_float_mesh_attribute);
     function ("sizeof_int_mesh_attribute", &sizeof_int_mesh_attribute);
     function ("sizeof_loaded_mesh_asset", &sizeof_loaded_mesh_asset);
+    function ("sizeof_loaded_animated_mesh_asset", &sizeof_loaded_animated_mesh_asset);
     function ("sizeof_loaded_texture_asset", &sizeof_loaded_texture_asset);
     function ("sizeof_loaded_atlas_asset", &sizeof_loaded_atlas_asset);
     function ("sizeof_render_command_header", &sizeof_render_command_header);
     function ("sizeof_render_command_model", &sizeof_render_command_model);
+    function ("sizeof_render_command_animated_model", &sizeof_render_command_animated_model);
     function ("sizeof_render_command_lines", &sizeof_render_command_lines);
     function ("sizeof_render_command_sprite", &sizeof_render_command_sprite);
     function ("sizeof_render_sprite", &sizeof_render_sprite);

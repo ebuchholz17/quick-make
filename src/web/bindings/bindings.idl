@@ -78,7 +78,9 @@ interface memory_arena {
 enum asset_type {
     "ASSET_TYPE_OBJ",
     "ASSET_TYPE_BMP",
-    "ASSET_TYPE_ATLAS"
+    "ASSET_TYPE_ATLAS",
+    "ASSET_TYPE_ANIMATION_DATA",
+    "ASSET_TYPE_QMM"
 };
 
 interface asset_to_load {
@@ -112,6 +114,16 @@ interface loaded_mesh_asset {
     [Value] attribute int_mesh_attribute indices;
 };
 
+interface loaded_animated_mesh_asset {
+    attribute long key;
+    [Value] attribute float_mesh_attribute positions;
+    [Value] attribute float_mesh_attribute texCoords;
+    [Value] attribute float_mesh_attribute normals;
+    [Value] attribute float_mesh_attribute boneIndices;
+    [Value] attribute float_mesh_attribute boneWeights;
+    [Value] attribute int_mesh_attribute indices;
+};
+
 interface loaded_texture_asset {
     attribute long key;
     attribute long width;
@@ -128,6 +140,7 @@ interface loaded_atlas_asset {
 
 enum render_command_type {
     "RENDER_COMMAND_MODEL",
+    "RENDER_COMMAND_ANIMATED_MODEL",
     "RENDER_COMMAND_LINES",
     "RENDER_COMMAND_SPRITE",
     "RENDER_COMMAND_SPRITE_LIST",
@@ -143,6 +156,14 @@ interface render_command_model {
     attribute long meshKey;
     attribute long textureKey;
     [Value] attribute matrix4x4 modelMatrix;
+};
+
+interface render_command_animated_model {
+    [Value] attribute matrix4x4 modelMatrix;
+    attribute matrix4x4 boneMatrices;
+    attribute long animatedMeshKey;
+    attribute long textureKey;
+    attribute long numBones;
 };
 
 interface render_command_lines {

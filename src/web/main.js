@@ -65,8 +65,8 @@ WebPlatform.prototype = {
         this.viewport.insertAdjacentElement("afterbegin", this.canvas);
         this.viewport.style.display = "block";
 
-        this.canvas.width = 960;
-        this.canvas.height = 540;
+        this.canvas.width = 1152;
+        this.canvas.height = 648;
         this.canvas.style["touch-action"] = "none";
         this.canvas.style["user-select"] = "none";
         this.canvas.style["-moz-user-select"] = "none";
@@ -118,21 +118,63 @@ WebPlatform.prototype = {
                 default:
                     console.log("invalid asset to load type");
                     break;
-                case this.game.ASSET_TYPE_OBJ: 
-                {
+                case this.game.ASSET_TYPE_ANIMATION_DATA: {
+                    this.loadAnimationDataFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
+                } break;
+                case this.game.ASSET_TYPE_OBJ: {
                     this.loadOBJFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
                 } break;
-                case this.game.ASSET_TYPE_BMP: 
-                {
+                case this.game.ASSET_TYPE_QMM: {
+                    this.loadQMMFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
+                } break;
+                case this.game.ASSET_TYPE_BMP: {
                     this.loadBMPFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
                 } break;
-                case this.game.ASSET_TYPE_ATLAS: 
-                {
+                case this.game.ASSET_TYPE_ATLAS: {
                     this.loadTextureAtlas(assetToLoad.path, assetToLoad.type, assetToLoad.key, assetToLoad.secondKey);
                 } break;
             }
         }
 
+    },
+
+    loadAnimationDataFile: function (path, assetType, assetKey, assetSecondKey) {
+        //fetch(path).then(
+        //    function (file) {
+        //        file.text().then(
+        //            function (data) {
+                       // var strLength = this.game.lengthBytesUTF8(data);
+                       // var objFileData = this.game._malloc(strLength + 1);
+                       // this.game.writeAsciiToMemory(data, objFileData); 
+
+                        this.workingAssetMemory.size = 0;
+
+                        var fileData = 0;
+                        this.game.ccall("parseGameAsset", 
+                            "null", 
+                            ["number", "number", "number", "number", "number"], 
+                            [
+                                fileData, 
+                                0,
+                                assetType,
+                                assetKey,
+                                assetSecondKey,
+                                this.game.getPointer(this.gameMemory),
+                                this.game.getPointer(this.workingAssetMemory)
+                            ]
+                        );
+
+                        this.onAssetLoaded();
+        //            }.bind(this),
+        //            function () {
+        //                console.log("fetch .text() failed for " + path);
+        //            }.bind(this)
+        //        );
+        //    }.bind(this),
+        //    function () {
+        //        console.log("Failed to fetch " + path);
+        //    }.bind(this)
+        //);
     },
 
     loadOBJFile: function (path, assetType, assetKey, assetSecondKey) {
@@ -178,6 +220,52 @@ WebPlatform.prototype = {
                 console.log("Failed to fetch " + path);
             }.bind(this)
         );
+    },
+
+    loadQMMFile: function (path, assetType, assetKey, assetSecondKey) {
+        //fetch(path).then(
+        //    function (file) {
+        //        file.text().then(
+        //            function (data) {
+                       // var strLength = this.game.lengthBytesUTF8(data);
+                       // var objFileData = this.game._malloc(strLength + 1);
+                       // this.game.writeAsciiToMemory(data, objFileData); 
+
+                        this.workingAssetMemory.size = 0;
+
+                        var fileData = 0;
+                        this.game.ccall("parseGameAsset", 
+                            "null", 
+                            ["number", "number", "number", "number", "number"], 
+                            [
+                                fileData, 
+                                0,
+                                assetType,
+                                assetKey,
+                                assetSecondKey,
+                                this.game.getPointer(this.gameMemory),
+                                this.game.getPointer(this.workingAssetMemory)
+                            ]
+                        );
+
+                        var loadedMesh = 
+                            this.game.wrapPointer(
+                                this.game.getPointer(this.workingAssetMemory.base), 
+                                this.game.loaded_animated_mesh_asset
+                            );
+
+                        this.renderer.loadAnimatedMesh(this.game, loadedMesh);
+                        this.onAssetLoaded();
+        //            }.bind(this),
+        //            function () {
+        //                console.log("fetch .text() failed for " + path);
+        //            }.bind(this)
+        //        );
+        //    }.bind(this),
+        //    function () {
+        //        console.log("Failed to fetch " + path);
+        //    }.bind(this)
+        //);
     },
 
     loadBMPFile: function (path, assetType, assetKey, assetSecondKey) {

@@ -120,10 +120,10 @@ void loadRendererMesh (renderer_memory *memory, loaded_mesh_asset *loadedMesh) {
 
 void loadRendererAnimatedMesh (renderer_memory *memory, loaded_animated_mesh_asset *loadedMesh) {
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
-    assert(renderer->numMeshes < MAX_OPENGL_MESHES);
+    assert(renderer->numAnimatedMeshes < MAX_OPENGL_ANIMATED_MESHES);
     // TODO(ebuchholz): triple check that the keys will line up this way
     openGL_animated_mesh *mesh = &renderer->animatedMeshes[loadedMesh->key];
-    renderer->numMeshes++;
+    renderer->numAnimatedMeshes++;
 
     glGenBuffers(1, &mesh->positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->positionBuffer);
@@ -425,7 +425,7 @@ void drawAnimatedModel (openGL_renderer *renderer, GLuint program, render_comman
     glUniformMatrix4fv(projMatrixLocation, 1, true, renderer->projMatrix.m);
 
     int numBones = modelCommand->numBones;
-    assert(numBones < 32);
+    assert(numBones <= 32);
     GLint boneMatrixLocation = glGetUniformLocation(program, "boneTransforms");
     glUniformMatrix4fv(boneMatrixLocation, numBones, true, modelCommand->boneMatrices[0].m);
 

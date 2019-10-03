@@ -1,6 +1,7 @@
 "use strict";
 
 var defaultVertexShaderSource = require("./shaders/defaultVertexShader.glsl");
+var animatedModelVertexShaderSource = require("./shaders/animatedModelVertexShader.glsl");
 var defaultFragmentShaderSource = require("./shaders/defaultFragmentShader.glsl");
 var lineVertexShaderSource = require("./shaders/lineVertexShader.glsl");
 var lineFragmentShaderSource = require("./shaders/lineFragmentShader.glsl");
@@ -21,6 +22,17 @@ var WebGLMesh = function () {
     this.numIndices = -1;
 };
 
+var WebGLAnimatedMesh = function () {
+    this.key = -1;
+    this.positionBuffer = -1;
+    this.texCoordBuffer = -1;
+    this.normalBuffer= -1;
+    this.boneIndexBuffer = -1;
+    this.boneWeightBuffer = -1;
+    this.indexBuffer = -1;
+    this.numIndices = -1;
+};
+
 var WebGLTexture = function () {
     this.key = -1;
     this.textureID = -1;
@@ -35,14 +47,16 @@ var ShaderProgram = function () {
 
 var ShaderTypes = {
     DEFAULT: 0,
-    LINES: 1,
-    SPRITE: 2,
-    BACKGROUND_VISUALIZATION: 3
+    ANIMATED_MODEL: 1,
+    LINES: 2,
+    SPRITE: 3,
+    BACKGROUND_VISUALIZATION: 4
 };
 
 var WebGLRenderer = function () {
     this.shaders = [];
     this.meshes = [];
+    this.animatedMeshes = [];
     this.textures = [];
 
     this.viewMatrix = null;
@@ -71,6 +85,7 @@ WebGLRenderer.prototype = {
         gl = canvas.getContext("webgl", { alpha: false });
         var success = gl.getExtension("OES_element_index_uint"); // TODO(ebuchholz): check
         this.compileAndLinkShader(defaultVertexShaderSource, defaultFragmentShaderSource, ShaderTypes.DEFAULT);
+        this.compileAndLinkShader(animatedModelVertexShaderSource, defaultFragmentShaderSource, ShaderTypes.SHADER_TYPE_ANIMATED_MODEL);
         this.compileAndLinkShader(lineVertexShaderSource, lineFragmentShaderSource, ShaderTypes.LINES);
         this.compileAndLinkShader(spriteVertexShaderSource, spriteFragmentShaderSource, ShaderTypes.SPRITE);
         this.compileAndLinkShader(backgroundVisualizationVertexShaderSource, backgroundVisualizationFragmentShaderSource, ShaderTypes.BACKGROUND_VISUALIZATION);
@@ -194,6 +209,56 @@ WebGLRenderer.prototype = {
         mesh.numIndices = loadedMesh.indices.count;
     },
 
+    loadAnimatedMesh: function (game, loadedAnimatedMesh) {
+        var animatedMesh = new WebGLAnimatedMesh();
+        animatedMesh.key = loadedAnimatedMesh.key;
+        this.animatedMeshes[animatedMesh.key] = animatedMesh;
+
+        animatedMesh.positionBuffer = gl.createBuffer();
+        var floatBuffer = new Float32Array(game.buffer,
+                                           loadedAnimatedMesh.positions.values.ptr, 
+                                           loadedAnimatedMesh.positions.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        animatedMesh.texCoordBuffer = gl.createBuffer();
+        floatBuffer = new Float32Array(game.buffer,
+                                       loadedAnimatedMesh.texCoords.values.ptr, 
+                                       loadedAnimatedMesh.texCoords.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.texCoordBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        animatedMesh.normalBuffer = gl.createBuffer();
+        floatBuffer = new Float32Array(game.buffer,
+                                       loadedAnimatedMesh.normals.values.ptr, 
+                                       loadedAnimatedMesh.normals.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.normalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        animatedMesh.boneIndexBuffer = gl.createBuffer();
+        floatBuffer = new Float32Array(game.buffer,
+                                       loadedAnimatedMesh.boneIndices.values.ptr, 
+                                       loadedAnimatedMesh.boneIndices.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.boneIndexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        animatedMesh.boneWeightBuffer = gl.createBuffer();
+        floatBuffer = new Float32Array(game.buffer,
+                                       loadedAnimatedMesh.boneWeights.values.ptr, 
+                                       loadedAnimatedMesh.boneWeights.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.boneWeightBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        animatedMesh.indexBuffer = gl.createBuffer();
+        var uintBuffer = new Uint32Array(game.buffer,
+                                         loadedAnimatedMesh.indices.values.ptr, 
+                                         loadedAnimatedMesh.indices.count);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, animatedMesh.indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, uintBuffer, gl.STATIC_DRAW);
+
+        animatedMesh.numIndices = loadedAnimatedMesh.indices.count;
+    },
+
     loadTexture: function (game, loadedTexture) {
         var texture = new WebGLTexture();
         texture.key = loadedTexture.key;
@@ -240,6 +305,35 @@ WebGLRenderer.prototype = {
         floatBuffer[13] = matrixBuffer[7];
         floatBuffer[14] = matrixBuffer[11];
         floatBuffer[15] = matrixBuffer[15]
+
+        return floatBuffer;
+    },
+    
+    matrix4x4ArrayTranspose: function (matrixBuffer, numMatrices) {
+        var floatBuffer = new Float32Array(16 * numMatrices)
+
+        for (var i = 0; i < numMatrices; ++i) {
+            var offset = i * 16;
+            floatBuffer[offset + 0] = matrixBuffer[offset + 0];
+            floatBuffer[offset + 1] = matrixBuffer[offset + 4];
+            floatBuffer[offset + 2] = matrixBuffer[offset + 8];
+            floatBuffer[offset + 3] = matrixBuffer[offset + 12];
+
+            floatBuffer[offset + 4] = matrixBuffer[offset + 1];
+            floatBuffer[offset + 5] = matrixBuffer[offset + 5];
+            floatBuffer[offset + 6] = matrixBuffer[offset + 9];
+            floatBuffer[offset + 7] = matrixBuffer[offset + 13];
+
+            floatBuffer[offset + 8] = matrixBuffer[offset + 2];
+            floatBuffer[offset + 9] = matrixBuffer[offset + 6];
+            floatBuffer[offset + 10] = matrixBuffer[offset + 10];
+            floatBuffer[offset + 11] = matrixBuffer[offset + 14];
+
+            floatBuffer[offset + 12] = matrixBuffer[offset + 3];
+            floatBuffer[offset + 13] = matrixBuffer[offset + 7];
+            floatBuffer[offset + 14] = matrixBuffer[offset + 11];
+            floatBuffer[offset + 15] = matrixBuffer[offset + 15]
+        }
 
         return floatBuffer;
     },
@@ -290,6 +384,79 @@ WebGLRenderer.prototype = {
         gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
 
         gl.drawElements(gl.TRIANGLES, mesh.numIndices, gl.UNSIGNED_INT, 0);
+    },
+
+    drawAnimatedModel: function (game, animatedModelCommand, program) {
+        var animatedMesh = this.animatedMeshes[animatedModelCommand.animatedMeshKey];
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.positionBuffer);
+        var positionLocation = gl.getAttribLocation(program, "position");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.texCoordBuffer);
+        var texCoordLocation = gl.getAttribLocation(program, "texCoord");
+        gl.enableVertexAttribArray(texCoordLocation);
+        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.normalBuffer);
+        var normalLocation = gl.getAttribLocation(program, "normal");
+        gl.enableVertexAttribArray(normalLocation);
+        gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.boneIndexBuffer);
+        var boneIndexLocation = gl.getAttribLocation(program, "boneIndices");
+        gl.enableVertexAttribArray(boneIndexLocation);
+        gl.vertexAttribPointer(boneIndexLocation, 4, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.boneWeightBuffer);
+        var boneWeightLocation = gl.getAttribLocation(program, "boneWeights");
+        gl.enableVertexAttribArray(boneWeightLocation);
+        gl.vertexAttribPointer(boneWeightLocation, 4, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, animatedMesh.indexBuffer);
+
+        // TODO(ebuchholz): figure out how to do this without making new array buffer view every frame
+        var floatBuffer = new Float32Array(game.buffer,
+                                           animatedModelCommand.modelMatrix.ptr,
+                                           16); //4x4 matrix
+        var modelMatrixLocation = gl.getUniformLocation(program, "modelMatrix");
+        gl.uniformMatrix4fv(modelMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
+
+        floatBuffer = new Float32Array(game.buffer,
+                                           this.viewMatrix.ptr,
+                                           16); //4x4 matrix
+        var viewMatrixLocation = gl.getUniformLocation(program, "viewMatrix");
+        gl.uniformMatrix4fv(viewMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
+
+        floatBuffer = new Float32Array(game.buffer,
+                                           this.projMatrix.ptr,
+                                           16); //4x4 matrix
+        var projMatrixLocation = gl.getUniformLocation(program, "projMatrix");
+        gl.uniformMatrix4fv(projMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
+
+        var numBones = animatedModelCommand.numBones;
+        if (numBones > 32) { console.log("too many bones"); }
+        for (var i = 0; i < numBones; ++i) {
+            floatBuffer = new Float32Array(game.buffer,
+                                           animatedModelCommand.boneMatrices.ptr + game.sizeof_matrix4x4() * i,
+                                           16);
+            var boneMatrixLocation = gl.getUniformLocation(program, "boneTransforms[" + i + "]");
+            gl.uniformMatrix4fv(boneMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
+        }
+        for (var i = numBones; i < 32; ++i) {
+            floatBuffer = new Float32Array(game.buffer, animatedModelCommand.boneMatrices.ptr, 16);
+            var boneMatrixLocation = gl.getUniformLocation(program, "boneTransforms[" + i + "]");
+            gl.uniformMatrix4fv(boneMatrixLocation, false, floatBuffer);
+        }
+
+        var texture = this.textures[animatedModelCommand.textureKey];
+        var textureLocation = gl.getUniformLocation(program, "texture");
+        gl.uniform1i(textureLocation, 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
+
+        gl.drawElements(gl.TRIANGLES, animatedMesh.numIndices, gl.UNSIGNED_INT, 0);
     },
 
     drawSprite: function (game, program, spriteCommand, screenWidth, screenHeight) {
@@ -540,9 +707,20 @@ WebGLRenderer.prototype = {
                     gl.useProgram(program);
 
                     var modelCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
-                                                            game.render_command_model);
+                                                        game.render_command_model);
                     renderCommandOffset += game.sizeof_render_command_model();
                     this.drawModel(game, modelCommand, program);
+                } break;
+                case game.RENDER_COMMAND_ANIMATED_MODEL:
+                {
+                    var program = this.shaders[ShaderTypes.ANIMATED_MODEL].program;
+                    gl.useProgram(program);
+
+                    var animatedModelCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
+                                                                game.render_command_animated_model);
+                    renderCommandOffset += game.sizeof_render_command_animated_model();
+                    renderCommandOffset += game.sizeof_matrix4x4() * animatedModelCommand.numBones;
+                    this.drawAnimatedModel(game, animatedModelCommand, program);
                 } break;
                 case game.RENDER_COMMAND_LINES:
                 {
