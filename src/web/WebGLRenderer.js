@@ -179,28 +179,28 @@ WebGLRenderer.prototype = {
         this.meshes[mesh.key] = mesh;
 
         mesh.positionBuffer = gl.createBuffer();
-        var floatBuffer = new Float32Array(game.buffer,
+        var floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            loadedMesh.positions.values.ptr, 
                                            loadedMesh.positions.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         mesh.texCoordBuffer = gl.createBuffer();
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                        loadedMesh.texCoords.values.ptr, 
                                        loadedMesh.texCoords.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.texCoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         mesh.normalBuffer = gl.createBuffer();
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                        loadedMesh.normals.values.ptr, 
                                        loadedMesh.normals.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         mesh.indexBuffer = gl.createBuffer();
-        var uintBuffer = new Uint32Array(game.buffer,
+        var uintBuffer = new Uint32Array(game.HEAPU8.buffer,
                                          loadedMesh.indices.values.ptr, 
                                          loadedMesh.indices.count);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
@@ -215,42 +215,42 @@ WebGLRenderer.prototype = {
         this.animatedMeshes[animatedMesh.key] = animatedMesh;
 
         animatedMesh.positionBuffer = gl.createBuffer();
-        var floatBuffer = new Float32Array(game.buffer,
+        var floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            loadedAnimatedMesh.positions.values.ptr, 
                                            loadedAnimatedMesh.positions.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         animatedMesh.texCoordBuffer = gl.createBuffer();
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                        loadedAnimatedMesh.texCoords.values.ptr, 
                                        loadedAnimatedMesh.texCoords.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.texCoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         animatedMesh.normalBuffer = gl.createBuffer();
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                        loadedAnimatedMesh.normals.values.ptr, 
                                        loadedAnimatedMesh.normals.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         animatedMesh.boneIndexBuffer = gl.createBuffer();
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                        loadedAnimatedMesh.boneIndices.values.ptr, 
                                        loadedAnimatedMesh.boneIndices.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.boneIndexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         animatedMesh.boneWeightBuffer = gl.createBuffer();
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                        loadedAnimatedMesh.boneWeights.values.ptr, 
                                        loadedAnimatedMesh.boneWeights.count);
         gl.bindBuffer(gl.ARRAY_BUFFER, animatedMesh.boneWeightBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
 
         animatedMesh.indexBuffer = gl.createBuffer();
-        var uintBuffer = new Uint32Array(game.buffer,
+        var uintBuffer = new Uint32Array(game.HEAPU8.buffer,
                                          loadedAnimatedMesh.indices.values.ptr, 
                                          loadedAnimatedMesh.indices.count);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, animatedMesh.indexBuffer);
@@ -267,7 +267,7 @@ WebGLRenderer.prototype = {
         this.textures[texture.key] = texture;
 
         texture.textureID = gl.createTexture();
-        var uintBuffer = new Uint8Array(game.buffer,
+        var uintBuffer = new Uint8Array(game.HEAPU8.buffer,
                                         loadedTexture.pixels.ptr,
                                         loadedTexture.width * loadedTexture.height * 4);
         gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
@@ -359,19 +359,19 @@ WebGLRenderer.prototype = {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
 
         // TODO(ebuchholz): figure out how to do this without making new array buffer view every frame
-        var floatBuffer = new Float32Array(game.buffer,
+        var floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            modelCommand.modelMatrix.ptr,
                                            16); //4x4 matrix
         var modelMatrixLocation = gl.getUniformLocation(program, "modelMatrix");
         gl.uniformMatrix4fv(modelMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            this.viewMatrix.ptr,
                                            16); //4x4 matrix
         var viewMatrixLocation = gl.getUniformLocation(program, "viewMatrix");
         gl.uniformMatrix4fv(viewMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            this.projMatrix.ptr,
                                            16); //4x4 matrix
         var projMatrixLocation = gl.getUniformLocation(program, "projMatrix");
@@ -417,38 +417,32 @@ WebGLRenderer.prototype = {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, animatedMesh.indexBuffer);
 
         // TODO(ebuchholz): figure out how to do this without making new array buffer view every frame
-        var floatBuffer = new Float32Array(game.buffer,
+        var floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            animatedModelCommand.modelMatrix.ptr,
                                            16); //4x4 matrix
         var modelMatrixLocation = gl.getUniformLocation(program, "modelMatrix");
         gl.uniformMatrix4fv(modelMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            this.viewMatrix.ptr,
                                            16); //4x4 matrix
         var viewMatrixLocation = gl.getUniformLocation(program, "viewMatrix");
         gl.uniformMatrix4fv(viewMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
-        floatBuffer = new Float32Array(game.buffer,
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            this.projMatrix.ptr,
                                            16); //4x4 matrix
         var projMatrixLocation = gl.getUniformLocation(program, "projMatrix");
         gl.uniformMatrix4fv(projMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
         var numBones = animatedModelCommand.numBones;
-        if (numBones > 32) { console.log("too many bones"); }
-        for (var i = 0; i < numBones; ++i) {
-            floatBuffer = new Float32Array(game.buffer,
-                                           animatedModelCommand.boneMatrices.ptr + game.sizeof_matrix4x4() * i,
-                                           16);
-            var boneMatrixLocation = gl.getUniformLocation(program, "boneTransforms[" + i + "]");
-            gl.uniformMatrix4fv(boneMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
-        }
-        for (var i = numBones; i < 32; ++i) {
-            floatBuffer = new Float32Array(game.buffer, animatedModelCommand.boneMatrices.ptr, 16);
-            var boneMatrixLocation = gl.getUniformLocation(program, "boneTransforms[" + i + "]");
-            gl.uniformMatrix4fv(boneMatrixLocation, false, floatBuffer);
-        }
+        var maxNumBones = 24;
+        if (numBones > maxNumBones) { console.log("too many bones"); }
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
+                                       animatedModelCommand.boneMatrices.ptr,
+                                       16 * maxNumBones);
+        var boneMatrixLocation = gl.getUniformLocation(program, "boneTransforms");
+        gl.uniformMatrix4fv(boneMatrixLocation, false, this.matrix4x4ArrayTranspose(floatBuffer, numBones));
 
         var texture = this.textures[animatedModelCommand.textureKey];
         var textureLocation = gl.getUniformLocation(program, "texture");
@@ -570,7 +564,7 @@ WebGLRenderer.prototype = {
                 var numColors = numSpritesBatched * 16;
 
                 // TODO(ebuchholz): maybe calculate these whole buffers on C side? to avoid copying, and using webidl getters/setters
-                var spritePos = new Float32Array(game.buffer, sprite.pos.ptr, 8);
+                var spritePos = new Float32Array(game.HEAPU8.buffer, sprite.pos.ptr, 8);
                 this.spriteVertexPositions[numFloats]   = spritePos[0];
                 this.spriteVertexPositions[numFloats+1] = spritePos[1];
                 this.spriteVertexPositions[numFloats+2] = spritePos[2];
@@ -580,7 +574,7 @@ WebGLRenderer.prototype = {
                 this.spriteVertexPositions[numFloats+6] = spritePos[6];
                 this.spriteVertexPositions[numFloats+7] = spritePos[7];
 
-                var spriteTex = new Float32Array(game.buffer, sprite.texCoord.ptr, 8);
+                var spriteTex = new Float32Array(game.HEAPU8.buffer, sprite.texCoord.ptr, 8);
                 this.spriteTextureCoords[numFloats]   = spriteTex[0];
                 this.spriteTextureCoords[numFloats+1] = spriteTex[1];
                 this.spriteTextureCoords[numFloats+2] = spriteTex[2];
@@ -590,7 +584,7 @@ WebGLRenderer.prototype = {
                 this.spriteTextureCoords[numFloats+6] = spriteTex[6];
                 this.spriteTextureCoords[numFloats+7] = spriteTex[7];
 
-                var spriteColor = new Float32Array(game.buffer, sprite.color.ptr, 16);
+                var spriteColor = new Float32Array(game.HEAPU8.buffer, sprite.color.ptr, 16);
                 this.spriteColors[numColors]    = spriteColor[0];
                 this.spriteColors[numColors+1]  = spriteColor[1];
                 this.spriteColors[numColors+2]  = spriteColor[2];
@@ -619,7 +613,7 @@ WebGLRenderer.prototype = {
     drawLines: function (game, lineCommand, program) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.debugPositionBuffer);
 
-        var floatBuffer = new Float32Array(game.buffer,
+        var floatBuffer = new Float32Array(game.HEAPU8.buffer,
                                            lineCommand.lines.ptr, 
                                            lineCommand.numLines * game.sizeof_line());
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
@@ -628,11 +622,11 @@ WebGLRenderer.prototype = {
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
 
-        floatBuffer = new Float32Array(game.buffer, this.viewMatrix.ptr, 16); //4x4 matrix
+        floatBuffer = new Float32Array(game.HEAPU8.buffer, this.viewMatrix.ptr, 16); //4x4 matrix
         var viewMatrixLocation = gl.getUniformLocation(program, "viewMatrix");
         gl.uniformMatrix4fv(viewMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
-        floatBuffer = new Float32Array(game.buffer, this.projMatrix.ptr, 16); //4x4 matrix
+        floatBuffer = new Float32Array(game.HEAPU8.buffer, this.projMatrix.ptr, 16); //4x4 matrix
         var projMatrixLocation = gl.getUniformLocation(program, "projMatrix");
         gl.uniformMatrix4fv(projMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 

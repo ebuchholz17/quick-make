@@ -42,7 +42,7 @@ WebAudioSounds.prototype = {
                     ]
                 );
 
-                var floatBuffer = new Float32Array(game.buffer, soundSamples, numSamples);
+                var floatBuffer = new Float32Array(game.HEAPU8.buffer, soundSamples, numSamples);
                 var buffer = this.audioContext.createBuffer(1, numSamples, this.samplesPerSecond);
                 var output = buffer.getChannelData(0);
                 for (var sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {

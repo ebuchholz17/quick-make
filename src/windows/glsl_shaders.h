@@ -34,7 +34,7 @@ char *animatedModelVertexShaderSource = R"shader(
     uniform mat4 viewMatrix;
     uniform mat4 projMatrix;
 
-    uniform mat4 boneTransforms[32];
+    uniform mat4 boneTransforms[24];
 
     varying vec2 vTexCoord;
     varying float vLighting;

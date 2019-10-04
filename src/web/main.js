@@ -277,7 +277,7 @@ WebPlatform.prototype = {
                         //var strLength = this.game.lengthBytesUTF8(data);
                         var numBytes = data.byteLength;
                         var bmpFileData = this.game._malloc(numBytes);
-                        var bmpDataView = new Uint8Array(this.game.buffer, 
+                        var bmpDataView = new Uint8Array(this.game.HEAPU8.buffer, 
                                                          bmpFileData,
                                                          numBytes);
                         bmpDataView.set(fileDataView, 0);
@@ -334,7 +334,7 @@ WebPlatform.prototype = {
                 //var strLength = this.game.lengthBytesUTF8(bmpData);
                 var numBytes = bmpData.byteLength;
                 var bmpFileData = this.game._malloc(numBytes);
-                var bmpDataView = new Uint8Array(this.game.buffer, 
+                var bmpDataView = new Uint8Array(this.game.HEAPU8.buffer, 
                                                  bmpFileData,
                                                  numBytes);
                 bmpDataView.set(fileDataView, 0);
@@ -514,12 +514,12 @@ WebPlatform.prototype = {
         // zero render command memory
         // TODO(ebuchholz): use 32 bit array, it's faster
         // TODO(ebuchholz): fill is slow in some browsers (firefox) so maybe don't zero it, or zero it on webassembly side
-        //var uintBuffer = new Uint8Array(this.game.buffer,
+        //var uintBuffer = new Uint8Array(this.game.HEAPU8.buffer,
         //                                this.game.getPointer(this.renderCommands.memory.base),
         //                                this.renderCommands.memory.capacity);
         //uintBuffer.fill(0);
         //// zero temp memory
-        //uintBuffer = new Uint8Array(this.game.buffer,
+        //uintBuffer = new Uint8Array(this.game.HEAPU8.buffer,
         //                                this.game.getPointer(this.gameMemory.tempMemory),
         //                                this.gameMemory.tempMemoryCapacity);
         //uintBuffer.fill(0);

@@ -425,7 +425,7 @@ void drawAnimatedModel (openGL_renderer *renderer, GLuint program, render_comman
     glUniformMatrix4fv(projMatrixLocation, 1, true, renderer->projMatrix.m);
 
     int numBones = modelCommand->numBones;
-    assert(numBones <= 32);
+    assert(numBones <= 24);
     GLint boneMatrixLocation = glGetUniformLocation(program, "boneTransforms");
     glUniformMatrix4fv(boneMatrixLocation, numBones, true, modelCommand->boneMatrices[0].m);
 
