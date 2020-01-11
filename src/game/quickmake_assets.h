@@ -21,8 +21,6 @@ struct animated_mesh_asset {
 };
 
 enum texture_key {
-    TEXTURE_KEY_BLUE,
-    TEXTURE_KEY_SNAKE_PATTERN,
     TEXTURE_KEY_FONT,
     TEXTURE_KEY_GAME_ATLAS
 };
@@ -36,6 +34,15 @@ struct texture_asset {
 
 enum atlas_key {
     ATLAS_KEY_GAME
+};
+
+enum sound_key {
+    SOUND_KEY_MENU_BUTTON,
+};
+
+struct sound_asset {
+    sound_key key;
+    // info about file size, duration, etc?
 };
 
 struct atlas_frame {
@@ -119,6 +126,24 @@ struct animation_data {
     animation_data_key key;
 };
 
+#pragma pack(push, 1)
+struct wav_header {
+    unsigned char riff[4];
+    unsigned int fileSize;
+    unsigned char fileType[4];
+    unsigned char formatChunkMarker[4];
+    unsigned int formatLength;
+    unsigned short formatType;
+    unsigned short numChannels;
+    unsigned int sampleRate;
+    unsigned int byteRate;
+    unsigned short blockAlign;
+    unsigned short bitsPerSample;
+    unsigned char dataMarker[4];
+    unsigned int dataSize;
+};
+#pragma pack(pop)
+
 // assuming a particular bmp format (the one that gets exported from gimp: 32 bit, rgba, compression mode 3)
 #pragma pack(push, 1)
 struct bitmap_header {
@@ -150,6 +175,7 @@ struct bitmap_header {
 #define MAX_NUM_MESHES 100
 #define MAX_NUM_ANIMATED_MESHES 30
 #define MAX_NUM_TEXTURES 100
+#define MAX_NUM_SOUNDS 100
 #define MAX_NUM_ATLASES 20
 
 #define MAX_NUM_ANIMATION_DATA 10
@@ -167,6 +193,9 @@ struct game_assets {
 
     texture_asset *textures[MAX_NUM_TEXTURES];
     int numTextures;
+    
+    sound_asset *sounds[MAX_NUM_SOUNDS];
+    int numSounds;
 
     atlas_asset *atlases[MAX_NUM_ATLASES];
     int numAtlases;

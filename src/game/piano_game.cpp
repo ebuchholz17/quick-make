@@ -242,5 +242,5 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
         if (i > 1) { offset += 48; }
         addSprite(i * 48.0f + offset, 0.0f, assets, ATLAS_KEY_GAME, (char *)frameName, spriteList);
     }
-    //addSprite(localPointerPos.x, localPointerPos.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
+    addSprite(localPointerPos.x, localPointerPos.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
 }

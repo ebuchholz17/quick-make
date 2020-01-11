@@ -56,14 +56,10 @@ static void initInstruments (game_sounds *gameSounds) {
 
 // TODO(ebuchholz): Maybe pack everything into a single file and load that?
 extern "C" void getGameAssetList (asset_list *assetList) {
-    pushAsset(assetList, "assets/meshes/cube.obj", ASSET_TYPE_OBJ, MESH_KEY_CUBE);
-    pushAsset(assetList, "fakeFile", ASSET_TYPE_QMM, ANIM_MESH_KEY_TUBE_SNAKE);
-    pushAsset(assetList, "assets/textures/blue.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_BLUE);
-    pushAsset(assetList, "assets/textures/snake_pattern.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_SNAKE_PATTERN);
     pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
-    pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_LEGS);
-    pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_MULTI_ELBOW);
-    pushAsset(assetList, "fakeFileForTestingPurposes", ASSET_TYPE_ANIMATION_DATA, ANIMATION_DATA_KEY_SNAKE);
+    pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
+
+    pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
@@ -107,6 +103,9 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
     case ASSET_TYPE_BMP:
         parseBitmap(assetData, &gameState->assets, key, workingMemory);
         break;
+    case ASSET_TYPE_WAV:
+        parseWav(assetData, &gameState->assets, key, workingMemory);
+        break;
     case ASSET_TYPE_ATLAS:
         parseBitmap(secondAssetData, &gameState->assets, secondKey, workingMemory);
         parseAtlas(assetData, &gameState->assets, key, secondKey, workingMemory);
@@ -124,8 +123,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         initLetterCoords();
 
         //initBlockGame(&gameState->memory, &gameState->blockGame);
-        //initPianoGame(&gameState->pianoGame);
-        initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
+        initPianoGame(&gameState->pianoGame);
+        //initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -176,13 +175,13 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     //                                                                 sizeof(render_command_background_visualization));
     //visualizationCommand->t = gameState->visualizationT;
 
-    //pushSpriteTransform(&spriteList, gameOrigin, gameScale);
+    pushSpriteTransform(&spriteList, gameOrigin, gameScale);
 
     //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
-    //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
-    updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
+    updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
+    //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
 
-    //popSpriteMatrix(&spriteList);
+    popSpriteMatrix(&spriteList);
 
     render_command_sprite_list *spriteListCommand = 
         (render_command_sprite_list *)pushRenderCommand(renderCommands,

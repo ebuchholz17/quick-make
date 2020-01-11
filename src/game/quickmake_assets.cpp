@@ -380,6 +380,19 @@ void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *wo
     }
 }
 
+void parseWav (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
+    int numSounds = assets->numSounds;
+    assert(numSounds < MAX_NUM_SOUNDS);
+
+    sound_asset *soundAsset = (sound_asset *)allocateMemorySize(&assets->assetMemory, sizeof(sound_asset)); 
+    assets->sounds[key] = soundAsset;
+    assets->numSounds++;
+
+    wav_header *header = (wav_header *)fileData;    
+    // NOTE(ebuchholz): supporting only a very specific format: 1 channel, 16-bit samples, 
+    // TODO(ebuchholz): resample audio to platform's sample rate: can't specify browser's audio rate for example
+}
+
 void parseAnimationData (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
     // ignore file data for now
     int numAnimationData = assets->numAnimationData;

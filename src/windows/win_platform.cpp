@@ -10,8 +10,8 @@
 
 static bool programRunning = false;
 
-static int gameWidth = 1152;
-static int gameHeight = 648;
+static int gameWidth = 768;
+static int gameHeight = 432;
 static float targetMSPerFrame = 1000.0f / 60.0f;
 
 void DEBUGPrintString (char *string) {
@@ -288,7 +288,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             getGameAssetList(&assetList);
 
             memory_arena workingAssetMemory = {};
-            workingAssetMemory.capacity = 30 * 1024 * 1024; // 10MB limit for working with asset files?
+            workingAssetMemory.capacity = 30 * 1024 * 1024; // 30MB limit for working with asset files?
             workingAssetMemory.base = malloc(workingAssetMemory.capacity);
 
             for (int i = 0; i < assetList.numAssetsToLoad; ++i) {
@@ -340,6 +340,23 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
                         // load texture onto gpu
                         loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
+                    } break;
+                    case ASSET_TYPE_WAV: {
+                        FILE *wavFile; 
+                        fopen_s(&wavFile, assetToLoad->path, "rb");
+                        assert(wavFile); // TODO(ebuchholz): better error check?
+
+                        fseek(wavFile, 0, SEEK_END);
+                        int fileSize = ftell(wavFile);
+                        fseek(wavFile, 0, SEEK_SET);
+
+                        char *fileData = (char *)malloc(fileSize);
+                        fread(fileData, fileSize, 1, wavFile);
+                        fclose(wavFile);
+
+                        parseGameAsset(fileData, 0, ASSET_TYPE_WAV, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory);
+                        free(fileData);
                     } break;
                     case ASSET_TYPE_ATLAS: {
                         char *atlasData = readEntireTextFile(assetToLoad->path);
@@ -398,7 +415,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             // init sound
             win_sound_output soundOutput = {};
-            soundOutput.samplesPerSecond = 48000;
+            soundOutput.samplesPerSecond = 44100;
             soundOutput.bytesPerSample = 2;
             soundOutput.secondaryBufferSize = soundOutput.samplesPerSecond * soundOutput.bytesPerSample;
             initDirectSound(window, &soundOutput);
