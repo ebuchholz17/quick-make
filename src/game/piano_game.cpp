@@ -184,16 +184,9 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
     if (input->pointerDown) {
         int pianoNoteIndex = noteTappedByPointer(localPointerPos.x, localPointerPos.y);
         if (pianoNoteIndex != -1) {
-            if (pianoNoteIndex == 0 && input->pointerJustDown) {
-                //if (input->pointerJustDown) {
-                    playSound(SOUND_KEY_MENU_BUTTON, gameSounds);
-                //}
-            }   
-            else {
-                keysTappedByPointer[pianoNoteIndex] = true;
-                piano_game_note *pianoNote = pianoGame->notes + pianoNoteIndex;
-                processKey(pianoNote, (sound_note)pianoNoteIndex, gameSounds, true);
-            }
+            keysTappedByPointer[pianoNoteIndex] = true;
+            piano_game_note *pianoNote = pianoGame->notes + pianoNoteIndex;
+            processKey(pianoNote, (sound_note)pianoNoteIndex, gameSounds, true);
         }
     }
     for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
