@@ -156,13 +156,56 @@ struct input_key {
     bool justPressed;
 };
 
+// based on xbox 360 controller/xinput
+struct game_controller_input {
+    bool connected;
+
+    input_key dPadUp;
+    input_key dPadDown;
+    input_key dPadLeft;
+    input_key dPadRight;
+
+    input_key start;
+    input_key back;
+
+    input_key leftStick;
+    input_key rightStick;
+
+    input_key leftBumper;
+    input_key rightBumper;
+
+    input_key aButton;
+    input_key bButton;
+    input_key xButton;
+    input_key yButton;
+
+    float leftTrigger;
+    input_key leftTriggerButton;
+    float rightTrigger;
+    input_key rightTriggerButton;
+
+    float leftStickX;
+    float leftStickY;
+    float rightStickX;
+    float rightStickY;
+
+    input_key leftStickUp;
+    input_key leftStickDown;
+    input_key leftStickLeft;
+    input_key leftStickRight;
+
+    input_key rightStickUp;
+    input_key rightStickDown;
+    input_key rightStickLeft;
+    input_key rightStickRight;
+};
+
 struct game_input {
     input_key upKey;
     input_key downKey;
     input_key leftKey;
     input_key rightKey;
 
-    // TODO(ebuchholz): add just pressed for other buttons, maybe button struct
     input_key aKey;
     input_key sKey;
     input_key dKey;
@@ -176,6 +219,8 @@ struct game_input {
     input_key tKey;
     input_key yKey;
     input_key uKey;
+
+    game_controller_input controllers[4];
 
     bool pointerDown;
     bool pointerJustDown;

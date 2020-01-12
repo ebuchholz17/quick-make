@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <xinput.h>
+
 #include "win_platform.h"
 #include "../game/quickmake_game.cpp"
 
@@ -13,6 +15,15 @@ static bool programRunning = false;
 static int gameWidth = 768;
 static int gameHeight = 432;
 static float targetMSPerFrame = 1000.0f / 60.0f;
+
+// xinput functions
+// NOTE(ebuchholz): avoiding redefinition of functions in xinput.h
+typedef DWORD WINAPI x_input_get_state(DWORD dwUserIndex, XINPUT_STATE *pState);
+static x_input_get_state *XInputGetState_;
+#define XInputGetState XInputGetState_
+typedef DWORD WINAPI x_input_set_state(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration);
+static x_input_set_state *XInputSetState_;
+#define XInputSetState XInputSetState_
 
 void DEBUGPrintString (char *string) {
     OutputDebugStringA(string);
@@ -188,6 +199,111 @@ static void processWindowsMessages (HWND window, game_input *input, render_comma
     }
 }
 
+static void updateControllerButton (XINPUT_GAMEPAD gamepad, input_key *button, WORD buttonBitmask) {
+    button->justPressed = false;
+    if (gamepad.wButtons & buttonBitmask) {
+        if (!button->down) {
+            button->justPressed = true;
+        }
+        button->down = true;
+    }
+    else {
+        button->down = false;
+    }
+}
+
+static void updateControllerTrigger (float *trigger, input_key *triggerButton, BYTE triggerValue, BYTE triggerMax) {
+    triggerButton->justPressed = false;
+    if (triggerValue >= XINPUT_GAMEPAD_TRIGGER_THRESHOLD) {
+        triggerValue -= XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+        *trigger = (float)((float)triggerValue / (float)triggerMax);
+        if (!triggerButton->down) {
+            triggerButton->justPressed = true;
+        }
+        triggerButton->down = true;
+    }
+    else {
+        *trigger = 0.0f;
+        triggerButton->down = false;
+    }
+
+}
+
+static void updateControllerStick (SHORT gamepadStickX, SHORT gamepadStickY, float *stickX, float *stickY, SHORT deadzone) {
+    float floatStickX = (float)gamepadStickX;
+    float floatStickY = -(float)gamepadStickY;
+    float magnitude = sqrtf(floatStickX * floatStickX + floatStickY * floatStickY);
+    float normalizedSX = floatStickX / magnitude;
+    float normalizedSY = floatStickY / magnitude;
+
+    if (magnitude > (float)deadzone) {
+        if (magnitude > 32767.0f) {
+            magnitude = 32767.0f;
+        }
+        magnitude -= deadzone;
+        float normalizedMagnitude = magnitude / (32767.0f - deadzone);
+        *stickX = normalizedSX * normalizedMagnitude;
+        *stickY = normalizedSY * normalizedMagnitude;
+    }
+    else {
+        *stickX = 0.0f;
+        *stickY = 0.0f;
+    }
+}
+
+static void updateControllerStickDirection (input_key *dir0, input_key *dir1, SHORT gamepadVal, SHORT deadzone) {
+    dir0->justPressed = false;
+    if (gamepadVal < -deadzone) {
+        if (!dir0->down) {
+            dir0->justPressed = true;
+        }
+        dir0->down = true;
+    }
+    else {
+        dir0->down = false;
+    }
+    dir1->justPressed = false;
+    if (gamepadVal > deadzone) {
+        if (!dir1->down) {
+            dir1->justPressed = true;
+        }
+        dir1->down = true;
+    }
+    else {
+        dir1->down = false;
+    }
+}
+
+static void updateController (game_controller_input *controller, XINPUT_STATE state) {
+    XINPUT_GAMEPAD gamepad = state.Gamepad;
+    updateControllerButton(gamepad, &controller->dPadUp, XINPUT_GAMEPAD_DPAD_UP);
+    updateControllerButton(gamepad, &controller->dPadDown, XINPUT_GAMEPAD_DPAD_DOWN);
+    updateControllerButton(gamepad, &controller->dPadLeft, XINPUT_GAMEPAD_DPAD_LEFT);
+    updateControllerButton(gamepad, &controller->dPadRight, XINPUT_GAMEPAD_DPAD_RIGHT);
+    updateControllerButton(gamepad, &controller->start, XINPUT_GAMEPAD_START);
+    updateControllerButton(gamepad, &controller->back, XINPUT_GAMEPAD_BACK);
+    updateControllerButton(gamepad, &controller->leftStick, XINPUT_GAMEPAD_LEFT_THUMB);
+    updateControllerButton(gamepad, &controller->rightStick, XINPUT_GAMEPAD_RIGHT_THUMB);
+    updateControllerButton(gamepad, &controller->leftBumper, XINPUT_GAMEPAD_LEFT_SHOULDER);
+    updateControllerButton(gamepad, &controller->rightBumper, XINPUT_GAMEPAD_RIGHT_SHOULDER);
+    updateControllerButton(gamepad, &controller->aButton, XINPUT_GAMEPAD_A);
+    updateControllerButton(gamepad, &controller->bButton, XINPUT_GAMEPAD_B);
+    updateControllerButton(gamepad, &controller->xButton, XINPUT_GAMEPAD_X);
+    updateControllerButton(gamepad, &controller->yButton, XINPUT_GAMEPAD_Y);
+
+    BYTE triggerMax = 255 - XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+    updateControllerTrigger(&controller->leftTrigger, &controller->leftTriggerButton, gamepad.bLeftTrigger, triggerMax);
+    updateControllerTrigger(&controller->rightTrigger, &controller->rightTriggerButton, gamepad.bRightTrigger, triggerMax);
+
+    updateControllerStick(gamepad.sThumbLX, gamepad.sThumbLY, &controller->leftStickX, &controller->leftStickY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    updateControllerStick(gamepad.sThumbRX, gamepad.sThumbRY, &controller->rightStickX, &controller->rightStickY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+
+    updateControllerStickDirection(&controller->leftStickUp, &controller->leftStickDown, -gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    updateControllerStickDirection(&controller->leftStickLeft, &controller->leftStickRight, gamepad.sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    updateControllerStickDirection(&controller->rightStickUp, &controller->rightStickDown, -gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+    updateControllerStickDirection(&controller->rightStickLeft, &controller->rightStickRight, gamepad.sThumbRX, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+}
+
 static char *readEntireTextFile (char *path) {
     FILE *textFile; 
     fopen_s(&textFile, path, "rb");
@@ -203,6 +319,31 @@ static char *readEntireTextFile (char *path) {
     fclose(textFile);
 
     return fileData;
+}
+
+static void loadXInput () {
+    HMODULE XInputLibrary = LoadLibraryA("xinput1_4.dll");
+    if(!XInputLibrary) {
+        XInputLibrary = LoadLibraryA("xinput9_1_0.dll");
+    }
+    if(!XInputLibrary) {
+        XInputLibrary = LoadLibraryA("xinput1_3.dll");
+    }
+
+    // TODO(ebuchholz): replace with error-handling that doesn't crash program
+    if(XInputLibrary) {
+        XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary, "XInputGetState");
+        if(!XInputGetState) { 
+            assert(0);
+        }
+        XInputSetState = (x_input_set_state *)GetProcAddress(XInputLibrary, "XInputSetState");
+        if(!XInputSetState) { 
+            assert(0);
+        }
+    }
+    else {
+        assert(0); // couldn't load xinput
+    }
 }
 
 int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int showCode) {
@@ -303,6 +444,8 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             sound_sample *soundSamples = (sound_sample *)malloc(soundOutput.samplesPerSecond * 4);
             assert(soundSamples);
+
+            loadXInput();
 
             // set up windows-specific options that the game needs to know about
             platform_options options = {};
@@ -452,7 +595,22 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 input.downKey.justPressed = false;
                 input.leftKey.justPressed = false;
                 input.rightKey.justPressed = false;
+
                 processWindowsMessages(window, &input, &renderCommands);
+
+                for (int i = 0; i < 4; ++i) {
+                    game_controller_input *controller = &input.controllers[i];
+
+                    XINPUT_STATE state = {};
+                    DWORD result = XInputGetState(i, &state);
+                    if (result == ERROR_SUCCESS) {
+                        controller->connected = true;
+                        updateController(controller, state);
+                    }
+                    else {
+                        controller->connected = false;
+                    }
+                }
 
                 renderCommands.windowWidth = gameWidth;
                 renderCommands.windowHeight = gameHeight;

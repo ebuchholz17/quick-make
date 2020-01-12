@@ -125,7 +125,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         initLetterCoords();
 
         //initBlockGame(&gameState->memory, &gameState->blockGame);
-        initPianoGame(&gameState->pianoGame);
+        //initPianoGame(&gameState->pianoGame);
         //initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
     }
     // general purpose temporary storage
@@ -180,8 +180,9 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
 
     //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
-    updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
+    //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
+    updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
 
     popSpriteMatrix(&spriteList);
 
