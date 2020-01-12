@@ -37,12 +37,14 @@ enum atlas_key {
 };
 
 enum sound_key {
-    SOUND_KEY_MENU_BUTTON,
+    SOUND_KEY_MENU_BUTTON
 };
 
 struct sound_asset {
     sound_key key;
     // info about file size, duration, etc?
+    short *samples;
+    int numSamples;
 };
 
 struct atlas_frame {

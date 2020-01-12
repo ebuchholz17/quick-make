@@ -80,7 +80,8 @@ enum asset_type {
     "ASSET_TYPE_BMP",
     "ASSET_TYPE_ATLAS",
     "ASSET_TYPE_ANIMATION_DATA",
-    "ASSET_TYPE_QMM"
+    "ASSET_TYPE_QMM",
+    "ASSET_TYPE_WAV"
 };
 
 interface asset_to_load {

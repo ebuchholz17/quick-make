@@ -391,6 +391,21 @@ void parseWav (void *fileData, game_assets *assets, int key, memory_arena *worki
     wav_header *header = (wav_header *)fileData;    
     // NOTE(ebuchholz): supporting only a very specific format: 1 channel, 16-bit samples, 
     // TODO(ebuchholz): resample audio to platform's sample rate: can't specify browser's audio rate for example
+    assert(header->numChannels == 1);
+    assert(header->formatType == 1);
+    assert(header->bitsPerSample == 16);
+    assert(header->blockAlign == 2);
+
+    int numSamples = header->dataSize / header->blockAlign;
+    // align data??? think this will allocate a little extra so the data is aligned
+    int numSamplesToAllocate = ((numSamples / 4) + 1) * 4;
+    soundAsset->samples = (short *)(allocateMemorySize(&assets->assetMemory, sizeof(short) * numSamplesToAllocate));
+    soundAsset->numSamples = numSamples;
+
+    short *sampleData = (short *)((char *)fileData + sizeof(wav_header));
+    for (int i = 0; i < numSamples; ++i) {
+        soundAsset->samples[i] = sampleData[i];
+    }
 }
 
 void parseAnimationData (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {

@@ -145,7 +145,7 @@ int noteTappedByPointer (float pointerX, float pointerY) {
 void processKey (piano_game_note *pianoNote, sound_note noteIndex, game_sounds *gameSounds, bool keyPressed) {
     if (!pianoNote->playing) {
         if (keyPressed) {
-            int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz(noteIndex));
+            int soundIndex = playInstrument(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz(noteIndex));
             if (soundIndex != -1) {
                 pianoNote->playing = true;
                 pianoNote->playingSoundIndex = soundIndex;
@@ -153,7 +153,7 @@ void processKey (piano_game_note *pianoNote, sound_note noteIndex, game_sounds *
         }
     }
     else {
-        synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
+        synth_sound *sound = gameSounds->instrumentSounds + pianoNote->playingSoundIndex;
         if (!sound->active) {
             pianoNote->playing = false;
             pianoNote->playingSoundIndex = -1;
@@ -161,7 +161,7 @@ void processKey (piano_game_note *pianoNote, sound_note noteIndex, game_sounds *
         else {
             if (!sound->pressed && keyPressed) {
                 sound->pressed = false;
-                int soundIndex = playSound(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz(noteIndex));
+                int soundIndex = playInstrument(gameSounds, INSTRUMENT_TYPE_PIANO, noteHz(noteIndex));
                 if (soundIndex != -1) {
                     pianoNote->playing = true;
                     pianoNote->playingSoundIndex = soundIndex;
@@ -184,9 +184,16 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
     if (input->pointerDown) {
         int pianoNoteIndex = noteTappedByPointer(localPointerPos.x, localPointerPos.y);
         if (pianoNoteIndex != -1) {
-            keysTappedByPointer[pianoNoteIndex] = true;
-            piano_game_note *pianoNote = pianoGame->notes + pianoNoteIndex;
-            processKey(pianoNote, (sound_note)pianoNoteIndex, gameSounds, true);
+            if (pianoNoteIndex == 0 && input->pointerJustDown) {
+                //if (input->pointerJustDown) {
+                    playSound(SOUND_KEY_MENU_BUTTON, gameSounds);
+                //}
+            }   
+            else {
+                keysTappedByPointer[pianoNoteIndex] = true;
+                piano_game_note *pianoNote = pianoGame->notes + pianoNoteIndex;
+                processKey(pianoNote, (sound_note)pianoNoteIndex, gameSounds, true);
+            }
         }
     }
     for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
@@ -212,7 +219,7 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
         piano_game_note *pianoNote = pianoGame->notes + whiteKeys[i];
         const char *frameName = 0;
         if (pianoNote->playing) {
-            synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
+            synth_sound *sound = gameSounds->instrumentSounds + pianoNote->playingSoundIndex;
             frameName = sound->pressed ? "white_key_pressed" : "white_key";
         }
         else {
@@ -232,7 +239,7 @@ void updatePianoGame (game_sounds *gameSounds, game_assets *assets, game_input *
         piano_game_note *pianoNote = pianoGame->notes + blackKeys[i];
         const char *frameName = 0;
         if (pianoNote->playing) {
-            synth_sound *sound = gameSounds->sounds + pianoNote->playingSoundIndex;
+            synth_sound *sound = gameSounds->instrumentSounds + pianoNote->playingSoundIndex;
             frameName = sound->pressed ? "black_key_pressed" : "black_key";
         }
         else {

@@ -657,7 +657,7 @@ WebGLRenderer.prototype = {
 
     renderFrame: function (game, renderCommands) {
         gl.viewport(0, 0, renderCommands.windowWidth, renderCommands.windowHeight);
-        gl.enable(gl.DEPTH_TEST);
+        //gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
         gl.clearColor(0.0, 0.7, 0.8, 0.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

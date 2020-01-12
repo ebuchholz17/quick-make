@@ -1,6 +1,6 @@
 #include "quickmake_game.h"
 
-static void initInstruments (game_sounds *gameSounds) {
+static void initSounds (game_sounds *gameSounds) {
     instrument_type instrumentType;
     sound_instrument *instrument;
     sound_envelope *envelope;
@@ -29,6 +29,8 @@ static void initInstruments (game_sounds *gameSounds) {
     waveform->volume = 0.1f;
     waveform->muliplier = 3.0f;
     instrument->numWaveForms = 3;
+
+    gameSounds->numPlayingSounds = 0;
 }
 
 //static void growTransformGroupEntryList () {
@@ -118,7 +120,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     if (!gameState->gameInitialized) {
         gameState->gameInitialized = true;
         gameState->sounds = {};
-        initInstruments(&gameState->sounds);
+        initSounds(&gameState->sounds);
 
         initLetterCoords();
 
@@ -242,6 +244,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output *soundOutput) { 
     game_state *gameState = (game_state *)gameMemory->memory;
     game_sounds *gameSounds = &gameState->sounds;
+    game_assets *assets = &gameState->assets;
 
     float volume = 1.0f;
     float dt = 1.0f / (float)soundOutput->samplesPerSecond;
@@ -250,13 +253,30 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
     for (int i = 0; i < soundOutput->sampleCount; ++i) 
     {
         float sampleValue = 0.0f;
-        for (int soundIndex = 0; soundIndex < MAX_SOUNDS; ++soundIndex) {
-            synth_sound *sound = gameSounds->sounds + soundIndex;
+        for (int soundIndex = 0; soundIndex < MAX_INSTRUMENT_SOUNDS; ++soundIndex) {
+            synth_sound *sound = gameSounds->instrumentSounds + soundIndex;
             sound_instrument *instrument = gameSounds->instruments + sound->instrumentType;
             if (sound->active) {
-                sampleValue += updateSound(sound, instrument, dt);
+                sampleValue += updateInstrument(sound, instrument, dt);
             }
         }
+
+        for (int soundIndex = gameSounds->numPlayingSounds - 1; soundIndex >= 0; --soundIndex) {
+            playing_sound *sound = gameSounds->playingSounds + soundIndex;
+            sound_asset *soundAsset = assets->sounds[sound->key];
+
+            short soundValue = soundAsset->samples[sound->currentSample];
+            float floatValue = (float)soundValue / 32767;
+            sampleValue += floatValue;
+
+            ++sound->currentSample;
+            if (sound->currentSample >= soundAsset->numSamples) {
+                playing_sound *lastSound = gameSounds->playingSounds + (gameSounds->numPlayingSounds - 1);
+                *sound = *lastSound;
+                --gameSounds->numPlayingSounds;
+            }
+        }
+
         // clamp between -1 and 1
         sampleValue = sampleValue > 1.0f ? 1.0f : sampleValue;
         sampleValue = sampleValue < -1.0f ? -1.0f : sampleValue;

@@ -1,14 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "quickmake", "..\..\build\windows\quickmake.exe", "{CE9BBFC2-54D2-484D-BC5C-77EEB9C25B50}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
-		Executable = C:\Users\Erik\Documents\Programming\quickmake\build\windows\quickmake.exe
+		Executable = D:\Libraries\Documents\Programming\quick-make\build\windows\quickmake.exe
 		RemoteMachine = ARK-WS032
-		StartingDirectory = C:\Users\Erik\Documents\Programming\quickmake\src\data
+		StartingDirectory = D:\Libraries\Documents\Programming\quick-make\src\data
 		Environment = Default
 		LaunchingEngine = 00000000-0000-0000-0000-000000000000
 		UseLegacyDebugEngines = No
@@ -21,9 +21,12 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CE9BBFC2-54D2-484D-BC5C-77EEB9C25B50}.Release|x64.ActiveCfg = Release|x64
+		{CE9BBFC2-54D2-484D-BC5C-77EEB9C25B50}.Release|x64.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1AFB121E-3D65-4FDC-8C98-1B146E0F9CDD}
 	EndGlobalSection
 EndGlobal

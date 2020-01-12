@@ -1,7 +1,8 @@
 #ifndef QUICKMAKE_AUDIO_H
 #define QUICKMAKE_AUDIO_H
 
-#define MAX_SOUNDS 16
+#define MAX_INSTRUMENT_SOUNDS 16
+#define MAX_PLAYING_SOUNDS 16
 #define MAX_WAVEFORMS 10
 
 struct sound_envelope {
@@ -59,9 +60,16 @@ struct synth_sound {
     bool active;
 };
 
+struct playing_sound {
+    sound_key key;
+    int currentSample;
+};
+
 struct game_sounds {
     sound_instrument instruments[INSTRUMENT_TYPE_COUNT];
-    synth_sound sounds[MAX_SOUNDS];
+    synth_sound instrumentSounds[MAX_INSTRUMENT_SOUNDS];
+    playing_sound playingSounds[MAX_PLAYING_SOUNDS];
+    int numPlayingSounds;
 };
 
 #endif

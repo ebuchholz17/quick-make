@@ -21,11 +21,11 @@ float noiseWave () {
 }
 
 // TODO(ebuchholz): specify sound type
-int playSound (game_sounds *gameSounds, instrument_type instrumentType, float hz) {
+int playInstrument (game_sounds *gameSounds, instrument_type instrumentType, float hz) {
     synth_sound *sound = 0;
     int soundIndex = -1;
-    for (int i = 0; i < MAX_SOUNDS; ++i) {
-        synth_sound *currentSound = gameSounds->sounds + i;
+    for (int i = 0; i < MAX_INSTRUMENT_SOUNDS; ++i) {
+        synth_sound *currentSound = gameSounds->instrumentSounds + i;
         if (!currentSound->active) {
             sound = currentSound;
             soundIndex = i;
@@ -41,7 +41,7 @@ int playSound (game_sounds *gameSounds, instrument_type instrumentType, float hz
     return soundIndex;
 }
 
-float updateSound (synth_sound *sound, sound_instrument *instrument, float dt) {
+float updateInstrument (synth_sound *sound, sound_instrument *instrument, float dt) {
     sound->t += dt;
     float volume = 0.0f;
     sound_envelope *envelope = &instrument->envelope;
@@ -104,3 +104,16 @@ float updateSound (synth_sound *sound, sound_instrument *instrument, float dt) {
     return volume * tone;
     //return volume * sineWave(880, sound->t);
 }
+
+void playSound (sound_key key, game_sounds *gameSounds) {
+    // ignore sounds beyond the limit
+    if(gameSounds->numPlayingSounds >= MAX_PLAYING_SOUNDS) { 
+        return;
+    }
+    playing_sound *playingSound = &gameSounds->playingSounds[gameSounds->numPlayingSounds];
+    ++gameSounds->numPlayingSounds;
+
+    playingSound->key = key;
+    playingSound->currentSample = 0;
+}
+

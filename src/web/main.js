@@ -130,6 +130,9 @@ WebPlatform.prototype = {
                 case this.game.ASSET_TYPE_BMP: {
                     this.loadBMPFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
                 } break;
+                case this.game.ASSET_TYPE_WAV: {
+                    this.loadWAVFile(assetToLoad.path, assetToLoad.type, assetToLoad.key);
+                } break;
                 case this.game.ASSET_TYPE_ATLAS: {
                     this.loadTextureAtlas(assetToLoad.path, assetToLoad.type, assetToLoad.key, assetToLoad.secondKey);
                 } break;
@@ -305,6 +308,56 @@ WebPlatform.prototype = {
                             );
 
                         this.renderer.loadTexture(this.game, loadedTexture);
+                        this.onAssetLoaded();
+                    }.bind(this),
+                    function () {
+                        console.log("fetch .arrayBuffer() failed for " + path);
+                    }.bind(this)
+                );
+            }.bind(this),
+            function () {
+                console.log("Failed to fetch " + path);
+            }.bind(this)
+        );
+    },
+
+    loadWAVFile: function (path, assetType, assetKey, assetSecondKey) {
+        fetch(path).then(
+            function (file) {
+                file.arrayBuffer().then(
+                    function (data) {
+                        var fileDataView = new Uint8Array(data);
+                        //var strLength = this.game.lengthBytesUTF8(data);
+                        var numBytes = data.byteLength;
+                        var wavFileData = this.game._malloc(numBytes);
+                        var wavDataView = new Uint8Array(this.game.HEAPU8.buffer, 
+                                                         wavFileData,
+                                                         numBytes);
+                        wavDataView.set(fileDataView, 0);
+
+                        this.workingAssetMemory.size = 0;
+
+                        this.game.ccall("parseGameAsset", 
+                            "null", 
+                            ["number", "number", "number", "number", "number"], 
+                            [
+                                wavFileData, 
+                                0,
+                                assetType,
+                                assetKey,
+                                assetSecondKey,
+                                this.game.getPointer(this.gameMemory),
+                                this.game.getPointer(this.workingAssetMemory)
+                            ]
+                        );
+
+                        //var loadedTexture = 
+                        //    this.game.wrapPointer(
+                        //        this.game.getPointer(this.workingAssetMemory.base), 
+                        //        this.game.loaded_texture_asset
+                        //    );
+
+                        //this.renderer.loadTexture(this.game, loadedTexture);
                         this.onAssetLoaded();
                     }.bind(this),
                     function () {
