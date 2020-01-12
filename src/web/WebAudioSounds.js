@@ -18,6 +18,13 @@ WebAudioSounds.prototype = {
         this.playTime = this.audioContext.currentTime;
     },
 
+    getSampleRate: function () {
+        // make a dummy audio context to figure out the sample rate
+        var audioContextClass = window.AudioContext || window.webkitAudioContext;
+        var audioContext = new audioContextClass(); 
+        return audioContext.sampleRate;
+    },
+
     updateAudio: function (game, gameMemory, gameSoundOutput, soundSamples) {
         var currentAudioTime = this.audioContext.currentTime;
         var bufferingDelay = 50/1000;

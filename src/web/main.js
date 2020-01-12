@@ -91,7 +91,17 @@ WebPlatform.prototype = {
         this.gameMemory.tempMemoryCapacity = 10 * 1024 * 1024;
         this.gameMemory.tempMemory = this.game._malloc(this.gameMemory.tempMemoryCapacity);
 
+        // sounds
+        this.webAudioSounds = new WebAudioSounds();
+        this.webAudioSounds.audioBufferSize = 512; // TODO(ebuchholz): tune buffers (windows and web)
+
+        // NOTE(ebuchholz): need to init on first input to work in browsers
+        //this.webAudioSounds.init(this.game);
+
         // TODO(ebuchholz): clear memory
+        this.platformOptions = this.game.wrapPointer(this.game._malloc(this.game.sizeof_platform_options()), 
+                                                     this.game.platform_options);
+        this.platformOptions.audioSampleRate = this.webAudioSounds.getSampleRate();
 
         this.assetList = this.game.wrapPointer(this.game._malloc(this.game.sizeof_asset_list()), 
                                                 this.game.asset_list);
@@ -163,7 +173,8 @@ WebPlatform.prototype = {
                                 assetKey,
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
-                                this.game.getPointer(this.workingAssetMemory)
+                                this.game.getPointer(this.workingAssetMemory),
+                                this.game.getPointer(this.platformOptions)
                             ]
                         );
 
@@ -201,7 +212,8 @@ WebPlatform.prototype = {
                                 assetKey,
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
-                                this.game.getPointer(this.workingAssetMemory)
+                                this.game.getPointer(this.workingAssetMemory),
+                                this.game.getPointer(this.platformOptions)
                             ]
                         );
 
@@ -247,7 +259,8 @@ WebPlatform.prototype = {
                                 assetKey,
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
-                                this.game.getPointer(this.workingAssetMemory)
+                                this.game.getPointer(this.workingAssetMemory),
+                                this.game.getPointer(this.platformOptions)
                             ]
                         );
 
@@ -297,7 +310,8 @@ WebPlatform.prototype = {
                                 assetKey,
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
-                                this.game.getPointer(this.workingAssetMemory)
+                                this.game.getPointer(this.workingAssetMemory),
+                                this.game.getPointer(this.platformOptions)
                             ]
                         );
 
@@ -347,7 +361,8 @@ WebPlatform.prototype = {
                                 assetKey,
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
-                                this.game.getPointer(this.workingAssetMemory)
+                                this.game.getPointer(this.workingAssetMemory),
+                                this.game.getPointer(this.platformOptions)
                             ]
                         );
 
@@ -404,7 +419,8 @@ WebPlatform.prototype = {
                         assetKey,
                         assetSecondKey,
                         this.game.getPointer(this.gameMemory),
-                        this.game.getPointer(this.workingAssetMemory)
+                        this.game.getPointer(this.workingAssetMemory),
+                        this.game.getPointer(this.platformOptions)
                     ]
                 );
 
@@ -502,13 +518,6 @@ WebPlatform.prototype = {
             this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
         }
 
-        // sounds
-        this.webAudioSounds = new WebAudioSounds();
-        this.webAudioSounds.audioBufferSize = 512; // TODO(ebuchholz): tune buffers (windows and web)
-
-        // NOTE(ebuchholz): need to init on first input to work in browsers
-        //this.webAudioSounds.init(this.game);
-
         this.resize();
         this.lastTime = window.performance.now();
         this.update();
@@ -582,7 +591,8 @@ WebPlatform.prototype = {
             [
                 this.game.getPointer(this.gameInput), 
                 this.game.getPointer(this.gameMemory), 
-                this.game.getPointer(this.renderCommands)
+                this.game.getPointer(this.renderCommands),
+                this.game.getPointer(this.platformOptions)
             ]
         );
 

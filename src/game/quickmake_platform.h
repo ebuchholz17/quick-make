@@ -192,6 +192,10 @@ struct sound_sample {
     float value;
 };
 
+struct platform_options {
+    int audioSampleRate;
+};
+
 struct game_sound_output {
     int samplesPerSecond;
     int sampleCount;

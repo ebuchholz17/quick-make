@@ -248,6 +248,10 @@ interface sound_sample {
     attribute float value;
 };
 
+interface platform_options {
+    attribute long audioSampleRate;
+};
+
 interface game_sound_output {
     attribute long samplesPerSecond;
     attribute long sampleCount;

@@ -291,6 +291,23 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             workingAssetMemory.capacity = 30 * 1024 * 1024; // 30MB limit for working with asset files?
             workingAssetMemory.base = malloc(workingAssetMemory.capacity);
 
+            // init sound
+            win_sound_output soundOutput = {};
+            soundOutput.samplesPerSecond = 44100;
+            soundOutput.bytesPerSample = 2;
+            soundOutput.secondaryBufferSize = soundOutput.samplesPerSecond * soundOutput.bytesPerSample;
+            initDirectSound(window, &soundOutput);
+            clearSecondaryBuffer(&soundOutput);
+            soundOutput.secondaryBuffer->Play(0, 0, DSBPLAY_LOOPING);
+            soundOutput.soundValid = false;
+
+            sound_sample *soundSamples = (sound_sample *)malloc(soundOutput.samplesPerSecond * 4);
+            assert(soundSamples);
+
+            // set up windows-specific options that the game needs to know about
+            platform_options options = {};
+            options.audioSampleRate = soundOutput.samplesPerSecond;
+
             for (int i = 0; i < assetList.numAssetsToLoad; ++i) {
                 asset_to_load *assetToLoad = assetList.assetsToLoad + i;
                 workingAssetMemory.size = 0;
@@ -301,13 +318,13 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         char *fileData = 0;
                         //char *fileData = readEntireTextFile(assetToLoad->path);
                         parseGameAsset(fileData, 0, assetToLoad->type, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory);
+                                       &gameMemory, &workingAssetMemory, &options);
                         //free(fileData);
                     } break;
                     case ASSET_TYPE_OBJ: {
                         char *fileData = readEntireTextFile(assetToLoad->path);
                         parseGameAsset(fileData, 0, ASSET_TYPE_OBJ, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory);
+                                       &gameMemory, &workingAssetMemory, &options);
                         free(fileData);
 
                         loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
@@ -316,7 +333,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         char *fileData = 0;
                         //char *fileData = readEntireTextFile(assetToLoad->path);
                         parseGameAsset(fileData, 0, ASSET_TYPE_QMM, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory);
+                                       &gameMemory, &workingAssetMemory, &options);
                         //free(fileData);
 
                         loadRendererAnimatedMesh(&rendererMemory, (loaded_animated_mesh_asset *)workingAssetMemory.base);
@@ -335,7 +352,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fclose(bmpFile);
 
                         parseGameAsset(fileData, 0, ASSET_TYPE_BMP, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory);
+                                       &gameMemory, &workingAssetMemory, &options);
                         free(fileData);
 
                         // load texture onto gpu
@@ -355,7 +372,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fclose(wavFile);
 
                         parseGameAsset(fileData, 0, ASSET_TYPE_WAV, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory);
+                                       &gameMemory, &workingAssetMemory, &options);
                         free(fileData);
                     } break;
                     case ASSET_TYPE_ATLAS: {
@@ -392,7 +409,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fclose(bmpFile);
 
                         parseGameAsset(atlasData, bitmapData, ASSET_TYPE_ATLAS, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory);
+                                       &gameMemory, &workingAssetMemory, &options);
                         free(bitmapData);
                         free(atlasData);
 
@@ -412,19 +429,6 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             renderCommands.memory.capacity = memoryCapacity;
 
             game_input input ={};
-
-            // init sound
-            win_sound_output soundOutput = {};
-            soundOutput.samplesPerSecond = 44100;
-            soundOutput.bytesPerSample = 2;
-            soundOutput.secondaryBufferSize = soundOutput.samplesPerSecond * soundOutput.bytesPerSample;
-            initDirectSound(window, &soundOutput);
-            clearSecondaryBuffer(&soundOutput);
-            soundOutput.secondaryBuffer->Play(0, 0, DSBPLAY_LOOPING);
-            soundOutput.soundValid = false;
-
-            sound_sample *soundSamples = (sound_sample *)malloc(soundOutput.samplesPerSecond * 4);
-            assert(soundSamples);
 
             LARGE_INTEGER lastCounter;
             QueryPerformanceCounter(&lastCounter);
@@ -455,7 +459,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 renderCommands.memory.size = 0;
                 memset(renderCommands.memory.base, 0, renderCommands.memory.capacity);
                 memset(gameMemory.tempMemory, 0, gameMemory.tempMemoryCapacity);
-                updateGame(&input, &gameMemory, &renderCommands);
+                updateGame(&input, &gameMemory, &renderCommands, &options);
 
                 LARGE_INTEGER audioStartTime;
                 QueryPerformanceCounter(&audioStartTime);

@@ -65,7 +65,7 @@ extern "C" void getGameAssetList (asset_list *assetList) {
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
-                                game_memory *gameMemory, memory_arena *workingMemory) 
+                                game_memory *gameMemory, memory_arena *workingMemory, platform_options *options) 
 {
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->assetsInitialized) {
@@ -106,7 +106,7 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
         parseBitmap(assetData, &gameState->assets, key, workingMemory);
         break;
     case ASSET_TYPE_WAV:
-        parseWav(assetData, &gameState->assets, key, workingMemory);
+        parseWav(assetData, &gameState->assets, key, workingMemory, options);
         break;
     case ASSET_TYPE_ATLAS:
         parseBitmap(secondAssetData, &gameState->assets, secondKey, workingMemory);
@@ -115,7 +115,7 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
     }
 }
 
-extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_command_list *renderCommands) { 
+extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_command_list *renderCommands, platform_options *options) { 
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->gameInitialized) {
         gameState->gameInitialized = true;

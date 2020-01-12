@@ -380,7 +380,7 @@ void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *wo
     }
 }
 
-void parseWav (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
+void parseWav (void *fileData, game_assets *assets, int key, memory_arena *workingMemory, platform_options *options) {
     int numSounds = assets->numSounds;
     assert(numSounds < MAX_NUM_SOUNDS);
 
@@ -396,15 +396,49 @@ void parseWav (void *fileData, game_assets *assets, int key, memory_arena *worki
     assert(header->bitsPerSample == 16);
     assert(header->blockAlign == 2);
 
-    int numSamples = header->dataSize / header->blockAlign;
-    // align data??? think this will allocate a little extra so the data is aligned
-    int numSamplesToAllocate = ((numSamples / 4) + 1) * 4;
-    soundAsset->samples = (short *)(allocateMemorySize(&assets->assetMemory, sizeof(short) * numSamplesToAllocate));
-    soundAsset->numSamples = numSamples;
+    int numFileSamples = header->dataSize / header->blockAlign;
+    if (options->audioSampleRate != (int)header->sampleRate) {
+        // resample
+        // TODO(ebuchholz): do this better
+        double sampleRatio = (double)header->sampleRate / (double)options->audioSampleRate;
 
-    short *sampleData = (short *)((char *)fileData + sizeof(wav_header));
-    for (int i = 0; i < numSamples; ++i) {
-        soundAsset->samples[i] = sampleData[i];
+        int numSamples;
+        if (sampleRatio < 1.0) {
+            numSamples = (int)(numFileSamples * sampleRatio);
+        }
+        else {
+            numSamples = (int)(numFileSamples / sampleRatio);
+        }
+        int numSamplesToAllocate = ((numFileSamples / 4) + 1) * 4;
+        soundAsset->samples = (short *)(allocateMemorySize(&assets->assetMemory, sizeof(short) * numSamplesToAllocate));
+        soundAsset->numSamples = numSamples;
+
+        short *sampleData = (short *)((char *)fileData + sizeof(wav_header));
+        for (int i = 0; i < numSamples; ++i) {
+            double sampleIndex = (double)i * sampleRatio;
+            double firstSample = floor(sampleIndex);
+            double secondSample = floor(sampleIndex+1.0);
+            if ((int)firstSample >= numSamples || (int)secondSample >= numSamples) {
+                soundAsset->samples[i] = sampleData[numFileSamples - 1];
+            }
+            else {
+                double t = sampleIndex - firstSample;
+                double firstSampleContribution = (1.0 - t) * (double)sampleData[(int)firstSample];
+                double secondSampleContribution = t * (double)sampleData[(int)secondSample];
+                soundAsset->samples[i] = (short)(firstSampleContribution + secondSampleContribution);
+            }
+        }
+    }
+    else {
+        // align data??? think this will allocate a little extra so the data is aligned
+        int numSamplesToAllocate = ((numFileSamples / 4) + 1) * 4;
+        soundAsset->samples = (short *)(allocateMemorySize(&assets->assetMemory, sizeof(short) * numSamplesToAllocate));
+        soundAsset->numSamples = numFileSamples;
+
+        short *sampleData = (short *)((char *)fileData + sizeof(wav_header));
+        for (int i = 0; i < numFileSamples; ++i) {
+            soundAsset->samples[i] = sampleData[i];
+        }
     }
 }
 
