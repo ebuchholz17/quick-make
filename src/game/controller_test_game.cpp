@@ -87,49 +87,6 @@ void updateControllerTestGame (memory_arena *memory, memory_arena *tempMemory, g
         }
 
     }
-    //addText(-184, -100, appendString("score: ", numToString(17, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
 
     popSpriteMatrix(spriteList);
 }
-//struct game_controller_input {
-//    bool connected;
-//
-//    input_key dPadUp;
-//    input_key dPadDown;
-//    input_key dPadLeft;
-//    input_key dPadRight;
-//
-//    input_key start;
-//    input_key back;
-//
-//    input_key leftStick;
-//    input_key rightStick;
-//
-//    input_key leftBumper;
-//    input_key rightBumper;
-//
-//    input_key aButton;
-//    input_key bButton;
-//    input_key xButton;
-//    input_key yButton;
-//
-//    float leftTrigger;
-//    input_key leftTriggerButton;
-//    float rightTrigger;
-//    input_key rightTriggerButton;
-//
-//    float leftStickX;
-//    float leftStickY;
-//    float rightStickX;
-//    float rightStickY;
-//
-//    input_key leftStickUp;
-//    input_key leftStickDown;
-//    input_key leftStickLeft;
-//    input_key leftStickRight;
-//
-//    input_key rightStickUp;
-//    input_key rightStickDown;
-//    input_key rightStickLeft;
-//    input_key rightStickRight;
-//};

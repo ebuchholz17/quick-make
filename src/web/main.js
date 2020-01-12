@@ -518,6 +518,10 @@ WebPlatform.prototype = {
             this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
         }
 
+        this.controllers = {};
+        window.addEventListener("gamepadconnected", this.onGamepadConnected.bind(this), false);
+        window.addEventListener("gamepaddisconnected", this.onGamepadDisconnected.bind(this), false);
+
         this.resize();
         this.lastTime = window.performance.now();
         this.update();
@@ -569,6 +573,26 @@ WebPlatform.prototype = {
         this.gameInput.pointer2JustDown = this.input.pointer2JustDown;
         this.gameInput.pointer2X = this.input.pointer2X;
         this.gameInput.pointer2Y = this.input.pointer2Y;
+
+        // get updated gamepad state
+        var gamepads = navigator.getGamepads();
+        for (var i = 0; i < gamepads.length; i++) {
+            if (gamepads[i]) {
+                this.controllers[gamepads[i].index] = gamepads[i];
+            }
+        }
+
+        var controllerPointer = this.game.getPointer(this.gameInput.controllers);
+        for (var i = 0; i < 4; ++i) {
+            var gameController = this.game.wrapPointer(controllerPointer + this.game.sizeof_game_controller_input() * i, this.game.game_controller_input);
+            if (this.controllers[i]) {
+                gameController.connected = true;
+                this.updateController(gameController, this.controllers[i]);
+            }
+            else {
+                gameController.connected = false;
+            }
+        }
 
         this.renderCommands.windowWidth = this.canvas.width;
         this.renderCommands.windowHeight = this.canvas.height;
@@ -737,6 +761,116 @@ WebPlatform.prototype = {
         var mouseY = (y - this.canvas.clientTop) * scaleY;
         this.input.pointer2X = mouseX;
         this.input.pointer2Y = mouseY;
+    },
+
+    onGamepadConnected: function (e) {
+        this.controllers[e.gamepad.index] = e.gamepad;
+    },
+
+    onGamepadDisconnected: function (e) {
+        delete this.controllers[e.gamepad.index];
+    },
+
+    updateController: function (gameController, webController) {
+        this.updateControllerButton(webController, 12, gameController, "dPadUp");
+        this.updateControllerButton(webController, 13, gameController, "dPadDown");
+        this.updateControllerButton(webController, 14, gameController, "dPadLeft");
+        this.updateControllerButton(webController, 15, gameController, "dPadRight");
+
+        this.updateControllerButton(webController, 9, gameController, "start");
+        this.updateControllerButton(webController, 8, gameController, "back");
+        this.updateControllerButton(webController, 10, gameController, "leftStick");
+        this.updateControllerButton(webController, 11, gameController, "rightStick");
+        this.updateControllerButton(webController, 4, gameController, "leftBumper");
+        this.updateControllerButton(webController, 5, gameController, "rightBumper");
+        this.updateControllerButton(webController, 0, gameController, "aButton");
+        this.updateControllerButton(webController, 1, gameController, "bButton");
+        this.updateControllerButton(webController, 2, gameController, "xButton");
+        this.updateControllerButton(webController, 3, gameController, "yButton");
+
+        this.updateControllerTrigger(gameController, "leftTrigger", "leftTriggerButton", webController.buttons[6].value);
+        this.updateControllerTrigger(gameController, "rightTrigger", "rightTriggerButton", webController.buttons[7].value);
+
+        this.updateControllerStick(webController.axes[0], webController.axes[1], gameController, "leftStickX", "leftStickY", 0.23953978087710196234015930661946);
+        this.updateControllerStick(webController.axes[2], webController.axes[3], gameController, "rightStickX", "rightStickY", 0.26517532883693960386974700155644);
+
+        this.updateControllerStickDirection(gameController, "leftStickUp", "leftStickDown", webController.axes[1], 0.23953978087710196234015930661946);
+        this.updateControllerStickDirection(gameController, "leftStickLeft", "leftStickRight", webController.axes[0], 0.23953978087710196234015930661946);
+        this.updateControllerStickDirection(gameController, "rightStickUp", "rightStickDown", webController.axes[3], 0.26517532883693960386974700155644);
+        this.updateControllerStickDirection(gameController, "rightStickLeft", "rightStickRight", webController.axes[2], 0.26517532883693960386974700155644);
+    },
+
+    updateControllerButton: function (webController, buttonID, gameController, buttonProperty) {
+        gameController[buttonProperty].justPressed = false;
+        if (webController.buttons[buttonID].pressed) {
+            if (!gameController[buttonProperty].down) {
+                gameController[buttonProperty].justPressed = true;
+            }
+            gameController[buttonProperty].down = true;
+        }
+        else {
+            gameController[buttonProperty].down = false;
+        }
+    },
+
+    updateControllerTrigger: function (gameController, triggerProperty, triggerButtonProperty, value) {
+        gameController[triggerButtonProperty].justPressed = false;
+        var deadZone = 0.11764705882352941176470588235294; // attempt to match xinput default deadzone
+        if (value >= deadZone) {
+            value -= deadZone;
+            gameController[triggerProperty] = value / (1.0 - deadZone);
+            if (!gameController[triggerButtonProperty].down) {
+                gameController[triggerButtonProperty].justPressed = true;
+            }
+            gameController[triggerButtonProperty].down = true;
+        }
+        else {
+            gameController[triggerProperty] = 0.0;
+            gameController[triggerButtonProperty].down = false;
+        }
+    },
+
+    updateControllerStick: function (xValue, yValue, gameController, xProperty, yProperty, deadZone) {
+        var magnitude = Math.sqrt(xValue * xValue + yValue * yValue);
+        var normalizedX = xValue / magnitude;
+        var normalizedY = yValue / magnitude;
+
+        if (magnitude >= deadZone) {
+            if (magnitude > 1.0) {
+                magnitude = 1.0;
+            }
+            magnitude -= deadZone;
+            var normalizedMagnitude = magnitude / (1.0 - deadZone);
+            gameController[xProperty] = normalizedX * normalizedMagnitude;
+            gameController[yProperty] = normalizedY * normalizedMagnitude;
+        }
+        else {
+            gameController[xProperty] = 0.0;
+            gameController[yProperty] = 0.0;
+        }
+    },
+
+    updateControllerStickDirection: function (gameController, dir0Prop, dir1Prop, value, deadZone) {
+        gameController[dir0Prop].justPressed = false;
+        if (value <= -deadZone) {
+            if (!gameController[dir0Prop].down) {
+                gameController[dir0Prop].justPressed = true;
+            }
+            gameController[dir0Prop].down = true;
+        }
+        else {
+            gameController[dir0Prop].down = false;
+        }
+        gameController[dir1Prop].justPressed = false;
+        if (value >= deadZone) {
+            if (!gameController[dir1Prop].down) {
+                gameController[dir1Prop].justPressed = true;
+            }
+            gameController[dir1Prop].down = true;
+        }
+        else {
+            gameController[dir1Prop].down = false;
+        }
     }
 
 };

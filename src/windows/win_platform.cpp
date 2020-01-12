@@ -576,6 +576,9 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             LARGE_INTEGER lastCounter;
             QueryPerformanceCounter(&lastCounter);
 
+            LARGE_INTEGER lastControllerCheckTime = lastCounter;
+
+            bool shouldCheckForNewControllers = true;
             while (programRunning) {
                 input.pointerJustDown = false;
                 input.aKey.justPressed = false;
@@ -598,18 +601,31 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
                 processWindowsMessages(window, &input, &renderCommands);
 
+                LARGE_INTEGER controllerCheckTime;
+                QueryPerformanceCounter(&controllerCheckTime);
+
+                long long controllerTimeElapsed = controllerCheckTime.QuadPart - lastControllerCheckTime.QuadPart;
+                float elapsedControllerSeconds = (float)controllerTimeElapsed / (float)perfCountFrequency;
+                if (elapsedControllerSeconds >= 3.0f) {
+                    shouldCheckForNewControllers = true;
+                    lastControllerCheckTime = controllerCheckTime;
+                }
                 for (int i = 0; i < 4; ++i) {
                     game_controller_input *controller = &input.controllers[i];
-
-                    XINPUT_STATE state = {};
-                    DWORD result = XInputGetState(i, &state);
-                    if (result == ERROR_SUCCESS) {
-                        controller->connected = true;
-                        updateController(controller, state);
+                    if (controller->connected || shouldCheckForNewControllers) {
+                        XINPUT_STATE state = {};
+                        DWORD result = XInputGetState(i, &state);
+                        if (result == ERROR_SUCCESS) {
+                            controller->connected = true;
+                            updateController(controller, state);
+                        }
+                        else {
+                            controller->connected = false;
+                        }
                     }
-                    else {
-                        controller->connected = false;
-                    }
+                }
+                if (shouldCheckForNewControllers) {
+                    shouldCheckForNewControllers = false;
                 }
 
                 renderCommands.windowWidth = gameWidth;

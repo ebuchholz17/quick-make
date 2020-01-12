@@ -213,6 +213,49 @@ interface input_key {
     attribute boolean justPressed;
 };
 
+interface game_controller_input {
+    attribute boolean connected;
+
+    [Value] attribute input_key dPadUp;
+    [Value] attribute input_key dPadDown;
+    [Value] attribute input_key dPadLeft;
+    [Value] attribute input_key dPadRight;
+
+    [Value] attribute input_key start;
+    [Value] attribute input_key back;
+
+    [Value] attribute input_key leftStick;
+    [Value] attribute input_key rightStick;
+
+    [Value] attribute input_key leftBumper;
+    [Value] attribute input_key rightBumper;
+
+    [Value] attribute input_key aButton;
+    [Value] attribute input_key bButton;
+    [Value] attribute input_key xButton;
+    [Value] attribute input_key yButton;
+
+    attribute float leftTrigger;
+    [Value] attribute input_key leftTriggerButton;
+    attribute float rightTrigger;
+    [Value] attribute input_key rightTriggerButton;
+
+    attribute float leftStickX;
+    attribute float leftStickY;
+    attribute float rightStickX;
+    attribute float rightStickY;
+
+    [Value] attribute input_key leftStickUp;
+    [Value] attribute input_key leftStickDown;
+    [Value] attribute input_key leftStickLeft;
+    [Value] attribute input_key leftStickRight;
+
+    [Value] attribute input_key rightStickUp;
+    [Value] attribute input_key rightStickDown;
+    [Value] attribute input_key rightStickLeft;
+    [Value] attribute input_key rightStickRight;
+};
+
 interface game_input {
     [Value] attribute input_key upKey;
     [Value] attribute input_key downKey;
@@ -232,6 +275,8 @@ interface game_input {
     [Value] attribute input_key tKey;
     [Value] attribute input_key yKey;
     [Value] attribute input_key uKey;
+
+    [Value] attribute game_controller_input[] controllers;
 
     attribute boolean pointerDown;
     attribute boolean pointerJustDown;
