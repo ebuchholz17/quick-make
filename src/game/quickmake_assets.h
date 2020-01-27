@@ -22,7 +22,8 @@ struct animated_mesh_asset {
 
 enum texture_key {
     TEXTURE_KEY_FONT,
-    TEXTURE_KEY_GAME_ATLAS
+    TEXTURE_KEY_GAME_ATLAS,
+    TEXTURE_KEY_HITBOX_EDITOR_ATLAS
 };
 
 struct texture_asset {
@@ -33,7 +34,8 @@ struct texture_asset {
 };
 
 enum atlas_key {
-    ATLAS_KEY_GAME
+    ATLAS_KEY_GAME,
+    ATLAS_KEY_HITBOX_EDITOR
 };
 
 enum sound_key {

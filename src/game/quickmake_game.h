@@ -16,20 +16,27 @@
 //#include "block_game.cpp"
 //#include "piano_game.cpp"
 //#include "skeletal_game.cpp"
-#include "controller_test_game.cpp"
+//#include "controller_test_game.cpp"
+#include "hitbox_editor/hitbox_editor.cpp"
 
 
 struct game_state {
     memory_arena memory;
     memory_arena tempMemory; // cleared every frame
+
     bool assetsInitialized;
     game_assets assets;
     bool gameInitialized;
+
+    bool fileJustLoaded;
+    void *loadedFileData;
+    unsigned int loadedFileSize;
 
     float visualizationT;
     //piano_game pianoGame;
     //block_game blockGame;
     //skeletal_game skeletalGame;
+    hitbox_editor hitboxEditor;
 
     game_sounds sounds;
 

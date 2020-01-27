@@ -4,7 +4,7 @@
         <key>fileFormatVersion</key>
         <int>4</int>
         <key>texturePackerVersion</key>
-        <string>5.1.0</string>
+        <string>4.12.0</string>
         <key>autoSDSettings</key>
         <array>
             <struct type="AutoSDSettings">
@@ -181,8 +181,8 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">black_key.png</key>
-            <key type="filename">black_key_pressed.png</key>
+            <key type="filename">main/black_key.png</key>
+            <key type="filename">main/black_key_pressed.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -195,9 +195,9 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">block_blink.png</key>
-            <key type="filename">player.png</key>
-            <key type="filename">tile_backing.png</key>
+            <key type="filename">main/block_blink.png</key>
+            <key type="filename">main/player.png</key>
+            <key type="filename">main/tile_backing.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -210,13 +210,20 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">blue_tile.png</key>
-            <key type="filename">cyan_tile.png</key>
-            <key type="filename">green_tile.png</key>
-            <key type="filename">magenta_tile.png</key>
-            <key type="filename">red_tile.png</key>
-            <key type="filename">sheep.png</key>
-            <key type="filename">yellow_tile.png</key>
+            <key type="filename">main/blue_tile.png</key>
+            <key type="filename">main/cyan_tile.png</key>
+            <key type="filename">main/golfman.png</key>
+            <key type="filename">main/golfman_appear_0.png</key>
+            <key type="filename">main/golfman_appear_1.png</key>
+            <key type="filename">main/golfman_appear_2.png</key>
+            <key type="filename">main/golfman_punch.png</key>
+            <key type="filename">main/golfman_run_0.png</key>
+            <key type="filename">main/golfman_run_1.png</key>
+            <key type="filename">main/green_tile.png</key>
+            <key type="filename">main/magenta_tile.png</key>
+            <key type="filename">main/red_tile.png</key>
+            <key type="filename">main/sheep.png</key>
+            <key type="filename">main/yellow_tile.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -229,7 +236,7 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">boss.png</key>
+            <key type="filename">main/boss.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -242,8 +249,8 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">white_key.png</key>
-            <key type="filename">white_key_pressed.png</key>
+            <key type="filename">main/white_key.png</key>
+            <key type="filename">main/white_key_pressed.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -259,7 +266,7 @@
         </map>
         <key>fileList</key>
         <array>
-            <filename>.</filename>
+            <filename>main</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

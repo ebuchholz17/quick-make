@@ -116,6 +116,9 @@ int sizeof_sound_sample () {
 int sizeof_platform_options () {
     return sizeof(platform_options);
 }  
+int sizeof_platform_triggers () {
+    return sizeof(platform_triggers);
+}  
 int sizeof_game_sound_output () {
     return sizeof(game_sound_output);
 }  
@@ -157,6 +160,7 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_game_input", &sizeof_game_input);
     function ("sizeof_sound_sample", &sizeof_sound_sample);
     function ("sizeof_platform_options", &sizeof_platform_options);
+    function ("sizeof_platform_triggers", &sizeof_platform_triggers);
     function ("sizeof_game_sound_output", &sizeof_game_sound_output);
     function ("sizeof_game_memory", &sizeof_game_memory);
 }

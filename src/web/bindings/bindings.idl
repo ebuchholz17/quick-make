@@ -297,6 +297,13 @@ interface platform_options {
     attribute long audioSampleRate;
 };
 
+interface platform_triggers {
+    attribute boolean triggerFileWindow;
+    attribute boolean triggerFileSave;
+    attribute VoidPtr fileToSaveData;
+    attribute unsigned long fileToSaveSize;
+};
+
 interface game_sound_output {
     attribute long samplesPerSecond;
     attribute long sampleCount;

@@ -64,6 +64,11 @@ struct quaternion {
     float z;
 };
 
+struct rectangle {
+    vector2 min;
+    vector2 max;
+};
+
 struct aabb {
     vector3 min;
     vector3 max;

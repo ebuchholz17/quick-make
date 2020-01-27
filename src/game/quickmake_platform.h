@@ -241,6 +241,13 @@ struct platform_options {
     int audioSampleRate;
 };
 
+struct platform_triggers {
+    bool triggerFileWindow;
+    bool triggerFileSave;
+    void *fileToSaveData;
+    unsigned int fileToSaveSize;
+};
+
 struct game_sound_output {
     int samplesPerSecond;
     int sampleCount;

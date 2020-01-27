@@ -78,6 +78,14 @@ WebPlatform.prototype = {
         this.canvas.draggable = false;
         this.viewport.draggable = false;
 
+        // for interactive file loading/saving
+        this.fileInput = document.createElement("input");
+        this.fileInput.setAttribute("type", "file");
+        this.fileInput.onchange = this.onFileToLoadSelected.bind(this);
+        this.loadedFile = null;
+        this.loadedFileSize = 0;
+        this.fileSelectQueued = false;
+
         window.addEventListener("resize", this.resize.bind(this));
         this.updateCallback = this.update.bind(this);
 
@@ -102,6 +110,11 @@ WebPlatform.prototype = {
         this.platformOptions = this.game.wrapPointer(this.game._malloc(this.game.sizeof_platform_options()), 
                                                      this.game.platform_options);
         this.platformOptions.audioSampleRate = this.webAudioSounds.getSampleRate();
+
+        this.platformTriggers = this.game.wrapPointer(this.game._malloc(this.game.sizeof_platform_triggers()), 
+                                                     this.game.platform_triggers);
+        this.platformTriggers.triggerFileWindow = false;
+        this.platformTriggers.triggerFileSave = false;
 
         this.assetList = this.game.wrapPointer(this.game._malloc(this.game.sizeof_asset_list()), 
                                                 this.game.asset_list);
@@ -609,16 +622,41 @@ WebPlatform.prototype = {
         //                                this.game.getPointer(this.gameMemory.tempMemory),
         //                                this.gameMemory.tempMemoryCapacity);
         //uintBuffer.fill(0);
+
+        // reset platform triggers
+        this.platformTriggers.triggerFileWindow = false;
+        this.platformTriggers.triggerFileSave = false;
+        this.platformTriggers.fileToSaveData = 0;
+        this.platformTriggers.fileToSaveSize = 0;
+
+        if (this.loadedFile) {
+            this.game.ccall("loadFile", 
+                "null", 
+                ["number", "number", "number"],
+                [
+                    this.game.getPointer(this.gameMemory), 
+                    this.loadedFile, 
+                    this.loadedFileSize
+                ]
+            );
+        }
+
         this.game.ccall("updateGame", 
             "null", 
-            ["number", "number", "number"], 
+            ["number", "number", "number", "number", "number"], 
             [
                 this.game.getPointer(this.gameInput), 
                 this.game.getPointer(this.gameMemory), 
                 this.game.getPointer(this.renderCommands),
-                this.game.getPointer(this.platformOptions)
+                this.game.getPointer(this.platformOptions),
+                this.game.getPointer(this.platformTriggers)
             ]
         );
+
+        if (this.loadedFile) {
+            this.game._free(this.loadedFile);
+            this.loadedFile = null;
+        }
 
         // TODO(ebuchholz): handle interruptions due to resizing, switching tabs, losing focues, etc.
         if (this.webAudioSounds.started) {
@@ -635,11 +673,55 @@ WebPlatform.prototype = {
         this.input.pointerJustDown = false;
         this.input.pointer2JustDown = false;
 
+        if (this.platformTriggers.triggerFileWindow) {
+            // web file api
+            this.fileInput.click();
+            this.fileSelectQueued = true;
+        }
+        if (this.platformTriggers.triggerFileSave) {
+            // web file api
+            var uintBuffer = new Uint8Array(this.game.HEAPU8.buffer,
+                                            this.platformTriggers.fileToSaveData.ptr,
+                                            this.platformTriggers.fileToSaveSize);
+            var data = new Blob([uintBuffer]);
+            var downloadLinkURL = window.URL.createObjectURL(data);
+            var downloadLink = document.createElement("a");
+            downloadLink.download = "framedata.txt";
+            downloadLink.href = downloadLinkURL;
+            downloadLink.click();
+
+            //this.fileInput.click();
+        }
+
         var time = window.performance.now();
         //console.log("frame time: ", time - this.lastTime);
         this.lastTime = time;
 
         window.requestAnimationFrame(this.updateCallback);
+    },
+
+    onFileToLoadSelected: function (event) {
+        var fileToLoad = event.target.files[0];
+        this.fileSelectQueued = false;
+
+        if (fileToLoad) {
+            var reader = new FileReader();
+            reader.onload = function (fileLoadedEvent) {
+                var data = fileLoadedEvent.target.result;
+
+                var fileDataView = new Uint8Array(data);
+                //var strLength = this.game.lengthBytesUTF8(data);
+                var numBytes = data.byteLength;
+                var fileData = this.game._malloc(numBytes);
+                var gameFileDataView = new Uint8Array(this.game.HEAPU8.buffer, 
+                                                  fileData,
+                                                  numBytes);
+                gameFileDataView.set(fileDataView, 0);
+                this.loadedFile = fileData;
+                this.loadedFileSize = numBytes;
+            }.bind(this);
+            reader.readAsArrayBuffer(fileToLoad);
+        }
     },
 
     hexColorToString: function (hexColor) {
@@ -729,6 +811,10 @@ WebPlatform.prototype = {
     },
 
     onMouseDown: function (e) {
+        if (this.fileSelectQueued) {
+            this.fileInput.click();
+            this.fileSelectQueued = false;
+        }
         if (!this.input.pointerDown) {
             this.input.pointerJustDown = true;
         }

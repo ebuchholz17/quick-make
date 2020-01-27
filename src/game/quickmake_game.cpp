@@ -60,6 +60,7 @@ static void initSounds (game_sounds *gameSounds) {
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
     pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
+    pushAsset(assetList, "assets/textures/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
 
     pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
 }
@@ -115,7 +116,19 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
     }
 }
 
-extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_command_list *renderCommands, platform_options *options) { 
+// TODO(ebuchholz); better interface for interactively loading files at runtime
+extern "C" void loadFile (game_memory *gameMemory, void *fileData, unsigned int fileSize) {
+    game_state *gameState = (game_state *)gameMemory->memory;
+    // TODO(ebuchholz): copy file data?
+    gameState->fileJustLoaded = true;
+    gameState->loadedFileData = fileData;
+    gameState->loadedFileSize = fileSize;
+
+    // TODO(ebuchholz): do something with file?
+}
+
+extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_command_list *renderCommands, 
+                            platform_options *options, platform_triggers *triggers) { 
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->gameInitialized) {
         gameState->gameInitialized = true;
@@ -127,6 +140,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         //initBlockGame(&gameState->memory, &gameState->blockGame);
         //initPianoGame(&gameState->pianoGame);
         //initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
+        initHitboxEditor(&gameState->memory, &gameState->assets, &gameState->hitboxEditor);
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -179,10 +193,24 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
 
+    if (gameState->fileJustLoaded) {
+        loadFileIntoHitboxEditor(&gameState->hitboxEditor, &gameState->assets, gameState->loadedFileData, gameState->loadedFileSize);
+        gameState->fileJustLoaded = false;
+    }
+
     //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
     //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
-    updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
+    //updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
+    updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
+    if (gameState->hitboxEditor.requestFileLoad) {
+        triggers->triggerFileWindow = true;
+    }
+    if (gameState->hitboxEditor.requestFileSave) {
+        triggers->triggerFileSave = true;
+        triggers->fileToSaveData = gameState->hitboxEditor.fileToSaveData;
+        triggers->fileToSaveSize = gameState->hitboxEditor.fileToSaveSize;
+    }
 
     popSpriteMatrix(&spriteList);
 

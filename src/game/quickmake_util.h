@@ -137,6 +137,54 @@ char *numToString (int num, memory_arena *memory) {
     return string;
 }
 
+char *writeNumToBuffer (int num, char *buffer) {
+    const int maxStringLength = 20;
+    char numberBuffer[maxStringLength] = {};
+
+    char *currentDigit = numberBuffer + (maxStringLength - 1);
+    char *stringEnd = currentDigit;
+
+    bool isNegative = false;
+    if (num < 0) {
+        isNegative = true;
+        num = -num;
+    }
+
+    do {
+        --currentDigit;
+        *currentDigit = '0' + num % 10;
+        num /= 10;
+    } while (num != 0);
+
+    if (isNegative) {
+        --currentDigit;
+        *currentDigit = '-';
+    }
+    unsigned int stringLength = (unsigned int)(stringEnd - currentDigit);
+    char *string = buffer;
+
+    for (unsigned int i = 0; i < stringLength; ++i) {
+        string[i] = *currentDigit;
+        ++currentDigit;
+    }
+    //string[stringLength] = 0;
+
+    return string + stringLength;
+    //return string + stringLength + 1;
+}
+
+char *writeStringToBuffer (char *string, char *buffer) {
+    char *letter = string;
+    char *cursor = buffer;
+    while (*letter != 0) {
+        *cursor = *letter;
+        ++cursor;
+        ++letter;
+    }
+
+    return cursor;
+}
+
 char *allocateString (char *string, memory_arena *memory) {
     int length = 0;
     char *letter = string;

@@ -1536,6 +1536,29 @@ atlas_frame *getAtlasFrame (game_assets *assets, int atlasKey, char *frameName) 
     return result;
 }
 
+unsigned int getAtlasFrameIndex (game_assets *assets, int atlasKey, char *frameName) {
+    atlas_frame *result;
+
+    atlas_asset *textureAtlas = assets->atlases[atlasKey];
+    assert(textureAtlas);
+
+    unsigned int hash = hashString(frameName);
+    unsigned int mapIndex = hash % 500;
+    unsigned int originalMapIndex = mapIndex; // check that we actually find it after looping all the way around
+    while (true) {
+        result = &textureAtlas->map.entries[mapIndex];
+        if (stringsAreEqual(frameName, result->key)) {
+            break;
+        }
+        else {
+            mapIndex = (mapIndex + 1) % 500;
+            assert(mapIndex != originalMapIndex);
+        }
+    }
+
+    return mapIndex;
+}
+
 // get from atlas map function: calc hash, get item from array, check key, if conflict, get next and check key again
 
 void pushAsset (asset_list *assetList, char *path, asset_type type, int key) {

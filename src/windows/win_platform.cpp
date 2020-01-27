@@ -321,6 +321,18 @@ static char *readEntireTextFile (char *path) {
     return fileData;
 }
 
+static size_t writeEntireFile (char *path, void *data, size_t size) {
+    FILE *file; 
+    fopen_s(&file, path, "w");
+    assert(file); // TODO(ebuchholz): better error check?
+
+    size_t resultSize = fwrite(data, 1, size, file);
+
+    fclose(file);
+
+    return resultSize;
+}
+
 static void loadXInput () {
     HMODULE XInputLibrary = LoadLibraryA("xinput1_4.dll");
     if(!XInputLibrary) {
@@ -579,6 +591,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             LARGE_INTEGER lastControllerCheckTime = lastCounter;
 
             bool shouldCheckForNewControllers = true;
+            bool shouldLoadFile = false;
             while (programRunning) {
                 input.pointerJustDown = false;
                 input.aKey.justPressed = false;
@@ -633,7 +646,27 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 renderCommands.memory.size = 0;
                 memset(renderCommands.memory.base, 0, renderCommands.memory.capacity);
                 memset(gameMemory.tempMemory, 0, gameMemory.tempMemoryCapacity);
-                updateGame(&input, &gameMemory, &renderCommands, &options);
+
+                platform_triggers platformTriggers = {};
+
+                if (shouldLoadFile) {
+                    char fileName[MAX_PATH] = {};
+                    OPENFILENAMEA openFileDialogInfo = {};
+                    openFileDialogInfo.lStructSize = sizeof(OPENFILENAMEA);
+                    openFileDialogInfo.lpstrFile = fileName;
+                    openFileDialogInfo.nMaxFile = MAX_PATH;
+                    GetOpenFileNameA(&openFileDialogInfo);
+
+                    char *fileData = readEntireTextFile(fileName);
+                    shouldLoadFile = false;
+
+                    // TODO(ebuchholz): handle file size instead of passing 0
+                    if (fileData) {
+                        loadFile(&gameMemory, fileData, 0);
+                    }
+                }
+
+                updateGame(&input, &gameMemory, &renderCommands, &options, &platformTriggers);
 
                 LARGE_INTEGER audioStartTime;
                 QueryPerformanceCounter(&audioStartTime);
@@ -658,6 +691,19 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 //OutputDebugString(message);
 
                 renderFrame(&rendererMemory, &renderCommands);
+
+                if (platformTriggers.triggerFileWindow) {
+                    shouldLoadFile = true;
+                }
+                if (platformTriggers.triggerFileSave) {
+                    char fileName[MAX_PATH] = {};
+                    OPENFILENAMEA saveFileDialogInfo = {};
+                    saveFileDialogInfo.lStructSize = sizeof(OPENFILENAMEA);
+                    saveFileDialogInfo.lpstrFile = fileName;
+                    saveFileDialogInfo.nMaxFile = MAX_PATH;
+                    GetSaveFileNameA(&saveFileDialogInfo);
+                    writeEntireFile(fileName, platformTriggers.fileToSaveData, platformTriggers.fileToSaveSize);
+                }
 
                 // Sleep for any leftover time
                 LARGE_INTEGER workCounter;

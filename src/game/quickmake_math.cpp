@@ -1044,6 +1044,34 @@ int aabbAxisWithMaximumExtent (aabb a) {
 
     return max;
 }
+
+rectangle unionRectangle (rectangle a, rectangle b) {
+    rectangle result;
+
+    result.min.x = a.min.x < b.min.x ? a.min.x : b.min.x;
+    result.min.y = a.min.y < b.min.y ? a.min.y : b.min.y;
+
+    result.max.x = a.max.x > b.max.x ? a.max.x : b.max.x;
+    result.max.y = a.max.y > b.max.y ? a.max.y : b.max.y;
+
+    return result;
+}
+
+bool rectangleIntersection (rectangle a, rectangle b) {
+    if (a.max.x < b.min.x) { return false; }
+    if (a.min.x > b.max.x) { return false; }
+    if (a.max.y < b.min.y) { return false; }
+    if (a.min.y > b.max.y) { return false; }
+    return true;
+}
+
+bool rectangleContainsPoint (rectangle rect, float x, float y) {
+    if (x >= rect.min.x && x < rect.max.x && y >= rect.min.y && y < rect.max.y) {
+        return true;
+    }
+    return false;
+}
+
 inline sphere Sphere (vector3 pos, float radius) {
     sphere result;
 
