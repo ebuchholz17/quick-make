@@ -1559,6 +1559,26 @@ unsigned int getAtlasFrameIndex (game_assets *assets, int atlasKey, char *frameN
     return mapIndex;
 }
 
+void loadDataFile (void *assetData, game_assets *assets, int dataKey, memory_arena *workingMemory, unsigned int size) {
+    int numDataAssets = assets->numDataAssets;
+    assert(numDataAssets < MAX_NUM_DATA_ASSETS);
+
+    data_asset *dataAsset = 
+        (data_asset *)allocateMemorySize(&assets->assetMemory, sizeof(data_asset)); 
+    assets->dataAssets[dataKey] = dataAsset;
+    assets->numDataAssets++;
+    dataAsset->key = (data_key)dataKey;
+    void *copiedData = allocateMemorySize(&assets->assetMemory, size); 
+    char *filePointer = (char *)assetData;
+    char *dataPointer = (char *)copiedData;
+    for (unsigned int i = 0; i < size; ++i) {
+        dataPointer[i] = filePointer[i];
+    }
+
+    dataAsset->data = copiedData;
+    dataAsset->size = size;
+}
+
 // get from atlas map function: calc hash, get item from array, check key, if conflict, get next and check key again
 
 void pushAsset (asset_list *assetList, char *path, asset_type type, int key) {

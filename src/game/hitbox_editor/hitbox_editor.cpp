@@ -53,7 +53,7 @@ bool doLabelButton (float x, float y, float width, float height, char *label, bo
     return result;
 }
 
-void drawBox (sprite_list *spriteList, float originX, float originY, rectangle box, game_assets *assets, char *boxKey, int additionalOffsetX, int additionalOffsetY) {
+static void drawBox (sprite_list *spriteList, float originX, float originY, rectangle box, game_assets *assets, char *boxKey, int additionalOffsetX, int additionalOffsetY) {
         pushSpriteTransform(spriteList, Vector2((float)additionalOffsetX, (float)additionalOffsetY));
         pushSpriteTransform(spriteList, Vector2(originX, originY));
         pushSpriteTransform(spriteList, box.min);

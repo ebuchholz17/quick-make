@@ -5,7 +5,6 @@
 #define GAME_WIDTH 384.0f
 #define GAME_HEIGHT 216.0f
 
-
 #include "quickmake_platform.h"
 #include "quickmake_math.cpp"
 #include "quickmake_util.h"
@@ -13,11 +12,15 @@
 #include "quickmake_sprites.cpp"
 #include "quickmake_audio.cpp"
 #include "quickmake_rendering.cpp"
+
+#include "hitbox/hitbox.cpp"
+
+#include "test_game.cpp"
 //#include "block_game.cpp"
 //#include "piano_game.cpp"
 //#include "skeletal_game.cpp"
 //#include "controller_test_game.cpp"
-#include "hitbox_editor/hitbox_editor.cpp"
+//#include "hitbox_editor/hitbox_editor.cpp"
 
 
 struct game_state {
@@ -36,7 +39,7 @@ struct game_state {
     //piano_game pianoGame;
     //block_game blockGame;
     //skeletal_game skeletalGame;
-    hitbox_editor hitboxEditor;
+    //hitbox_editor hitboxEditor;
 
     game_sounds sounds;
 

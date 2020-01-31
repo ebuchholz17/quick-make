@@ -19,7 +19,8 @@ enum asset_type {
     ASSET_TYPE_ATLAS,
     ASSET_TYPE_ANIMATION_DATA,
     ASSET_TYPE_QMM,
-    ASSET_TYPE_WAV
+    ASSET_TYPE_WAV,
+    ASSET_TYPE_DATA
 };
 
 struct asset_to_load {

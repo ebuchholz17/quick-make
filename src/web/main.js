@@ -159,6 +159,9 @@ WebPlatform.prototype = {
                 case this.game.ASSET_TYPE_ATLAS: {
                     this.loadTextureAtlas(assetToLoad.path, assetToLoad.type, assetToLoad.key, assetToLoad.secondKey);
                 } break;
+                case this.game.ASSET_TYPE_DATA: {
+                    this.loadDataAsset(assetToLoad.path, assetToLoad.type, assetToLoad.key);
+                } break;
             }
         }
 
@@ -178,7 +181,8 @@ WebPlatform.prototype = {
                         var fileData = 0;
                         this.game.ccall("parseGameAsset", 
                             "null", 
-                            ["number", "number", "number", "number", "number"], 
+                            ["number", "number", "number", "number", 
+                             "number", "number", "number", "number", "number"], 
                             [
                                 fileData, 
                                 0,
@@ -187,7 +191,8 @@ WebPlatform.prototype = {
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory),
-                                this.game.getPointer(this.platformOptions)
+                                this.game.getPointer(this.platformOptions),
+                                0
                             ]
                         );
 
@@ -217,7 +222,8 @@ WebPlatform.prototype = {
 
                         this.game.ccall("parseGameAsset", 
                             "null", 
-                            ["number", "number", "number", "number", "number"], 
+                            ["number", "number", "number", "number", 
+                             "number", "number", "number", "number", "number"], 
                             [
                                 objFileData, 
                                 0,
@@ -226,7 +232,8 @@ WebPlatform.prototype = {
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory),
-                                this.game.getPointer(this.platformOptions)
+                                this.game.getPointer(this.platformOptions),
+                                0
                             ]
                         );
 
@@ -264,7 +271,8 @@ WebPlatform.prototype = {
                         var fileData = 0;
                         this.game.ccall("parseGameAsset", 
                             "null", 
-                            ["number", "number", "number", "number", "number"], 
+                            ["number", "number", "number", "number", 
+                             "number", "number", "number", "number", "number"], 
                             [
                                 fileData, 
                                 0,
@@ -273,7 +281,8 @@ WebPlatform.prototype = {
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory),
-                                this.game.getPointer(this.platformOptions)
+                                this.game.getPointer(this.platformOptions),
+                                0
                             ]
                         );
 
@@ -315,7 +324,8 @@ WebPlatform.prototype = {
 
                         this.game.ccall("parseGameAsset", 
                             "null", 
-                            ["number", "number", "number", "number", "number"], 
+                            ["number", "number", "number", "number", 
+                             "number", "number", "number", "number", "number"], 
                             [
                                 bmpFileData, 
                                 0,
@@ -324,7 +334,8 @@ WebPlatform.prototype = {
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory),
-                                this.game.getPointer(this.platformOptions)
+                                this.game.getPointer(this.platformOptions),
+                                0
                             ]
                         );
 
@@ -366,7 +377,8 @@ WebPlatform.prototype = {
 
                         this.game.ccall("parseGameAsset", 
                             "null", 
-                            ["number", "number", "number", "number", "number"], 
+                            ["number", "number", "number", "number", 
+                             "number", "number", "number", "number", "number"], 
                             [
                                 wavFileData, 
                                 0,
@@ -375,7 +387,61 @@ WebPlatform.prototype = {
                                 assetSecondKey,
                                 this.game.getPointer(this.gameMemory),
                                 this.game.getPointer(this.workingAssetMemory),
-                                this.game.getPointer(this.platformOptions)
+                                this.game.getPointer(this.platformOptions),
+                                0
+                            ]
+                        );
+
+                        //var loadedTexture = 
+                        //    this.game.wrapPointer(
+                        //        this.game.getPointer(this.workingAssetMemory.base), 
+                        //        this.game.loaded_texture_asset
+                        //    );
+
+                        //this.renderer.loadTexture(this.game, loadedTexture);
+                        this.onAssetLoaded();
+                    }.bind(this),
+                    function () {
+                        console.log("fetch .arrayBuffer() failed for " + path);
+                    }.bind(this)
+                );
+            }.bind(this),
+            function () {
+                console.log("Failed to fetch " + path);
+            }.bind(this)
+        );
+    },
+
+    loadDataAsset: function (path, assetType, assetKey, assetSecondKey) {
+        fetch(path).then(
+            function (file) {
+                file.arrayBuffer().then(
+                    function (data) {
+                        var fileDataView = new Uint8Array(data);
+                        //var strLength = this.game.lengthBytesUTF8(data);
+                        var numBytes = data.byteLength;
+                        var fileData = this.game._malloc(numBytes);
+                        var dataView = new Uint8Array(this.game.HEAPU8.buffer, 
+                                                         fileData,
+                                                         numBytes);
+                        dataView.set(fileDataView, 0);
+
+                        this.workingAssetMemory.size = 0;
+
+                        this.game.ccall("parseGameAsset", 
+                            "null", 
+                            ["number", "number", "number", "number", 
+                             "number", "number", "number", "number", "number"], 
+                            [
+                                fileData, 
+                                0,
+                                assetType,
+                                assetKey,
+                                assetSecondKey,
+                                this.game.getPointer(this.gameMemory),
+                                this.game.getPointer(this.workingAssetMemory),
+                                this.game.getPointer(this.platformOptions),
+                                numBytes
                             ]
                         );
 
@@ -424,7 +490,8 @@ WebPlatform.prototype = {
 
                 this.game.ccall("parseGameAsset", 
                     "null", 
-                    ["number", "number", "number", "number", "number"], 
+                    ["number", "number", "number", "number", 
+                     "number", "number", "number", "number", "number"], 
                     [
                         txtFileData, 
                         bmpFileData, 
@@ -433,7 +500,8 @@ WebPlatform.prototype = {
                         assetSecondKey,
                         this.game.getPointer(this.gameMemory),
                         this.game.getPointer(this.workingAssetMemory),
-                        this.game.getPointer(this.platformOptions)
+                        this.game.getPointer(this.platformOptions),
+                        0
                     ]
                 );
 

@@ -1,5 +1,5 @@
-#ifndef FISH_GAME_H
-#define FISH_GAME_H
+#ifndef TEST_GAME_H
+#define TEST_GAME_H
 
 //struct block_sheep {
 //    bool moving;
@@ -18,7 +18,7 @@
 //    BLOCK_GAME_STATE_CLEARING_LINES
 //};
 
-struct fish_game {
+struct test_game {
     //block_sheep sheep;
 
     //block_game_state gameState;

@@ -49,6 +49,16 @@ struct sound_asset {
     int numSamples;
 };
 
+enum data_key {
+    DATA_KEY_HITBOX_DATA
+};
+
+struct data_asset {
+    data_key key;
+    void *data;
+    unsigned int size;
+};
+
 struct atlas_frame {
     // assumes unrotated
     vector2 frameCorners[4]; // 0.0-1.0 texture coords, not pixel width/height
@@ -181,6 +191,7 @@ struct bitmap_header {
 #define MAX_NUM_TEXTURES 100
 #define MAX_NUM_SOUNDS 100
 #define MAX_NUM_ATLASES 20
+#define MAX_NUM_DATA_ASSETS 100
 
 #define MAX_NUM_ANIMATION_DATA 10
 
@@ -206,6 +217,9 @@ struct game_assets {
 
     animation_data *animationData[MAX_NUM_ANIMATION_DATA];
     int numAnimationData;
+
+    data_asset *dataAssets[MAX_NUM_DATA_ASSETS];
+    int numDataAssets;
 };
 
 #endif

@@ -63,10 +63,12 @@ extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/textures/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
 
     pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
+
+    pushAsset(assetList, "assets/data/data.txt", ASSET_TYPE_DATA, DATA_KEY_HITBOX_DATA);
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
-                                game_memory *gameMemory, memory_arena *workingMemory, platform_options *options) 
+                                game_memory *gameMemory, memory_arena *workingMemory, platform_options *options, unsigned int size) 
 {
     game_state *gameState = (game_state *)gameMemory->memory;
     if (!gameState->assetsInitialized) {
@@ -113,6 +115,9 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
         parseBitmap(secondAssetData, &gameState->assets, secondKey, workingMemory);
         parseAtlas(assetData, &gameState->assets, key, secondKey, workingMemory);
         break;
+    case ASSET_TYPE_DATA:
+        loadDataFile(assetData, &gameState->assets, key, workingMemory, size);
+        break;
     }
 }
 
@@ -140,7 +145,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         //initBlockGame(&gameState->memory, &gameState->blockGame);
         //initPianoGame(&gameState->pianoGame);
         //initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
-        initHitboxEditor(&gameState->memory, &gameState->assets, &gameState->hitboxEditor);
+        //initHitboxEditor(&gameState->memory, &gameState->assets, &gameState->hitboxEditor);
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -194,7 +199,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
 
     if (gameState->fileJustLoaded) {
-        loadFileIntoHitboxEditor(&gameState->hitboxEditor, &gameState->assets, gameState->loadedFileData, gameState->loadedFileSize);
+        //loadFileIntoHitboxEditor(&gameState->hitboxEditor, &gameState->assets, gameState->loadedFileData, gameState->loadedFileSize);
         gameState->fileJustLoaded = false;
     }
 
@@ -202,15 +207,16 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
     //updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
-    updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
-    if (gameState->hitboxEditor.requestFileLoad) {
-        triggers->triggerFileWindow = true;
-    }
-    if (gameState->hitboxEditor.requestFileSave) {
-        triggers->triggerFileSave = true;
-        triggers->fileToSaveData = gameState->hitboxEditor.fileToSaveData;
-        triggers->fileToSaveSize = gameState->hitboxEditor.fileToSaveSize;
-    }
+    //updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
+    updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
+    //if (gameState->hitboxEditor.requestFileLoad) {
+    //    triggers->triggerFileWindow = true;
+    //}
+    //if (gameState->hitboxEditor.requestFileSave) {
+    //    triggers->triggerFileSave = true;
+    //    triggers->fileToSaveData = gameState->hitboxEditor.fileToSaveData;
+    //    triggers->fileToSaveSize = gameState->hitboxEditor.fileToSaveSize;
+    //}
 
     popSpriteMatrix(&spriteList);
 

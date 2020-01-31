@@ -304,7 +304,7 @@ static void updateController (game_controller_input *controller, XINPUT_STATE st
     updateControllerStickDirection(&controller->rightStickLeft, &controller->rightStickRight, gamepad.sThumbRX, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 }
 
-static char *readEntireTextFile (char *path) {
+static char *readEntireTextFile (char *path, unsigned int *size) {
     FILE *textFile; 
     fopen_s(&textFile, path, "rb");
     assert(textFile); // TODO(ebuchholz): better error check?
@@ -317,6 +317,8 @@ static char *readEntireTextFile (char *path) {
     fread(fileData, fileSize, 1, textFile);
     fileData[fileSize] = 0;
     fclose(textFile);
+
+    *size = fileSize;
 
     return fileData;
 }
@@ -473,13 +475,14 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         char *fileData = 0;
                         //char *fileData = readEntireTextFile(assetToLoad->path);
                         parseGameAsset(fileData, 0, assetToLoad->type, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options);
+                                       &gameMemory, &workingAssetMemory, &options, 0);
                         //free(fileData);
                     } break;
                     case ASSET_TYPE_OBJ: {
-                        char *fileData = readEntireTextFile(assetToLoad->path);
+                        unsigned int size;
+                        char *fileData = readEntireTextFile(assetToLoad->path, &size);
                         parseGameAsset(fileData, 0, ASSET_TYPE_OBJ, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options);
+                                       &gameMemory, &workingAssetMemory, &options, 0);
                         free(fileData);
 
                         loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
@@ -488,7 +491,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         char *fileData = 0;
                         //char *fileData = readEntireTextFile(assetToLoad->path);
                         parseGameAsset(fileData, 0, ASSET_TYPE_QMM, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options);
+                                       &gameMemory, &workingAssetMemory, &options, 0);
                         //free(fileData);
 
                         loadRendererAnimatedMesh(&rendererMemory, (loaded_animated_mesh_asset *)workingAssetMemory.base);
@@ -507,7 +510,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fclose(bmpFile);
 
                         parseGameAsset(fileData, 0, ASSET_TYPE_BMP, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options);
+                                       &gameMemory, &workingAssetMemory, &options, 0);
                         free(fileData);
 
                         // load texture onto gpu
@@ -527,11 +530,19 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fclose(wavFile);
 
                         parseGameAsset(fileData, 0, ASSET_TYPE_WAV, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options);
+                                       &gameMemory, &workingAssetMemory, &options, 0);
+                        free(fileData);
+                    } break;
+                    case ASSET_TYPE_DATA: {
+                        unsigned int size;
+                        char *fileData = readEntireTextFile(assetToLoad->path, &size);
+                        parseGameAsset(fileData, 0, ASSET_TYPE_DATA, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory, &options, size);
                         free(fileData);
                     } break;
                     case ASSET_TYPE_ATLAS: {
-                        char *atlasData = readEntireTextFile(assetToLoad->path);
+                        unsigned int size;
+                        char *atlasData = readEntireTextFile(assetToLoad->path, &size);
                         char bitmapPath[MAX_PATH];
                         int letterIndex = 0;
                         for (; assetToLoad->path[letterIndex] != 0; ++letterIndex) {
@@ -564,7 +575,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fclose(bmpFile);
 
                         parseGameAsset(atlasData, bitmapData, ASSET_TYPE_ATLAS, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options);
+                                       &gameMemory, &workingAssetMemory, &options, 0);
                         free(bitmapData);
                         free(atlasData);
 
@@ -657,7 +668,8 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                     openFileDialogInfo.nMaxFile = MAX_PATH;
                     GetOpenFileNameA(&openFileDialogInfo);
 
-                    char *fileData = readEntireTextFile(fileName);
+                    unsigned int size;
+                    char *fileData = readEntireTextFile(fileName, &size);
                     shouldLoadFile = false;
 
                     // TODO(ebuchholz): handle file size instead of passing 0
