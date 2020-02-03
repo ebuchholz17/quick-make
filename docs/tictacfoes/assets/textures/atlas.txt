@@ -1,0 +1,299 @@
+atlas.png
+size: 1024, 1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+arena
+  rotate: false
+  xy: 2, 321
+  size: 767, 216
+  orig: 767, 216
+  offset: 0, 0
+  index: -1
+blue_reticule
+  rotate: false
+  xy: 247, 2
+  size: 63, 57
+  orig: 63, 57
+  offset: 0, 0
+  index: -1
+crouching_block_o
+  rotate: false
+  xy: 866, 2
+  size: 62, 83
+  orig: 62, 83
+  offset: 0, 0
+  index: -1
+crouching_block_x
+  rotate: false
+  xy: 219, 87
+  size: 62, 83
+  orig: 62, 83
+  offset: 0, 0
+  index: -1
+crouching_hit_o
+  rotate: false
+  xy: 441, 2
+  size: 62, 81
+  orig: 62, 81
+  offset: 0, 0
+  index: -1
+crouching_hit_x
+  rotate: false
+  xy: 377, 2
+  size: 62, 81
+  orig: 62, 81
+  offset: 0, 0
+  index: -1
+crouching_idle_o
+  rotate: false
+  xy: 2, 87
+  size: 62, 83
+  orig: 62, 83
+  offset: 0, 0
+  index: -1
+crouching_idle_x
+  rotate: false
+  xy: 66, 87
+  size: 62, 83
+  orig: 62, 83
+  offset: 0, 0
+  index: -1
+crouching_kick_o
+  rotate: false
+  xy: 365, 87
+  size: 80, 88
+  orig: 80, 88
+  offset: 0, 0
+  index: -1
+crouching_kick_x
+  rotate: false
+  xy: 283, 87
+  size: 80, 88
+  orig: 80, 88
+  offset: 0, 0
+  index: -1
+crouching_punch_o
+  rotate: false
+  xy: 130, 87
+  size: 87, 83
+  orig: 87, 83
+  offset: 0, 0
+  index: -1
+crouching_punch_x
+  rotate: false
+  xy: 930, 2
+  size: 87, 83
+  orig: 87, 83
+  offset: 0, 0
+  index: -1
+eraser_hand
+  rotate: false
+  xy: 388, 539
+  size: 246, 249
+  orig: 246, 249
+  offset: 0, 0
+  index: -1
+hit_air_o
+  rotate: false
+  xy: 169, 2
+  size: 76, 52
+  orig: 76, 52
+  offset: 0, 0
+  index: -1
+hit_air_x
+  rotate: false
+  xy: 91, 2
+  size: 76, 52
+  orig: 76, 52
+  offset: 0, 0
+  index: -1
+hp_segment
+  rotate: false
+  xy: 2, 2
+  size: 12, 12
+  orig: 12, 12
+  offset: 0, 0
+  index: -1
+jump_kick_o
+  rotate: false
+  xy: 531, 87
+  size: 82, 89
+  orig: 82, 89
+  offset: 0, 0
+  index: -1
+jump_kick_x
+  rotate: false
+  xy: 447, 87
+  size: 82, 89
+  orig: 82, 89
+  offset: 0, 0
+  index: -1
+jump_o
+  rotate: false
+  xy: 764, 87
+  size: 60, 92
+  orig: 60, 92
+  offset: 0, 0
+  index: -1
+jump_punch_o
+  rotate: false
+  xy: 677, 87
+  size: 85, 92
+  orig: 85, 92
+  offset: 0, 0
+  index: -1
+jump_punch_x
+  rotate: false
+  xy: 826, 87
+  size: 85, 92
+  orig: 85, 92
+  offset: 0, 0
+  index: -1
+jump_x
+  rotate: false
+  xy: 615, 87
+  size: 60, 92
+  orig: 60, 92
+  offset: 0, 0
+  index: -1
+o
+  rotate: false
+  xy: 56, 2
+  size: 33, 35
+  orig: 33, 35
+  offset: 0, 0
+  index: -1
+pencil_hand
+  rotate: false
+  xy: 636, 539
+  size: 246, 249
+  orig: 246, 249
+  offset: 0, 0
+  index: -1
+red_reticule
+  rotate: false
+  xy: 312, 2
+  size: 63, 57
+  orig: 63, 57
+  offset: 0, 0
+  index: -1
+standing_block_o
+  rotate: false
+  xy: 541, 201
+  size: 42, 113
+  orig: 42, 113
+  offset: 0, 0
+  index: -1
+standing_block_walk_o
+  rotate: false
+  xy: 451, 201
+  size: 43, 113
+  orig: 43, 113
+  offset: 0, 0
+  index: -1
+standing_block_walk_x
+  rotate: false
+  xy: 496, 201
+  size: 43, 113
+  orig: 43, 113
+  offset: 0, 0
+  index: -1
+standing_block_x
+  rotate: false
+  xy: 585, 201
+  size: 42, 113
+  orig: 42, 113
+  offset: 0, 0
+  index: -1
+standing_hit_o
+  rotate: false
+  xy: 913, 87
+  size: 57, 112
+  orig: 57, 112
+  offset: 0, 0
+  index: -1
+standing_hit_x
+  rotate: false
+  xy: 2, 201
+  size: 57, 112
+  orig: 57, 112
+  offset: 0, 0
+  index: -1
+standing_idle_0
+  rotate: false
+  xy: 397, 201
+  size: 52, 113
+  orig: 52, 113
+  offset: 0, 0
+  index: -1
+standing_idle_x
+  rotate: false
+  xy: 169, 201
+  size: 52, 113
+  orig: 52, 113
+  offset: 0, 0
+  index: -1
+standing_kick_o
+  rotate: false
+  xy: 730, 201
+  size: 99, 118
+  orig: 99, 118
+  offset: 0, 0
+  index: -1
+standing_kick_x
+  rotate: false
+  xy: 629, 201
+  size: 99, 118
+  orig: 99, 118
+  offset: 0, 0
+  index: -1
+standing_punch_o
+  rotate: false
+  xy: 310, 201
+  size: 85, 113
+  orig: 85, 113
+  offset: 0, 0
+  index: -1
+standing_punch_x
+  rotate: false
+  xy: 223, 201
+  size: 85, 113
+  orig: 85, 113
+  offset: 0, 0
+  index: -1
+standing_walk_0
+  rotate: false
+  xy: 115, 201
+  size: 52, 113
+  orig: 52, 113
+  offset: 0, 0
+  index: -1
+standing_walk_x
+  rotate: false
+  xy: 61, 201
+  size: 52, 113
+  orig: 52, 113
+  offset: 0, 0
+  index: -1
+tictactoe_backing
+  rotate: false
+  xy: 2, 539
+  size: 384, 216
+  orig: 384, 216
+  offset: 0, 0
+  index: -1
+ui
+  rotate: false
+  xy: 505, 2
+  size: 359, 83
+  orig: 359, 83
+  offset: 0, 0
+  index: -1
+x
+  rotate: false
+  xy: 16, 2
+  size: 38, 34
+  orig: 38, 34
+  offset: 0, 0
+  index: -1
