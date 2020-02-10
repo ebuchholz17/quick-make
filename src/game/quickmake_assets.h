@@ -79,6 +79,38 @@ struct atlas_asset {
     int height;
 };
 
+enum midi_key {
+    MIDI_KEY_TEST
+};
+
+enum midi_format {
+    MIDI_FORMAT_SINGLE_TRACK,
+    MIDI_FORMAT_MULTI_TRACK_SIMULTANEOUS,
+    MIDI_FORMAT_MULTI_TRACK_ASYNCHRONOUS
+};
+
+enum midi_div_mode {
+    MIDI_DIV_MODE_TICKS_PER_QUARTER_NOTE,
+    MIDI_DIV_MODE_TICKS_PER_FRAME
+};
+
+#define MAX_MIDI_TRACKS 256
+
+struct midi_track {
+    char *data;
+    unsigned int length;
+};
+
+struct midi_asset {
+    midi_format format;
+    midi_div_mode divisionMode;
+    int ticksPerQuarterNote;
+    double tickDuration;
+
+    int numTracks;
+    midi_track tracks[MAX_MIDI_TRACKS];
+};
+
 // TODO(ebuchholz): maybe pack just the transforms together separately?
 struct skeleton_bone {
     matrix4x4 transform;
@@ -190,6 +222,7 @@ struct bitmap_header {
 #define MAX_NUM_ANIMATED_MESHES 30
 #define MAX_NUM_TEXTURES 100
 #define MAX_NUM_SOUNDS 100
+#define MAX_NUM_MIDIS 10
 #define MAX_NUM_ATLASES 20
 #define MAX_NUM_DATA_ASSETS 100
 
@@ -211,6 +244,9 @@ struct game_assets {
     
     sound_asset *sounds[MAX_NUM_SOUNDS];
     int numSounds;
+
+    midi_asset *midis[MAX_NUM_MIDIS];
+    int numMidis;
 
     atlas_asset *atlases[MAX_NUM_ATLASES];
     int numAtlases;

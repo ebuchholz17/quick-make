@@ -137,6 +137,23 @@ char *numToString (int num, memory_arena *memory) {
     return string;
 }
 
+unsigned int bigEndianToLittleEndian (unsigned int num){
+    unsigned int low = ((num >> 24) & 0xff);
+    unsigned int mid0 = ((num >> 16) & 0xff);
+    unsigned int mid1 = ((num >> 8) & 0xff);
+    unsigned int high = (num & 0xff);
+
+    return low |
+           (mid0 << 8) | 
+           (mid1 << 16) | 
+           (high << 24);
+}
+
+unsigned short bigEndianToLittleEndian (unsigned short num){
+    return ((num >> 8) & 0xff) | 
+           ((num & 0xff) << 8);
+}
+
 char *writeNumToBuffer (int num, char *buffer) {
     const int maxStringLength = 20;
     char numberBuffer[maxStringLength] = {};

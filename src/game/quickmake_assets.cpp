@@ -442,6 +442,113 @@ void parseWav (void *fileData, game_assets *assets, int key, memory_arena *worki
     }
 }
 
+void parseMidi (void *fileData, game_assets *assets, int key, memory_arena *workingMemory, platform_options *options) {
+    int numMidis = assets->numMidis;
+    assert(numMidis < MAX_NUM_MIDIS);
+
+    midi_asset *midiAsset = (midi_asset *)allocateMemorySize(&assets->assetMemory, sizeof(midi_asset)); 
+    assets->midis[key] = midiAsset;
+    assets->numMidis++;
+
+    char *fileCursor = (char *)fileData;
+
+    // header
+    char headerChunkType[4];
+    headerChunkType[0] = fileCursor[0];
+    headerChunkType[1] = fileCursor[1];
+    headerChunkType[2] = fileCursor[2];
+    headerChunkType[3] = fileCursor[3];
+    fileCursor += 4;
+    // TODO(ebuchholz): check header?
+
+    unsigned int headerLength = *((unsigned int *)fileCursor);
+    headerLength = bigEndianToLittleEndian(headerLength);
+    fileCursor += 4;
+
+    unsigned short format = *((unsigned short *)fileCursor);
+    format = bigEndianToLittleEndian(format);
+    fileCursor += 2;
+
+    switch (format) {
+    case 0:
+        midiAsset->format = MIDI_FORMAT_SINGLE_TRACK;
+        break;
+    case 1:
+        midiAsset->format = MIDI_FORMAT_MULTI_TRACK_SIMULTANEOUS;
+        //assert(0); // unsupported
+        break;
+    case 2:
+        midiAsset->format = MIDI_FORMAT_MULTI_TRACK_ASYNCHRONOUS;
+        assert(0); // unsupported
+        break;
+    default:
+        assert(0);
+        break;
+    }
+
+    unsigned short numTracks = *((unsigned short *)fileCursor);
+    numTracks = bigEndianToLittleEndian(numTracks);
+    fileCursor += 2;
+
+    assert(numTracks <= MAX_MIDI_TRACKS);
+    if (midiAsset->format == MIDI_FORMAT_SINGLE_TRACK) {
+        assert(numTracks == 1);
+    }
+    midiAsset->numTracks = numTracks;
+
+    unsigned short division = *((unsigned short *)fileCursor);
+    division = bigEndianToLittleEndian(division);
+    fileCursor += 2;
+
+    unsigned short divMode = (division & 0x8000) >> 15;
+    switch (divMode) {
+        case 0: {
+            midiAsset->divisionMode = MIDI_DIV_MODE_TICKS_PER_QUARTER_NOTE;
+            unsigned short ticksPerQuarterNote = division & 0x7fff;
+            midiAsset->ticksPerQuarterNote = ticksPerQuarterNote;
+            // default to 120bpm
+            midiAsset->tickDuration = 1.0 / ((double)ticksPerQuarterNote * 120.0 * (1.0 / 60.0));
+        } break;
+        case 1: {
+            midiAsset->divisionMode = MIDI_DIV_MODE_TICKS_PER_FRAME;
+            unsigned short fps = (division & 0x7f00) >> 8;
+            unsigned short ticksPerFrame = -((division & 0xff) >> 8);
+            if (ticksPerFrame == 29) {
+                midiAsset->tickDuration = 1.0f / (((double)fps) * (30.0/1.001));
+            }
+            else {
+                midiAsset->tickDuration = 1.0f / (((double)fps) * ((double)ticksPerFrame));
+            }
+        } break;
+        default: {
+            assert(0);
+        } break;
+    }
+
+    // allocate tracks
+    for (short trackIndex = 0; trackIndex < numTracks; ++trackIndex) {
+        midi_track *track = &midiAsset->tracks[trackIndex];
+
+        char trackChunk[4];
+        trackChunk[0] = fileCursor[0];
+        trackChunk[1] = fileCursor[1];
+        trackChunk[2] = fileCursor[2];
+        trackChunk[3] = fileCursor[3];
+        fileCursor += 4;
+
+        unsigned int trackLength = *((unsigned int *)fileCursor);
+        trackLength = bigEndianToLittleEndian(trackLength);
+        fileCursor += 4;
+
+        track->data = (char *)allocateMemorySize(&assets->assetMemory, trackLength); 
+        for (unsigned int trackDataIndex = 0; trackDataIndex < trackLength; ++trackDataIndex) {
+            track->data[trackDataIndex] = fileCursor[trackDataIndex];
+        }
+        track->length = trackLength;
+        fileCursor += trackLength;
+    }
+}
+
 void parseAnimationData (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
     // ignore file data for now
     int numAnimationData = assets->numAnimationData;

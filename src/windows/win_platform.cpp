@@ -533,6 +533,23 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                                        &gameMemory, &workingAssetMemory, &options, 0);
                         free(fileData);
                     } break;
+                    case ASSET_TYPE_MIDI: {
+                        FILE *midiFile; 
+                        fopen_s(&midiFile, assetToLoad->path, "rb");
+                        assert(midiFile); // TODO(ebuchholz): better error check?
+
+                        fseek(midiFile, 0, SEEK_END);
+                        int fileSize = ftell(midiFile);
+                        fseek(midiFile, 0, SEEK_SET);
+
+                        char *fileData = (char *)malloc(fileSize);
+                        fread(fileData, fileSize, 1, midiFile);
+                        fclose(midiFile);
+
+                        parseGameAsset(fileData, 0, ASSET_TYPE_MIDI, assetToLoad->key, assetToLoad->secondKey, 
+                                       &gameMemory, &workingAssetMemory, &options, 0);
+                        free(fileData);
+                    } break;
                     case ASSET_TYPE_DATA: {
                         unsigned int size;
                         char *fileData = readEntireTextFile(assetToLoad->path, &size);

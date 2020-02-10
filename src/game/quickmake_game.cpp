@@ -65,6 +65,8 @@ extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
 
     pushAsset(assetList, "assets/data/data.txt", ASSET_TYPE_DATA, DATA_KEY_HITBOX_DATA);
+
+    pushAsset(assetList, "assets/midi/onestop.mid", ASSET_TYPE_MIDI, MIDI_KEY_TEST);
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
@@ -110,6 +112,9 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
         break;
     case ASSET_TYPE_WAV:
         parseWav(assetData, &gameState->assets, key, workingMemory, options);
+        break;
+    case ASSET_TYPE_MIDI:
+        parseMidi(assetData, &gameState->assets, key, workingMemory, options);
         break;
     case ASSET_TYPE_ATLAS:
         parseBitmap(secondAssetData, &gameState->assets, secondKey, workingMemory);
@@ -208,7 +213,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
     //updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
     //updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
-    updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
+    updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->sounds);
     //if (gameState->hitboxEditor.requestFileLoad) {
     //    triggers->triggerFileWindow = true;
     //}
@@ -285,17 +290,14 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
     float dt = 1.0f / (float)soundOutput->samplesPerSecond;
     
     sound_sample *sampleOut = soundOutput->samples;
+
+    // update background music
+    updateBGM(gameSounds, sampleOut, soundOutput->sampleCount, soundOutput->samplesPerSecond);
+
+    sampleOut = soundOutput->samples;
     for (int i = 0; i < soundOutput->sampleCount; ++i) 
     {
         float sampleValue = 0.0f;
-        for (int soundIndex = 0; soundIndex < MAX_INSTRUMENT_SOUNDS; ++soundIndex) {
-            synth_sound *sound = gameSounds->instrumentSounds + soundIndex;
-            sound_instrument *instrument = gameSounds->instruments + sound->instrumentType;
-            if (sound->active) {
-                sampleValue += updateInstrument(sound, instrument, dt);
-            }
-        }
-
         for (int soundIndex = gameSounds->numPlayingSounds - 1; soundIndex >= 0; --soundIndex) {
             playing_sound *sound = gameSounds->playingSounds + soundIndex;
             sound_asset *soundAsset = assets->sounds[sound->key];
@@ -315,7 +317,7 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
         // clamp between -1 and 1
         sampleValue = sampleValue > 1.0f ? 1.0f : sampleValue;
         sampleValue = sampleValue < -1.0f ? -1.0f : sampleValue;
-        sampleOut->value = sampleValue * volume;
+        sampleOut->value = (0.5f * sampleOut->value) + (0.5f * (sampleValue * volume));
         assert(sampleOut->value >= -1.0f && sampleOut->value <= 1.0f);
         ++sampleOut;
     }

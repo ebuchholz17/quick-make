@@ -19,7 +19,7 @@ static void drawBox (sprite_list *spriteList, float originX, float originY, rect
 }
 
 void updateTestGame (memory_arena *memory, memory_arena *tempMemory, 
-                     game_assets *assets, game_input *input, sprite_list *spriteList)
+                     game_assets *assets, game_input *input, sprite_list *spriteList, game_sounds *gameSounds)
 {
     static bool initialized = false;
     static character_animation_data animation;
@@ -30,6 +30,8 @@ void updateTestGame (memory_arena *memory, memory_arena *tempMemory,
 
         data_asset *hitboxData = assets->dataAssets[DATA_KEY_HITBOX_DATA];
         loadHitboxData(assets, hitboxData->data, &animation);
+
+        playBGM(MIDI_KEY_TEST, gameSounds, assets);
     }
     // memory for dynamically created strings
     memory_arena stringMemory = {};
@@ -40,26 +42,26 @@ void updateTestGame (memory_arena *memory, memory_arena *tempMemory,
     //pushSpriteTransform(spriteList, Vector2(GAME_WIDTH/2.0f, GAME_HEIGHT/2.0f), 0.5f);
 
     //popSpriteMatrix(spriteList);
-    character_frame_data *currentFrame = &animation.frames[frame];
-    addSprite(40.0f + currentFrame->xOffset, 40.0f + currentFrame->yOffset, assets, ATLAS_KEY_GAME, currentFrame->frameKey, spriteList, 0.0f, 1.0f);
+    //character_frame_data *currentFrame = &animation.frames[frame];
+    //addSprite(40.0f + currentFrame->xOffset, 40.0f + currentFrame->yOffset, assets, ATLAS_KEY_GAME, currentFrame->frameKey, spriteList, 0.0f, 1.0f);
 
-    for (int i = 0; i < currentFrame->numHitboxes; ++i) {
-        rectangle box = currentFrame->hitboxes[i];
-        char *boxKey = "hitbox_frame_data";
-        drawBox(spriteList, 40, 40, box, assets, boxKey, 0, 0);
-    }
-    for (int i = 0; i < currentFrame->numHurtboxes; ++i) {
-        rectangle box = currentFrame->hurtboxes[i];
-        char *boxKey = "hurtbox_frame_data";
-        drawBox(spriteList, 40, 40, box, assets, boxKey, 0, 0);
-    }
+    //for (int i = 0; i < currentFrame->numHitboxes; ++i) {
+    //    rectangle box = currentFrame->hitboxes[i];
+    //    char *boxKey = "hitbox_frame_data";
+    //    drawBox(spriteList, 40, 40, box, assets, boxKey, 0, 0);
+    //}
+    //for (int i = 0; i < currentFrame->numHurtboxes; ++i) {
+    //    rectangle box = currentFrame->hurtboxes[i];
+    //    char *boxKey = "hurtbox_frame_data";
+    //    drawBox(spriteList, 40, 40, box, assets, boxKey, 0, 0);
+    //}
 
-    ++frameStep;
-    if (frameStep >= currentFrame->duration) {
-        frameStep = 0;
-        ++frame;
-        if (frame == animation.numFrames) {
-            frame = 0;
-        }
-    }
+    //++frameStep;
+    //if (frameStep >= currentFrame->duration) {
+    //    frameStep = 0;
+    //    ++frame;
+    //    if (frame == animation.numFrames) {
+    //        frame = 0;
+    //    }
+    //}
 }
