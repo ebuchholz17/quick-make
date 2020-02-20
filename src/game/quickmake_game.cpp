@@ -13,7 +13,7 @@ static void initSounds (game_sounds *gameSounds) {
     envelope->attackTime = 0.01f;
     envelope->attackVolume = 0.5f;
     envelope->decayTime = 0.07f;
-    envelope->sustain = false;
+    envelope->sustain = true;
     envelope->sustainVolume = 0.35f;
     envelope->releaseTime = 0.6f;
     waveform = &instrument->waveforms[0];
@@ -62,11 +62,11 @@ extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
     pushAsset(assetList, "assets/textures/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
 
-    pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
+    //pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
 
-    pushAsset(assetList, "assets/data/data.txt", ASSET_TYPE_DATA, DATA_KEY_HITBOX_DATA);
+    //pushAsset(assetList, "assets/data/data.txt", ASSET_TYPE_DATA, DATA_KEY_HITBOX_DATA);
 
-    pushAsset(assetList, "assets/midi/onestop.mid", ASSET_TYPE_MIDI, MIDI_KEY_TEST);
+    //pushAsset(assetList, "assets/midi/onestop.mid", ASSET_TYPE_MIDI, MIDI_KEY_TEST);
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
@@ -213,7 +213,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
     //updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
     //updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
-    updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->sounds);
+    //updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->sounds);
+    updateSoundEditor(&gameState->memory, &gameState->tempMemory, &gameState->soundEditor, &gameState->assets, input, &spriteList, &gameState->sounds, renderCommands);
     //if (gameState->hitboxEditor.requestFileLoad) {
     //    triggers->triggerFileWindow = true;
     //}
@@ -298,6 +299,15 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
     for (int i = 0; i < soundOutput->sampleCount; ++i) 
     {
         float sampleValue = 0.0f;
+        
+        for (int soundIndex = 0; soundIndex < MAX_INSTRUMENT_SOUNDS; ++soundIndex) {
+            synth_sound *sound = gameSounds->instrumentSounds + soundIndex;
+            sound_instrument *instrument = gameSounds->instruments + sound->instrumentType;
+            if (sound->active) {
+                sampleValue += updateInstrument(sound, instrument, dt);
+            }
+        }
+
         for (int soundIndex = gameSounds->numPlayingSounds - 1; soundIndex >= 0; --soundIndex) {
             playing_sound *sound = gameSounds->playingSounds + soundIndex;
             sound_asset *soundAsset = assets->sounds[sound->key];

@@ -974,6 +974,32 @@ inline matrix4x4 createPerspectiveMatrix (float nearPlane, float farPlane, float
 
     return result;
 }
+
+
+inline matrix4x4 createOrthgraphicMatrix (float nearPlane, float farPlane, float l, float r, float t, float b) {
+    matrix4x4 result = identityMatrix4x4();
+
+    result.m[0] = 2.0f / (r - l);
+    result.m[3] = -(r + l)/(r - l);
+    result.m[5] = 2.0f / (t - b);
+    result.m[7] = -(t + b)/(t - b);
+    result.m[10] = -2.0f / (farPlane - nearPlane);
+    result.m[11] = -(farPlane + nearPlane)/(farPlane - nearPlane);
+
+    return result;
+}
+
+inline matrix4x4 createOrthgraphicMatrix (float nearPlane, float farPlane, float width, float height) {
+    float halfWidth = width / 2.0f;
+    float l = -halfWidth;
+    float r = halfWidth;
+    float halfHeight = height / 2.0f;
+    float b = -halfHeight;
+    float t = halfHeight;
+
+    return createOrthgraphicMatrix(nearPlane, farPlane, l, r, t, b);
+}
+
 aabb getTriangleBounds (vector3 p0, vector3 p1, vector3 p2) {
     aabb result;
 

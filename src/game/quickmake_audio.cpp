@@ -106,7 +106,7 @@ float updateInstrument (synth_sound *sound, sound_instrument *instrument, float 
         } break;
         case SOUND_STATE_SUSTAIN: {
             volume = envelope->sustainVolume;
-            if (!sound->pressed) {
+            if (!sound->pressed || !envelope->sustain) {
                 sound->state = SOUND_STATE_RELEASE;
                 sound->releaseTime = sound->t;
             }

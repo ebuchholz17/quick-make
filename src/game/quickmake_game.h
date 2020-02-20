@@ -13,9 +13,10 @@
 #include "quickmake_audio.cpp"
 #include "quickmake_rendering.cpp"
 
-#include "hitbox/hitbox.cpp"
+//#include "hitbox/hitbox.cpp"
 
-#include "test_game.cpp"
+#include "sound_editor.cpp"
+//#include "test_game.cpp"
 //#include "block_game.cpp"
 //#include "piano_game.cpp"
 //#include "skeletal_game.cpp"
@@ -36,6 +37,7 @@ struct game_state {
     unsigned int loadedFileSize;
 
     float visualizationT;
+    sound_editor soundEditor;
     //piano_game pianoGame;
     //block_game blockGame;
     //skeletal_game skeletalGame;

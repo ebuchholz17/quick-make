@@ -57,7 +57,6 @@ static void *pushRenderCommand (render_command_list *renderCommands,
 
 
 
-#if 0
 
 static line *pushLineOntoRenderCommand (render_command_list *renderCommands, render_command_lines *lineCommand) {
     assert(renderCommands->memory.size + sizeof(line) < renderCommands->memory.capacity);
@@ -71,6 +70,8 @@ static line *pushLineOntoRenderCommand (render_command_list *renderCommands, ren
 
     return result;
 }
+
+#if 0
 static void addSprite (sprite newSprite, sprite_list *spriteList) {
     assert(spriteList->numSprites < MAX_SPRITES_PER_FRAME);
 
@@ -116,7 +117,6 @@ static void drawAnimatedModel (animated_mesh_key meshKey, texture_key textureKey
     }
 }
 
-#if 0
 
 static render_command_lines *startLines (render_command_list *renderCommands) {
     render_command_lines *lineCommand = 
@@ -136,6 +136,7 @@ static void drawLine (float ax, float ay, float az, float bx, float by, float bz
     line->b.z = bz;
 }
 
+#if 0
 // same as drawTriangle but without making a new render command
 //static void drawMeshTriangle (triangle *t, render_command_list *renderCommands, render_command_lines *lineCommand) {
 //    drawLine(t->p0.x, t->p0.y, t->p0.z, t->p1.x, t->p1.y, t->p1.z, renderCommands, lineCommand);
