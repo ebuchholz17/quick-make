@@ -14,7 +14,11 @@ float triangleWave (float hz, float t) {
     return (2.0f/PI)*asinf(sine);
 }
 
-// TODO(ebuchholz): add sawtooth
+
+float sawToothWave (float hz, float t) {
+    float value = 2.0f * (t * hz - floorf(0.5f + (t * hz)));
+    return value;
+}
 
 float noiseWave () {
     return randomFloat() * 2.0f - 1.0f;
@@ -137,7 +141,7 @@ float updateWaveform (synth_sound *sound, sound_instrument *instrument, float dt
                tone += waveform->volume * squareWave(pitch * waveform->muliplier, sound->t);
             } break;
             case OSCILLATOR_TYPE_SAWTOOTH: {
-
+               tone += waveform->volume * sawToothWave(pitch * waveform->muliplier, sound->t);
             } break;
             case OSCILLATOR_TYPE_NOISE: {
                tone += waveform->volume * noiseWave();

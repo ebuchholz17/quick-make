@@ -356,6 +356,7 @@ void updateSoundEditor (memory_arena *memory, memory_arena *tempMemory, sound_ed
         for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
             *(soundEditor->notes + i) = {};
         }
+        playBGM(MIDI_KEY_TEST, gameSounds, assets);
     }
     for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
         sound_editor_note *note = soundEditor->notes + i;
@@ -390,7 +391,7 @@ void updateSoundEditor (memory_arena *memory, memory_arena *tempMemory, sound_ed
     dummySound.pressed = true;
     dummySound.hz = noteHz(SOUND_NOTE_A);
     float lastX = 0.0f;
-    float lastY = 0.0f;
+    float lastY = 300.0f;
     float t = 0.0f;
     float dt = 1.0f / 10000.0f;
 
