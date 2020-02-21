@@ -327,9 +327,21 @@ void updateSoundEditor (memory_arena *memory, memory_arena *tempMemory, sound_ed
     showFilterType(&currentPos, "filter", filter->type, 40.0f, assets, spriteList, &stringMemory);
     currentPos.x = 5;
 
+    float cutoff = filter->cutoff;
     doEditArrows(&currentPos, &filter->cutoff, 0.02f, input->pointerJustDown, localPointerPos.x, localPointerPos.y, assets, spriteList);
     showFloatValue(&currentPos, "cutoff", filter->cutoff, 100.0f, assets, spriteList, &stringMemory);
     currentPos.x = 5;
+    if (cutoff != filter->cutoff) {
+        calcFeedbackForFilter(filter);
+    }
+
+    float resonance = filter->resonance;
+    doEditArrows(&currentPos, &filter->resonance, 0.02f, input->pointerJustDown, localPointerPos.x, localPointerPos.y, assets, spriteList);
+    showFloatValue(&currentPos, "resonance", filter->resonance, 100.0f, assets, spriteList, &stringMemory);
+    currentPos.x = 5;
+    if (resonance != filter->resonance) {
+        calcFeedbackForFilter(filter);
+    }
 
     for (int waveIndex = 0; waveIndex < instrument->numWaveForms; ++waveIndex) {
         float xStart = 205.0f + 145.0f * (waveIndex % 4);

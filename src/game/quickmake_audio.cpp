@@ -152,11 +152,15 @@ float updateWaveform (synth_sound *sound, sound_instrument *instrument, float dt
     //return volume * sineWave(880, sound->t);
 }
 
+void calcFeedbackForFilter (sound_filter *filter) {
+    filter->feedback = filter->resonance + filter->resonance / (1.0f - filter->cutoff);
+}
+
 inline float updateInstrument (synth_sound *sound, sound_instrument *instrument, float dt) {
     float amplitude = updateWaveform(sound, instrument, dt);
 
     sound_filter *filter = &instrument->filter;
-    sound->bufferedVal0 += filter->cutoff * (amplitude - sound->bufferedVal0);
+    sound->bufferedVal0 += filter->cutoff * (amplitude - sound->bufferedVal0 + filter->feedback * (sound->bufferedVal0 - sound->bufferedVal1));
     sound->bufferedVal1 += filter->cutoff * (sound->bufferedVal0 - sound->bufferedVal1);
     switch (filter->type) {
     default:
