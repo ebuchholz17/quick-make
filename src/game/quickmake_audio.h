@@ -169,6 +169,20 @@ struct sound_waveform {
     float muliplier;
 };
 
+enum sound_filter_type {
+    SOUND_FILTER_TYPE_NONE,
+    SOUND_FILTER_TYPE_LOW_PASS,
+    SOUND_FILTER_TYPE_HIGH_PASS,
+    SOUND_FILTER_TYPE_BAND_PASS
+};
+
+struct sound_filter {
+    sound_filter_type type;
+    float cutoff;
+    float resonance;
+    float feedback;
+};
+
 enum instrument_type {
     INSTRUMENT_TYPE_PIANO,
     //INSTRUMENT_TYPE_HARMONICA,
@@ -181,6 +195,7 @@ struct sound_instrument {
     sound_waveform waveforms[MAX_WAVEFORMS];
     int numWaveForms;
     sound_envelope envelope;
+    sound_filter filter;
 };
 
 struct synth_sound {
@@ -193,6 +208,9 @@ struct synth_sound {
 
     bool pressed;
     bool active;
+
+    float bufferedVal0;
+    float bufferedVal1;
 };
 
 struct playing_sound {

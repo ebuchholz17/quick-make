@@ -172,6 +172,29 @@ void showWaveType (status_text_pos *currentPos, char *text, int value, float off
     currentPos->y += 24;
 }
 
+void showFilterType (status_text_pos *currentPos, char *text, int value, float offset, game_assets *assets, sprite_list *spriteList, memory_arena *stringMemory) {
+    addText(currentPos->x, currentPos->y, text, assets, TEXTURE_KEY_FONT, spriteList);
+
+    char *waveText;
+    switch (value) {
+    default:
+    case SOUND_FILTER_TYPE_NONE:
+        waveText = "none";
+        break;
+    case SOUND_FILTER_TYPE_LOW_PASS:
+        waveText = "low pass";
+        break;
+    case SOUND_FILTER_TYPE_HIGH_PASS:
+        waveText = "high pass";
+        break;
+    case SOUND_FILTER_TYPE_BAND_PASS:
+        waveText = "band pass";
+        break;
+    }
+    addText(currentPos->x + offset, currentPos->y, waveText, assets, TEXTURE_KEY_FONT, spriteList);
+    currentPos->y += 24;
+}
+
 void showBoolValue (status_text_pos *currentPos, char *text, bool value, float offset, game_assets *assets, sprite_list *spriteList, memory_arena *stringMemory) {
     addText(currentPos->x, currentPos->y, text, assets, TEXTURE_KEY_FONT, spriteList);
 
@@ -296,6 +319,16 @@ void updateSoundEditor (memory_arena *memory, memory_arena *tempMemory, sound_ed
 
     doIntArrows(&currentPos, &instrument->numWaveForms, input->pointerJustDown, localPointerPos.x, localPointerPos.y, assets, spriteList);
     showIntValue(&currentPos, "numWaveForms", instrument->numWaveForms, 100.0f, assets, spriteList, &stringMemory);
+    currentPos.x = 5;
+
+    sound_filter *filter = &instrument->filter;
+    doIntArrows(&currentPos, (int *)(&filter->type), input->pointerJustDown, localPointerPos.x, localPointerPos.y, assets, spriteList);
+    filter->type = (sound_filter_type)(filter->type % 4);
+    showFilterType(&currentPos, "filter", filter->type, 40.0f, assets, spriteList, &stringMemory);
+    currentPos.x = 5;
+
+    doEditArrows(&currentPos, &filter->cutoff, 0.02f, input->pointerJustDown, localPointerPos.x, localPointerPos.y, assets, spriteList);
+    showFloatValue(&currentPos, "cutoff", filter->cutoff, 100.0f, assets, spriteList, &stringMemory);
     currentPos.x = 5;
 
     for (int waveIndex = 0; waveIndex < instrument->numWaveForms; ++waveIndex) {

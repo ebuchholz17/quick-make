@@ -84,7 +84,7 @@ void playMIDInstrument (midi_channel *channel, unsigned char midiNote, unsigned 
     }
 }
 
-float updateInstrument (synth_sound *sound, sound_instrument *instrument, float dt) {
+float updateWaveform (synth_sound *sound, sound_instrument *instrument, float dt) {
     sound->t += dt;
     float volume = 0.0f;
     sound_envelope *envelope = &instrument->envelope;
@@ -146,6 +146,24 @@ float updateInstrument (synth_sound *sound, sound_instrument *instrument, float 
     }
     return volume * tone;
     //return volume * sineWave(880, sound->t);
+}
+
+inline float updateInstrument (synth_sound *sound, sound_instrument *instrument, float dt) {
+    float amplitude = updateWaveform(sound, instrument, dt);
+
+    sound_filter *filter = &instrument->filter;
+    sound->bufferedVal0 += filter->cutoff * (amplitude - sound->bufferedVal0);
+    sound->bufferedVal1 += filter->cutoff * (sound->bufferedVal0 - sound->bufferedVal1);
+    switch (filter->type) {
+    default:
+        return amplitude;
+    case SOUND_FILTER_TYPE_LOW_PASS:
+        return sound->bufferedVal1;
+    case SOUND_FILTER_TYPE_HIGH_PASS:
+        return amplitude - sound->bufferedVal1;
+    case SOUND_FILTER_TYPE_BAND_PASS:
+        return sound->bufferedVal0 - sound->bufferedVal1;
+    }
 }
 
 void playSound (sound_key key, game_sounds *gameSounds) {
