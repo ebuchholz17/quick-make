@@ -41,6 +41,7 @@ int playInstrument (game_sounds *gameSounds, instrument_type instrumentType, flo
         sound->active = true;
         sound->pressed = true;
         sound->hz = hz;
+        sound->period = 1.0f / hz;
     }
     return soundIndex;
 }
@@ -84,12 +85,27 @@ void playMIDInstrument (midi_channel *channel, unsigned char midiNote, unsigned 
         sound->active = true;
         sound->pressed = true;
         sound->hz = midiNoteFrequencies[midiNote];
+        sound->period = 1.0f / sound->hz;
         sound->midiNote = midiNote;
+    }
+}
+
+void instrumentBendPitch (midi_channel *channel, unsigned int amount) {
+    for (int i = 0; i < channel->numPlayingSounds; ++i) {
+        synth_sound *playingSound = &channel->instrumentSounds[i];
+        double newHz = 440.0 * 
+                      pow(2.0, ((double)playingSound->midiNote - 69.0)/12.0 + ((double)amount - 8192.0)/(4096.0 * 12.0));
+        playingSound->hz = (float)newHz;
+        playingSound->period = 1.0f / playingSound->hz;
     }
 }
 
 float updateWaveform (synth_sound *sound, sound_instrument *instrument, float dt) {
     sound->t += dt;
+    sound->cycleT += dt / sound->period;
+    while (sound->cycleT >= 1.0f) {
+        sound->cycleT -= 1.0f;
+    }
     float volume = 0.0f;
     sound_envelope *envelope = &instrument->envelope;
     switch (sound->state) {
@@ -124,24 +140,25 @@ float updateWaveform (synth_sound *sound, sound_instrument *instrument, float dt
             }
         } break;
     }
-    volume *= 0.2f; // QQQ
+    volume *= 0.1f; // QQQ
 
     float tone = 0.0f;
     float pitch = sound->hz;
+    float waveTime = sound->cycleT * sound->period;
     for (int i = 0; i < instrument->numWaveForms; ++i) {
         sound_waveform *waveform = &instrument->waveforms[i];
         switch (waveform->waveType) {
             case OSCILLATOR_TYPE_SINE: {
-               tone += waveform->volume * sineWave(pitch * waveform->muliplier, sound->t);
+               tone += waveform->volume * sineWave(pitch * waveform->muliplier, waveTime);
             } break;
             case OSCILLATOR_TYPE_TRIANGLE: {
-               tone += waveform->volume * triangleWave(pitch * waveform->muliplier, sound->t);
+               tone += waveform->volume * triangleWave(pitch * waveform->muliplier, waveTime);
             } break;
             case OSCILLATOR_TYPE_SQUARE: {
-               tone += waveform->volume * squareWave(pitch * waveform->muliplier, sound->t);
+               tone += waveform->volume * squareWave(pitch * waveform->muliplier, waveTime);
             } break;
             case OSCILLATOR_TYPE_SAWTOOTH: {
-               tone += waveform->volume * sawToothWave(pitch * waveform->muliplier, sound->t);
+               tone += waveform->volume * sawToothWave(pitch * waveform->muliplier, waveTime);
             } break;
             case OSCILLATOR_TYPE_NOISE: {
                tone += waveform->volume * noiseWave();
@@ -285,6 +302,9 @@ void updateBGM (game_sounds *gameSounds, sound_sample *sampleOut, int sampleCoun
                                 char data1 = *trackPlayback->cursor;
 
                                 midi_channel *midiChannel = &bgmState->channels[channel];
+                                if (channel == 9) {
+                                    midiChannel->instrument = INSTRUMENT_TYPE_SNARE_DRUM;
+                                }
                                 playMIDInstrument(midiChannel, data0, data1);
                             } break;
                             case MIDI_EVENT_CODE_POLYPHONIC_KEY_PRESSURE: {
@@ -295,6 +315,32 @@ void updateBGM (game_sounds *gameSounds, sound_sample *sampleOut, int sampleCoun
                                 ++trackPlayback->cursor;
                             } break;
                             case MIDI_EVENT_CODE_PROGRAM_CHANGE: {
+                                midi_channel *midiChannel = &bgmState->channels[channel];
+                                // TODO(ebuchholz): support more instruments
+                                // pianos, chromatic percussion, organs
+                                if (data0 <= 24) {
+                                    midiChannel->instrument = INSTRUMENT_TYPE_PIANO;
+                                }
+                                // guitar/bass
+                                else if (data0 <= 40) {
+                                    midiChannel->instrument = INSTRUMENT_TYPE_GUITAR;
+                                }
+                                // violin/ensemble
+                                else if (data0 <= 56) {
+                                    midiChannel->instrument = INSTRUMENT_TYPE_VIOLIN;
+                                }
+                                // brass
+                                else if (data0 <= 64) {
+                                    midiChannel->instrument = INSTRUMENT_TYPE_TRUMPET;
+                                }
+                                // wind
+                                else if (data0 <= 80) {
+                                    midiChannel->instrument = INSTRUMENT_TYPE_FLUTE;
+                                }
+                                // drums
+                                else {
+                                    midiChannel->instrument = INSTRUMENT_TYPE_PIANO;
+                                }
                             } break;
                             case MIDI_EVENT_CODE_CHANNEL_PRESSURE: {
                                 // not supported, skip
@@ -302,6 +348,13 @@ void updateBGM (game_sounds *gameSounds, sound_sample *sampleOut, int sampleCoun
                             case MIDI_EVENT_CODE_PITCH_WHEEL_CHANGE: {
                                 // not supported, skip
                                 ++trackPlayback->cursor;
+                                char data1 = *trackPlayback->cursor;
+                                unsigned int pitchBendValue = 0;
+                                pitchBendValue |= data0;
+                                pitchBendValue |= (data1 << 7);
+                                midi_channel *midiChannel = &bgmState->channels[channel];
+
+                                instrumentBendPitch(midiChannel, pitchBendValue);
                             } break;
                         }
                     }

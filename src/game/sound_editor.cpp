@@ -402,6 +402,7 @@ void updateSoundEditor (memory_arena *memory, memory_arena *tempMemory, sound_ed
     dummySound.active = true;
     dummySound.pressed = true;
     dummySound.hz = noteHz(SOUND_NOTE_A);
+    dummySound.period = 1.0f / dummySound.hz;
     float lastX = 0.0f;
     float lastY = 300.0f;
     float t = 0.0f;

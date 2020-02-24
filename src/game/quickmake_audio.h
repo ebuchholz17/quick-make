@@ -185,8 +185,11 @@ struct sound_filter {
 
 enum instrument_type {
     INSTRUMENT_TYPE_PIANO,
-    //INSTRUMENT_TYPE_HARMONICA,
-    //INSTRUMENT_TYPE_SNARE_DRUM,
+    INSTRUMENT_TYPE_TRUMPET,
+    INSTRUMENT_TYPE_GUITAR,
+    INSTRUMENT_TYPE_VIOLIN,
+    INSTRUMENT_TYPE_FLUTE,
+    INSTRUMENT_TYPE_SNARE_DRUM,
     INSTRUMENT_TYPE_COUNT
 };
 
@@ -202,8 +205,10 @@ struct synth_sound {
     instrument_type instrumentType;
     sound_state state;
     float t;
+    float cycleT;
     float releaseTime;
     float hz;
+    float period;
     unsigned char midiNote;
 
     bool pressed;
