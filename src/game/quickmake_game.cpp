@@ -205,13 +205,13 @@ static void initSounds (game_sounds *gameSounds) {
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
     pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
-    pushAsset(assetList, "assets/textures/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
+    //pushAsset(assetList, "assets/textures/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
 
     //pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
 
     //pushAsset(assetList, "assets/data/data.txt", ASSET_TYPE_DATA, DATA_KEY_HITBOX_DATA);
 
-    pushAsset(assetList, "assets/midi/onestop.mid", ASSET_TYPE_MIDI, MIDI_KEY_TEST);
+    //pushAsset(assetList, "assets/midi/onestop.mid", ASSET_TYPE_MIDI, MIDI_KEY_TEST);
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
@@ -292,7 +292,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
         initLetterCoords();
 
-        //initBlockGame(&gameState->memory, &gameState->blockGame);
+        initBlockGame(&gameState->memory, &gameState->blockGame);
         //initPianoGame(&gameState->pianoGame);
         //initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
         //initHitboxEditor(&gameState->memory, &gameState->assets, &gameState->hitboxEditor);
@@ -353,13 +353,13 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         gameState->fileJustLoaded = false;
     }
 
-    //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
+    updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
     //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
     //updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
     //updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
     //updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->sounds);
-    updateSoundEditor(&gameState->memory, &gameState->tempMemory, &gameState->soundEditor, &gameState->assets, input, &spriteList, &gameState->sounds, renderCommands);
+    //updateSoundEditor(&gameState->memory, &gameState->tempMemory, &gameState->soundEditor, &gameState->assets, input, &spriteList, &gameState->sounds, renderCommands);
     //if (gameState->hitboxEditor.requestFileLoad) {
     //    triggers->triggerFileWindow = true;
     //}
