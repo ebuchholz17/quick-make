@@ -11,17 +11,26 @@ static float targetMSPerFrame = 1000.0f / 60.0f;
     platform_options options;
     render_command_list renderCommands;
     game_input input;
+    float windowWidth;
+    float windowHeight;
+
+    bool pointerDown;
+    bool pointerJustDown;
+    float pointerX;
+    float pointerY;
 }
 @end
 
 @implementation IOSPlatform
 
-- (void)setup {
+- (void)setupWithLayer:(CALayer *)layer {
     // set up update loop
     self.timer = [CADisplayLink displayLinkWithTarget:self selector:@selector(update)];
     [self.timer addToRunLoop:NSRunLoop.mainRunLoop forMode:NSDefaultRunLoopMode];
 
     // init renderer
+    self.metalRenderer = [MetalRenderer new];
+    [self.metalRenderer initRendererWithLayer:layer];
 
     // init game memory
     // TODO(ebuchholz): determine memory limitations for ios
@@ -102,7 +111,7 @@ static float targetMSPerFrame = 1000.0f / 60.0f;
                                &gameMemory, &workingAssetMemory, &options, 0);
 
                 // load texture onto gpu
-                //loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
+                [self.metalRenderer loadTexture:(loaded_texture_asset *)workingAssetMemory.base];
             } break;
             case ASSET_TYPE_WAV: {
                 NSData *fileNSData = [NSData dataWithContentsOfFile:resourcePath];
@@ -138,7 +147,7 @@ static float targetMSPerFrame = 1000.0f / 60.0f;
                 parseGameAsset(atlasData, bitmapData, ASSET_TYPE_ATLAS, assetToLoad->key, assetToLoad->secondKey, 
                                &gameMemory, &workingAssetMemory, &options, 0);
 
-                //loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
+                [self.metalRenderer loadTexture:(loaded_texture_asset *)workingAssetMemory.base];
             } break;
         }
     }
@@ -160,16 +169,61 @@ static float targetMSPerFrame = 1000.0f / 60.0f;
     // remember time
 }
 
+- (void)onResizedToBounds:(CGRect)bounds scale:(CGFloat)scale {
+    [self.metalRenderer onResizedToBounds:bounds scale:scale];
+    self->windowWidth = bounds.size.width * scale;
+    self->windowHeight = bounds.size.height * scale;
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = touches.anyObject;
+    CGPoint touchLocation = [touch locationInView:touch.view];
+
+    if (!self->pointerDown) {
+        self->pointerJustDown = true;
+    }
+    self->pointerDown = true;
+    [self setPointerXY:touchLocation.x y:touchLocation.y view:touch.view];
+}
+
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = touches.anyObject;
+    CGPoint touchLocation = [touch locationInView:touch.view];
+
+    [self setPointerXY:touchLocation.x y:touchLocation.y view:touch.view];
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    self->pointerDown = false;
+}
+
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
+    self->pointerDown = false;
+}
+
+- (void)setPointerXY:(float)x y:(float)y view:(UIView *)view {
+    CGFloat scale = [UIScreen mainScreen].scale;
+    
+    if (view.window) {
+        scale = view.window.screen.scale;
+    }
+
+    self->pointerX = x * scale;
+    self->pointerY = y * scale;
+}
+
 - (void)update {
     // get input
-    input.pointerJustDown = false;
+    input.pointerJustDown = self->pointerJustDown;
+    input.pointerDown = self->pointerDown;
+    input.pointerX = self->pointerX;
+    input.pointerY = self->pointerY;
+
     // NOTE(ebuchholz): no keys or controller buttons can be pressed unless we support keyboard/controller on ios
 
-    // TODO(ebuchholz): read touches
-
     // set up render commands
-    renderCommands.windowWidth = gameWidth;
-    renderCommands.windowHeight = gameHeight;
+    renderCommands.windowWidth = self->windowWidth;
+    renderCommands.windowHeight = self->windowHeight;
     renderCommands.memory.size = 0;
     memset(renderCommands.memory.base, 0, renderCommands.memory.capacity);
     memset(gameMemory.tempMemory, 0, gameMemory.tempMemoryCapacity);
@@ -183,8 +237,10 @@ static float targetMSPerFrame = 1000.0f / 60.0f;
     // update audio
 
     // render frame
+    [self.metalRenderer renderFrameWithRenderCommandList:&renderCommands];
 
     // reset input
+    self->pointerJustDown = false;
 
     // remember time
 }

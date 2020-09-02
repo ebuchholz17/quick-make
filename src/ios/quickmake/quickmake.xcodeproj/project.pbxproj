@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		E505590E24C3F9BA001842A2 /* ios_platform.mm in Sources */ = {isa = PBXBuildFile; fileRef = E505590D24C3F9BA001842A2 /* ios_platform.mm */; };
 		E505591024C3FC9D001842A2 /* game in Resources */ = {isa = PBXBuildFile; fileRef = E505590F24C3FC9D001842A2 /* game */; };
+		E53D5FDE24FECF93002FFF13 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = E53D5FDD24FECF93002FFF13 /* Shaders.metal */; };
+		E53D5FE124FECF98002FFF13 /* metal_renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = E53D5FE024FECF98002FFF13 /* metal_renderer.mm */; };
+		E53D5FE324FF2FD8002FFF13 /* BasicGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = E53D5FE224FF2FD8002FFF13 /* BasicGestureRecognizer.m */; };
 		E552540F24C3E4EA00929369 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E552540E24C3E4EA00929369 /* AppDelegate.m */; };
 		E552541224C3E4EA00929369 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E552541124C3E4EA00929369 /* SceneDelegate.m */; };
 		E552541524C3E4EA00929369 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E552541424C3E4EA00929369 /* ViewController.m */; };
@@ -22,6 +25,11 @@
 		E505590C24C3F9BA001842A2 /* ios_platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ios_platform.h; sourceTree = "<group>"; };
 		E505590D24C3F9BA001842A2 /* ios_platform.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_platform.mm; sourceTree = "<group>"; };
 		E505590F24C3FC9D001842A2 /* game */ = {isa = PBXFileReference; lastKnownFileType = folder; name = game; path = ../../../game; sourceTree = "<group>"; };
+		E53D5FDD24FECF93002FFF13 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		E53D5FDF24FECF98002FFF13 /* metal_renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = metal_renderer.h; sourceTree = "<group>"; };
+		E53D5FE024FECF98002FFF13 /* metal_renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = metal_renderer.mm; sourceTree = "<group>"; };
+		E53D5FE224FF2FD8002FFF13 /* BasicGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BasicGestureRecognizer.m; sourceTree = "<group>"; };
+		E53D5FE424FF3120002FFF13 /* BasicGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasicGestureRecognizer.h; sourceTree = "<group>"; };
 		E552540A24C3E4EA00929369 /* quickmake.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quickmake.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E552540D24C3E4EA00929369 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		E552540E24C3E4EA00929369 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -70,6 +78,11 @@
 				E505590F24C3FC9D001842A2 /* game */,
 				E505590C24C3F9BA001842A2 /* ios_platform.h */,
 				E505590D24C3F9BA001842A2 /* ios_platform.mm */,
+				E53D5FDD24FECF93002FFF13 /* Shaders.metal */,
+				E53D5FDF24FECF98002FFF13 /* metal_renderer.h */,
+				E53D5FE024FECF98002FFF13 /* metal_renderer.mm */,
+				E53D5FE424FF3120002FFF13 /* BasicGestureRecognizer.h */,
+				E53D5FE224FF2FD8002FFF13 /* BasicGestureRecognizer.m */,
 				E552540D24C3E4EA00929369 /* AppDelegate.h */,
 				E552540E24C3E4EA00929369 /* AppDelegate.m */,
 				E552541024C3E4EA00929369 /* SceneDelegate.h */,
@@ -155,8 +168,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E53D5FDE24FECF93002FFF13 /* Shaders.metal in Sources */,
+				E53D5FE124FECF98002FFF13 /* metal_renderer.mm in Sources */,
 				E552541524C3E4EA00929369 /* ViewController.m in Sources */,
 				E552540F24C3E4EA00929369 /* AppDelegate.m in Sources */,
+				E53D5FE324FF2FD8002FFF13 /* BasicGestureRecognizer.m in Sources */,
 				E552542024C3E4EA00929369 /* main.m in Sources */,
 				E505590E24C3F9BA001842A2 /* ios_platform.mm in Sources */,
 				E552541224C3E4EA00929369 /* SceneDelegate.m in Sources */,

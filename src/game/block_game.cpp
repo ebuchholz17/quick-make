@@ -632,16 +632,25 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
     stringMemory.capacity = 512 * 1024;
     stringMemory.base = allocateMemorySize(tempMemory, stringMemory.capacity);
 
-    if (input->upKey.justPressed) {
+    matrix3x3 gameTransform = peekSpriteMatrix(spriteList);
+    vector3 localPointerPos = Vector3((float)input->pointerX, (float)input->pointerY, 1.0f);
+    localPointerPos = inverse(gameTransform) * localPointerPos;
+
+    bool mouseUp = input->pointerDown && localPointerPos.y < 72 && !blockGame->sheep.moving;
+    bool mouseDown = input->pointerDown && localPointerPos.y > 144 && !blockGame->sheep.moving;
+    bool mouseLeft = input->pointerDown && localPointerPos.x < 192 && !blockGame->sheep.moving;
+    bool mouseRight = input->pointerDown && localPointerPos.x >= 192 && !blockGame->sheep.moving;
+
+    if (input->upKey.justPressed || mouseUp) {
         blockGame->nextMoveDirection = DIRECTION_UP;
     }
-    else if (input->downKey.justPressed) {
+    else if (input->downKey.justPressed || mouseDown) {
         blockGame->nextMoveDirection = DIRECTION_DOWN;
     }
-    else if (input->leftKey.justPressed) {
+    else if (input->leftKey.justPressed || mouseLeft) {
         blockGame->nextMoveDirection = DIRECTION_LEFT;
     }
-    else if (input->rightKey.justPressed) {
+    else if (input->rightKey.justPressed || mouseRight) {
         blockGame->nextMoveDirection = DIRECTION_RIGHT;
     }
 
@@ -691,6 +700,8 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
 
     pushSpriteTransform(spriteList, Vector2(GAME_WIDTH/2.0f, GAME_HEIGHT/2.0f));
 
+    addText(-184, -100, appendString("score: ", numToString(blockGame->score, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
+
     for (int i = 0; i < NUM_GRID_ROWS; ++i) {
         for (int j = 0; j < NUM_GRID_COLS; ++j) {
             addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * j, GRID_ROW_START + GRID_BLOCK_HEIGHT * i, assets, ATLAS_KEY_GAME, "tile_backing", spriteList, 0.5f, 0.5f);
@@ -736,7 +747,7 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
 
     addSprite(blockGame->sheep.x, blockGame->sheep.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
 
-    addText(-184, -100, appendString("score: ", numToString(blockGame->score, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
+    //addSprite(localPointerPos.x, localPointerPos.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
 
     //pushSpriteTransform(spriteList, Vector2(blockGame->sheep.x, blockGame->sheep.y), 1.0f, blockGame->sheep.y / 100.0f);
     //addSprite(0, 0, assets, TEXTURE_KEY_FONT, spriteList);
