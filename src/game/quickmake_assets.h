@@ -1,6 +1,15 @@
 #ifndef QUICKMAKE_ASSETS_H
 #define QUICKMAKE_ASSETS_H
 
+#pragma pack(push, 1)
+struct qmpack_file_header {
+    char name[50];
+    unsigned int size;
+    asset_type type;
+};
+#pragma pack(pop)
+
+
 // TODO(ebuchholz): some convenient structure to access assets
 enum mesh_key {
     MESH_KEY_CUBE

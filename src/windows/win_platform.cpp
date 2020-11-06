@@ -433,18 +433,6 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                 *((char *)gameMemory.memory + i) = 0;
             }
 
-            // Load assets
-            asset_list assetList = {};
-            assetList.numAssetsToLoad = 0;
-            assetList.maxAssetsToLoad = 100;
-            assetList.assetsToLoad = 
-                (asset_to_load *)malloc(assetList.maxAssetsToLoad * sizeof(asset_to_load));
-
-            getGameAssetList(&assetList);
-
-            memory_arena workingAssetMemory = {};
-            workingAssetMemory.capacity = 30 * 1024 * 1024; // 30MB limit for working with asset files?
-            workingAssetMemory.base = malloc(workingAssetMemory.capacity);
 
             // init sound
             win_sound_output soundOutput = {};
@@ -464,6 +452,63 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             // set up windows-specific options that the game needs to know about
             platform_options options = {};
             options.audioSampleRate = soundOutput.samplesPerSecond;
+
+            // Load assets
+            FILE *assetsFile; 
+            fopen_s(&assetsFile, "assets.qpk", "rb");
+            assert(assetsFile);
+
+            fseek(assetsFile, 0, SEEK_END);
+            int assetPackFileSize = ftell(assetsFile);
+            fseek(assetsFile, 0, SEEK_SET);
+
+            char *assetPackFileData = (char *)malloc(assetPackFileSize);
+            fread(assetPackFileData, assetPackFileSize, 1, assetsFile);
+            fclose(assetsFile);
+
+            memory_arena workingAssetMemory = {};
+            workingAssetMemory.capacity = 30 * 1024 * 1024; // 30MB limit for working with asset files?
+            workingAssetMemory.base = malloc(workingAssetMemory.capacity);
+
+            asset_pack_data assetPackData = {};
+            assetPackData.assetData = assetPackFileData;
+            do {
+                loadNextAssetFile(&assetPackData, &gameMemory, &workingAssetMemory, &options);
+                if (assetPackData.needPlatformLoad) {
+                    switch (assetToLoad.lastAssetType){
+                        default: {
+                            assert(0);
+                        } break;
+                        case ASSET_TYPE_OBJ: {
+                            loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
+                        } break;
+                        case ASSET_TYPE_QMM: {
+                            loadRendererAnimatedMesh(&rendererMemory, (loaded_animated_mesh_asset *)workingAssetMemory.base);
+                        } break;
+                        case ASSET_TYPE_BMP: {
+                            loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
+                        } break;
+                        case ASSET_TYPE_ATLAS_TEXTURE: {
+                            loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
+                        } break;
+                    }
+                }
+
+            } while (!assetPackData.complete);
+            free(assetPackFileData);
+            free(workingAssetMemory.capacity);
+
+            asset_list assetList = {};
+            assetList.numAssetsToLoad = 0;
+            assetList.maxAssetsToLoad = 100;
+            assetList.assetsToLoad = 
+                (asset_to_load *)malloc(assetList.maxAssetsToLoad * sizeof(asset_to_load));
+
+            getGameAssetList(&assetList);
+
+            memory_arena workingAssetMemory = {};
+            workingAssetMemory.capacity = 30 * 1024 * 1024; // 30MB limit for working with asset files?
+            workingAssetMemory.base = malloc(workingAssetMemory.capacity);
 
             for (int i = 0; i < assetList.numAssetsToLoad; ++i) {
                 asset_to_load *assetToLoad = assetList.assetsToLoad + i;
@@ -557,7 +602,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                                        &gameMemory, &workingAssetMemory, &options, size);
                         free(fileData);
                     } break;
-                    case ASSET_TYPE_ATLAS: {
+                    case ASSET_TYPE_ATLAS_DATA: {
                         unsigned int size;
                         char *atlasData = readEntireTextFile(assetToLoad->path, &size);
                         char bitmapPath[MAX_PATH];
@@ -591,7 +636,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
                         fread(bitmapData, fileSize, 1, bmpFile);
                         fclose(bmpFile);
 
-                        parseGameAsset(atlasData, bitmapData, ASSET_TYPE_ATLAS, assetToLoad->key, assetToLoad->secondKey, 
+                        parseGameAsset(atlasData, bitmapData, ASSET_TYPE_ATLAS_DATA, assetToLoad->key, assetToLoad->secondKey, 
                                        &gameMemory, &workingAssetMemory, &options, 0);
                         free(bitmapData);
                         free(atlasData);

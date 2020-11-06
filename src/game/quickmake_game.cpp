@@ -204,14 +204,53 @@ static void initSounds (game_sounds *gameSounds) {
 // TODO(ebuchholz): Maybe pack everything into a single file and load that?
 extern "C" void getGameAssetList (asset_list *assetList) {
     pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
-    pushAsset(assetList, "assets/textures/atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
-    //pushAsset(assetList, "assets/textures/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
+    pushAsset(assetList, "assets/atlas/atlas.txt", ASSET_TYPE_ATLAS_DATA, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
+    //pushAsset(assetList, "assets/atlas/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
 
     //pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
 
     //pushAsset(assetList, "assets/data/data.txt", ASSET_TYPE_DATA, DATA_KEY_HITBOX_DATA);
 
     //pushAsset(assetList, "assets/midi/onestop.mid", ASSET_TYPE_MIDI, MIDI_KEY_TEST);
+}
+
+extern "C" void loadNextAssetFile (asset_pack_data *assetPackData, game_memory *gameMemory, memory_arena *workingMemory, 
+                                   platform_options *options) 
+{
+    game_state *gameState = (game_state *)gameMemory->memory;
+    if (!gameState->assetsInitialized) {
+        gameState->assetsInitialized = true;
+
+        gameState->memory = {};
+        gameState->memory.size = 0;
+        gameState->memory.capacity = gameMemory->memoryCapacity - sizeof(game_state);
+        gameState->memory.base = (char *)gameMemory->memory + sizeof(game_state);
+
+        gameState->assets = {};
+        game_assets *assets = &gameState->assets;
+        assets->assetMemory = {};
+        assets->assetMemory.size = 0;
+        assets->assetMemory.capacity = 10 * 1024 * 1024; // 1MB of asset data???
+        assets->assetMemory.base = allocateMemorySize(&gameState->memory, assets->assetMemory.capacity); 
+        assets->numMeshes = 0;
+
+        gameState->sineT = 0.0f;
+    } 
+
+    // if asset pack tracking not initialized
+    if (assetPackData->cursor == 0) {
+        assetPackData->cursor = assetPackData->assetData;
+        assetPackData->numFiles = (unsigned int)assetPackData->assetData;
+        assetPackData->cursor += sizeof(unsigned int);
+        if (assetPackData->numFiles == 0) {
+            assetPackData->complete = true;
+            return;
+        }
+    }
+
+    assetPackData->complete = false;
+    assetPackData->needPlatformLoad = false;
+    qmpack_file_header fileHeader = (qmpack_file_header)assetPackData->cursor;
 }
 
 extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
@@ -261,7 +300,7 @@ extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_ty
     case ASSET_TYPE_MIDI:
         parseMidi(assetData, &gameState->assets, key, workingMemory, options);
         break;
-    case ASSET_TYPE_ATLAS:
+    case ASSET_TYPE_ATLAS_DATA:
         parseBitmap(secondAssetData, &gameState->assets, secondKey, workingMemory);
         parseAtlas(assetData, &gameState->assets, key, secondKey, workingMemory);
         break;

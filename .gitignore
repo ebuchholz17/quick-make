@@ -3,6 +3,7 @@
 /ebrt.VC.db
 /ebrt.VC.VC.opendb
 /Debug
+/tools/qmpack/build/.vs
 /src/web/node_modules
 /src/web/wasm
 /src/windows/.vs

@@ -16,7 +16,8 @@ struct memory_arena {
 enum asset_type {
     ASSET_TYPE_OBJ,
     ASSET_TYPE_BMP,
-    ASSET_TYPE_ATLAS,
+    ASSET_TYPE_ATLAS_TEXTURE,
+    ASSET_TYPE_ATLAS_DATA,
     ASSET_TYPE_ANIMATION_DATA,
     ASSET_TYPE_QMM,
     ASSET_TYPE_WAV,
@@ -35,6 +36,17 @@ struct asset_list {
     int numAssetsToLoad;
     int maxAssetsToLoad;
     asset_to_load *assetsToLoad;
+};
+
+struct asset_pack_data {
+    char *assetData;
+    int numFiles;
+    int currentIndex;
+
+    char *cursor;
+    bool lastAssetType;
+    bool needPlatformLoad;
+    bool complete;
 };
 
 // Makes it easier to wrap up in WebIDL
