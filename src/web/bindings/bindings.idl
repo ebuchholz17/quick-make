@@ -78,7 +78,8 @@ interface memory_arena {
 enum asset_type {
     "ASSET_TYPE_OBJ",
     "ASSET_TYPE_BMP",
-    "ASSET_TYPE_ATLAS",
+    "ASSET_TYPE_ATLAS_TEXTURE",
+    "ASSET_TYPE_ATLAS_DATA",
     "ASSET_TYPE_ANIMATION_DATA",
     "ASSET_TYPE_QMM",
     "ASSET_TYPE_WAV",
@@ -86,17 +87,15 @@ enum asset_type {
     "ASSET_TYPE_DATA"
 };
 
-interface asset_to_load {
-    attribute DOMString path;
-    attribute asset_type type;
-    attribute long key;
-    attribute long secondKey;
-};
+interface asset_pack_data {
+    attribute VoidPtr assetData;
+    attribute long numFiles;
+    attribute long currentIndex;
 
-interface asset_list {
-    attribute long numAssetsToLoad;
-    attribute long maxAssetsToLoad;
-    attribute asset_to_load assetsToLoad;
+    attribute VoidPtr cursor;
+    attribute asset_type lastAssetType;
+    attribute boolean needPlatformLoad;
+    attribute boolean complete;
 };
 
 interface float_mesh_attribute {
@@ -110,7 +109,7 @@ interface int_mesh_attribute {
 };
 
 interface loaded_mesh_asset {
-    attribute long key;
+    attribute long id;
     [Value] attribute float_mesh_attribute positions;
     [Value] attribute float_mesh_attribute texCoords;
     [Value] attribute float_mesh_attribute normals;
@@ -128,7 +127,7 @@ interface loaded_animated_mesh_asset {
 };
 
 interface loaded_texture_asset {
-    attribute long key;
+    attribute long id;
     attribute long width;
     attribute long height;
     attribute VoidPtr pixels; 
@@ -156,8 +155,8 @@ interface render_command_header{
 };
 
 interface render_command_model {
-    attribute long meshKey;
-    attribute long textureKey;
+    attribute long meshID;
+    attribute long textureID;
     [Value] attribute matrix4x4 modelMatrix;
 };
 
@@ -165,7 +164,7 @@ interface render_command_animated_model {
     [Value] attribute matrix4x4 modelMatrix;
     attribute matrix4x4 boneMatrices;
     attribute long animatedMeshKey;
-    attribute long textureKey;
+    attribute long textureID;
     attribute long numBones;
 };
 
@@ -175,7 +174,7 @@ interface render_command_lines {
 };
 
 interface render_command_sprite {
-    attribute long textureKey;
+    attribute long textureID;
     attribute float x;
     attribute float y;
     attribute float width;
@@ -187,7 +186,7 @@ interface render_sprite {
     [Value] attribute vector2[] texCoord;
     [Value] attribute vector4[] color;
 
-    attribute long textureKey;
+    attribute long textureID;
 };
 
 interface render_command_sprite_list {

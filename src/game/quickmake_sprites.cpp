@@ -49,15 +49,15 @@ sprite *createSpriteAndSetProperties (float x, float y, game_assets *assets, spr
     return nextSprite;
 }
 
-void addSprite (float x, float y, game_assets *assets, texture_key textureKey, sprite_list *spriteList, 
+void addSprite (float x, float y, game_assets *assets, char *textureKey, sprite_list *spriteList, 
                 float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
                 float alpha = 1.0f, unsigned int tint = 0xffffff) 
 {
     sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
 
     // TODO(ebuchholz): maybe pointer to texture info instead of copying?
-    texture_asset *texAsset = assets->textures[textureKey];
-    nextSprite->textureKey = textureKey;
+    texture_asset *texAsset = getTexture(assets, textureKey);
+    nextSprite->textureID = texAsset->id;
     nextSprite->width = (float)texAsset->width;
     nextSprite->height = (float)texAsset->height;
 
@@ -67,14 +67,14 @@ void addSprite (float x, float y, game_assets *assets, texture_key textureKey, s
     nextSprite->frameCorners[3] = Vector2(1.0f, 0.0f);
 }
 
-void addSprite (float x, float y, game_assets *assets, atlas_key atlasKey, char *frameName, sprite_list *spriteList, 
+void addSprite (float x, float y, game_assets *assets, char *atlasKey, char *frameName, sprite_list *spriteList, 
                 float anchorX = 0.0f, float anchorY = 0.0f, float scale=1.0f, float rotation = 0.0f, 
                 float alpha = 1.0f, unsigned int tint = 0xffffff) 
 {
     sprite *nextSprite = createSpriteAndSetProperties(x, y, assets, spriteList, anchorX, anchorY, scale, rotation, alpha, tint);
 
-    atlas_asset *atlas = assets->atlases[atlasKey];
-    nextSprite->textureKey = atlas->textureKey;
+    atlas_asset *atlas = getAtlas(assets, atlasKey);
+    nextSprite->textureID = atlas->textureID;
 
     atlas_frame *frame = getAtlasFrame(assets, atlasKey, frameName);
     nextSprite->width = (float)frame->frameWidth;
@@ -404,9 +404,9 @@ void initLetterCoords () {
     fontLetterCoords[' '] = coord;
 }
 
-void addText (float x, float y, char *text, game_assets *assets, texture_key fontTextureKey, sprite_list *spriteList) {
+void addText (float x, float y, char *text, game_assets *assets, char *fontTextureKey, sprite_list *spriteList) {
     char *currentLetter = text;
-    texture_asset *texAsset = assets->textures[fontTextureKey];
+    texture_asset *texAsset = getTexture(assets, fontTextureKey);
     float letterTexWidth = 8.0f / (float)texAsset->width;
     float letterTexHeight = 8.0f / (float)texAsset->height;
 
@@ -424,7 +424,7 @@ void addText (float x, float y, char *text, game_assets *assets, texture_key fon
             sprite *nextSprite = createSpriteAndSetProperties(x + xOffset, y + yOffset, assets, spriteList);
 
             // TODO(ebuchholz): maybe pointer to texture info instead of copying?
-            nextSprite->textureKey = fontTextureKey;
+            nextSprite->textureID = texAsset->id;
             nextSprite->width = 8.0f;//(float)texAsset->width;
             nextSprite->height = 8.0f;//(float)texAsset->height;
 

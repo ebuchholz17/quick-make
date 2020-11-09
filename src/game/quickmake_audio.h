@@ -219,7 +219,7 @@ struct synth_sound {
 };
 
 struct playing_sound {
-    sound_key key;
+    char *key;
     int currentSample;
 };
 

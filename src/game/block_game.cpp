@@ -700,11 +700,11 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
 
     pushSpriteTransform(spriteList, Vector2(GAME_WIDTH/2.0f, GAME_HEIGHT/2.0f));
 
-    addText(-184, -100, appendString("score: ", numToString(blockGame->score, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
+    addText(-184, -100, appendString("score: ", numToString(blockGame->score, &stringMemory), &stringMemory), assets, "font", spriteList);
 
     for (int i = 0; i < NUM_GRID_ROWS; ++i) {
         for (int j = 0; j < NUM_GRID_COLS; ++j) {
-            addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * j, GRID_ROW_START + GRID_BLOCK_HEIGHT * i, assets, ATLAS_KEY_GAME, "tile_backing", spriteList, 0.5f, 0.5f);
+            addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * j, GRID_ROW_START + GRID_BLOCK_HEIGHT * i, assets, "atlas", "tile_backing", spriteList, 0.5f, 0.5f);
         }
     }
 
@@ -723,7 +723,7 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
             continue; 
         }
         if (block->active) {
-            addSprite(block->x, block->y, assets, ATLAS_KEY_GAME, block->color, spriteList, 0.5f, 0.5f);
+            addSprite(block->x, block->y, assets, "atlas", block->color, spriteList, 0.5f, 0.5f);
         }
     }
 
@@ -739,15 +739,15 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
                 if (gridRow >= 0 && gridRow < NUM_GRID_ROWS && 
                     gridCol >= 0 && gridCol < NUM_GRID_COLS) 
                 {
-                    addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * gridCol, GRID_ROW_START + GRID_BLOCK_HEIGHT * gridRow, assets, ATLAS_KEY_GAME, "block_blink", spriteList, 0.5f, 0.5f, 1.0f, 0.0f, indicatorAlpha);
+                    addSprite(GRID_COL_START + GRID_BLOCK_WIDTH * gridCol, GRID_ROW_START + GRID_BLOCK_HEIGHT * gridRow, assets, "atlas", "block_blink", spriteList, 0.5f, 0.5f, 1.0f, 0.0f, indicatorAlpha);
                 }
             }
         }
     }
 
-    addSprite(blockGame->sheep.x, blockGame->sheep.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
+    addSprite(blockGame->sheep.x, blockGame->sheep.y, assets, "atlas", "sheep", spriteList, 0.5f, 0.5f);
 
-    //addSprite(localPointerPos.x, localPointerPos.y, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f);
+    //addSprite(localPointerPos.x, localPointerPos.y, assets, "atlas", "sheep", spriteList, 0.5f, 0.5f);
 
     //pushSpriteTransform(spriteList, Vector2(blockGame->sheep.x, blockGame->sheep.y), 1.0f, blockGame->sheep.y / 100.0f);
     //addSprite(0, 0, assets, TEXTURE_KEY_FONT, spriteList);
@@ -758,5 +758,5 @@ void updateBlockGame (memory_arena *memory, memory_arena *tempMemory, game_asset
     // some kind of pixel art antialiasing test
     //static float testT = 0.0f;
     //testT += DELTA_TIME * 0.1f;
-    //addSprite(200.0f + 150.0f * sinf(testT+1.6f), 100.0f, assets, ATLAS_KEY_GAME, "sheep", spriteList, 0.5f, 0.5f, 5.0f + 4.0f * sinf(testT), (testT * 1.0f) / 3.14f);
+    //addSprite(200.0f + 150.0f * sinf(testT+1.6f), 100.0f, assets, "atlas", "sheep", spriteList, 0.5f, 0.5f, 5.0f + 4.0f * sinf(testT), (testT * 1.0f) / 3.14f);
 }

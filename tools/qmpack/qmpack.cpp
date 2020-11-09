@@ -59,12 +59,14 @@ void assignFileNameFromFullPath (char *path, qmpack_file_header *fileHeader) {
     fileHeader->name[fileLength] = 0;
 }
 
-void addFilesToStagingDataList (qmpack_staging_data_list *stagingDataList, char_ptr_list *files, asset_type type) {
+void addFilesToStagingDataList (qmpack_staging_data_list *stagingDataList, char_ptr_list *files, 
+                                asset_type assetType, data_type dataType) {
     for (int i = 0; i < files->numValues; ++i) {
         qmpack_staging_data data = {};
         data.filePath = files->values[i];
         assignFileNameFromFullPath(data.filePath, &data.fileHeader);
-        data.fileHeader.type = type;
+        data.fileHeader.type = assetType;
+        data.dataType = dataType;
         listPush(stagingDataList, data);
     }
 }
@@ -85,31 +87,31 @@ int main (int argc, char **argv) {
 
     // data
     char_ptr_list dataFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/data/", &tempMemory), "*.txt", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &dataFilePaths, ASSET_TYPE_DATA);
+    addFilesToStagingDataList(&files, &dataFilePaths, ASSET_TYPE_DATA, DATA_TYPE_TEXT);
 
     // meshes
     char_ptr_list objFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/meshes/", &tempMemory), "*.obj", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &objFilePaths, ASSET_TYPE_OBJ);
+    addFilesToStagingDataList(&files, &objFilePaths, ASSET_TYPE_OBJ, DATA_TYPE_TEXT);
 
     // midi
     char_ptr_list midiFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/midi/", &tempMemory), "*.midi", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &midiFilePaths, ASSET_TYPE_MIDI);
+    addFilesToStagingDataList(&files, &midiFilePaths, ASSET_TYPE_MIDI, DATA_TYPE_BINARY);
     char_ptr_list midFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/midi/", &tempMemory), "*.mid", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &midFilePaths, ASSET_TYPE_MIDI);
+    addFilesToStagingDataList(&files, &midFilePaths, ASSET_TYPE_MIDI, DATA_TYPE_BINARY);
 
     // sounds
     char_ptr_list wavFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/sounds/", &tempMemory), "*.wav", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &wavFilePaths, ASSET_TYPE_WAV);
+    addFilesToStagingDataList(&files, &wavFilePaths, ASSET_TYPE_WAV, DATA_TYPE_BINARY);
 
     // textures
     char_ptr_list bmpFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/textures/", &tempMemory), "*.bmp", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &bmpFilePaths, ASSET_TYPE_BMP);
+    addFilesToStagingDataList(&files, &bmpFilePaths, ASSET_TYPE_BMP, DATA_TYPE_BINARY);
 
     // atlas
     char_ptr_list atlasTextureFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/atlas/", &tempMemory), "*.bmp", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &atlasTextureFilePaths, ASSET_TYPE_ATLAS_TEXTURE);
+    addFilesToStagingDataList(&files, &atlasTextureFilePaths, ASSET_TYPE_ATLAS_TEXTURE, DATA_TYPE_BINARY);
     char_ptr_list atlasDataFilePaths = getFilePathsInDirOfType(appendString(assetsDirPath, "/atlas/", &tempMemory), "*.txt", &memory, &tempMemory);
-    addFilesToStagingDataList(&files, &atlasDataFilePaths, ASSET_TYPE_ATLAS_DATA);
+    addFilesToStagingDataList(&files, &atlasDataFilePaths, ASSET_TYPE_ATLAS_DATA, DATA_TYPE_TEXT);
 
     tempMemory.size = 0;
 
@@ -130,12 +132,19 @@ int main (int argc, char **argv) {
         stagingData->fileHeader.size = ftell(assetFile);
         fseek(assetFile, 0, SEEK_SET);
 
+        if (stagingData->dataType == DATA_TYPE_TEXT) {
+            stagingData->fileHeader.size++;
+        }
+
         fwrite(&stagingData->fileHeader, 1, sizeof(qmpack_file_header), output);
 
         char buffer[4096];
         size_t count;
         while ((count = fread(buffer, 1, sizeof(buffer), assetFile)) > 0) {
             fwrite(buffer, 1, count, output);
+        }
+        if (stagingData->dataType == DATA_TYPE_TEXT) {
+            fwrite("\0", 1, 1, output);
         }
 
         fclose(assetFile);

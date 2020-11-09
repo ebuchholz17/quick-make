@@ -96,7 +96,7 @@ void loadRendererMesh (renderer_memory *memory, loaded_mesh_asset *loadedMesh) {
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
     assert(renderer->numMeshes < MAX_OPENGL_MESHES);
     // TODO(ebuchholz): triple check that the keys will line up this way
-    openGL_mesh *mesh = &renderer->meshes[loadedMesh->key];
+    openGL_mesh *mesh = &renderer->meshes[loadedMesh->id];
     renderer->numMeshes++;
 
     glGenBuffers(1, &mesh->positionBuffer);
@@ -156,7 +156,7 @@ void loadRendererTexture (renderer_memory *memory, loaded_texture_asset *loadedT
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
     assert(renderer->numTextures < MAX_OPENGL_TEXTURES);
     // TODO(ebuchholz): triple check that the keys will line up this way
-    openGL_texture *texture = &renderer->textures[loadedTexture->key];
+    openGL_texture *texture = &renderer->textures[loadedTexture->id];
     texture->width = loadedTexture->width;
     texture->height = loadedTexture->height;
     renderer->numTextures++;
@@ -309,8 +309,8 @@ int initOpenGL (HWND window, renderer_memory *memory) {
     glGenBuffers(1, &renderer->debugPositionBuffer);
 
     // TODO(ebuchholz): use the right blend mode depending on what's being drawn, this is just for default 2d drawing
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     return 0;
 }
 
@@ -320,7 +320,7 @@ void setCamera (openGL_renderer *renderer, render_command_set_camera *setCameraC
 }
 
 void drawModel (openGL_renderer *renderer, GLuint program, render_command_model *modelCommand) {
-    openGL_mesh *mesh = &renderer->meshes[modelCommand->meshKey];
+    openGL_mesh *mesh = &renderer->meshes[modelCommand->meshID];
 
     // TODO(ebuchholz): have a way to avoid finding and settings attributes/uniforms for each
     // time we draw a mesh
@@ -361,7 +361,7 @@ void drawModel (openGL_renderer *renderer, GLuint program, render_command_model 
     GLint projMatrixLocation = glGetUniformLocation(program, "projMatrix");
     glUniformMatrix4fv(projMatrixLocation, 1, true, renderer->projMatrix.m);
 
-    openGL_texture *texture = &renderer->textures[modelCommand->textureKey];
+    openGL_texture *texture = &renderer->textures[modelCommand->textureID];
 
     glActiveTexture(GL_TEXTURE0);
     GLuint textureLocation = glGetUniformLocation(program, "texture");
@@ -431,7 +431,7 @@ void drawAnimatedModel (openGL_renderer *renderer, GLuint program, render_comman
 
     // TODO(ebuchholz): load up some bones
 
-    openGL_texture *texture = &renderer->textures[modelCommand->textureKey];
+    openGL_texture *texture = &renderer->textures[modelCommand->textureID];
 
     glActiveTexture(GL_TEXTURE0);
     GLuint textureLocation = glGetUniformLocation(program, "texture");
@@ -479,7 +479,7 @@ void drawSprite (openGL_renderer *renderer, GLuint program, render_command_sprit
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->spriteIndexBuffer);
 
-    openGL_texture *texture = &renderer->textures[spriteCommand->textureKey];
+    openGL_texture *texture = &renderer->textures[spriteCommand->textureID];
 
     GLint screenWidthLocation = glGetUniformLocation(program, "screenWidth");
     glUniform1f(screenWidthLocation, screenWidth);
@@ -495,7 +495,7 @@ void drawSprite (openGL_renderer *renderer, GLuint program, render_command_sprit
 }
 
 void flushSprites (openGL_renderer *renderer, GLuint program, int numSpritesBatched, 
-                   float screenWidth, float screenHeight, int textureKey) 
+                   float screenWidth, float screenHeight, int textureID) 
 {
     glBindBuffer(GL_ARRAY_BUFFER, renderer->spritePositionBuffer);
     glBufferData(GL_ARRAY_BUFFER, numSpritesBatched * 8 * sizeof(float), renderer->spriteVertexPositions, GL_DYNAMIC_DRAW);
@@ -520,7 +520,7 @@ void flushSprites (openGL_renderer *renderer, GLuint program, int numSpritesBatc
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->spriteIndexBuffer);
 
-    openGL_texture *texture = &renderer->textures[textureKey];
+    openGL_texture *texture = &renderer->textures[textureID];
 
     GLint screenWidthLocation = glGetUniformLocation(program, "screenWidth");
     glUniform1f(screenWidthLocation, screenWidth);
@@ -546,16 +546,16 @@ void drawSpriteList (openGL_renderer *renderer, GLuint program, render_command_s
 {
     if (spriteListCommand->numSprites > 0) {
         render_sprite *sprites = spriteListCommand->sprites;
-        int currentTextureKey = sprites[0].textureKey;
+        unsigned int currentTextureID = sprites[0].textureID;
         int numSpritesBatched = 0;
 
         for (int i = 0; i < spriteListCommand->numSprites; ++i) {
             render_sprite *sprite = &sprites[i];
 
-            if (sprite->textureKey != currentTextureKey || numSpritesBatched >= MAX_SPRITES_PER_BATCH) {
-                flushSprites(renderer, program, numSpritesBatched, screenWidth, screenHeight, currentTextureKey);
+            if (sprite->textureID != currentTextureID || numSpritesBatched >= MAX_SPRITES_PER_BATCH) {
+                flushSprites(renderer, program, numSpritesBatched, screenWidth, screenHeight, currentTextureID);
                 numSpritesBatched = 0;
-                currentTextureKey = sprite->textureKey;
+                currentTextureID = sprite->textureID;
             }
 
             int numFloats = numSpritesBatched * 8;
@@ -599,7 +599,7 @@ void drawSpriteList (openGL_renderer *renderer, GLuint program, render_command_s
             ++numSpritesBatched;
         }
         if (numSpritesBatched > 0) {
-            flushSprites(renderer, program, numSpritesBatched, screenWidth, screenHeight, currentTextureKey);
+            flushSprites(renderer, program, numSpritesBatched, screenWidth, screenHeight, currentTextureID);
         }
     }
 }
@@ -650,7 +650,7 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
 
     glViewport(0, 0, renderCommands->windowWidth, renderCommands->windowHeight);
-    //glEnable(GL_DEPTH_TEST); // off for 2d stuff
+    glEnable(GL_DEPTH_TEST); // off for 2d stuff
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.7f, 0.8f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

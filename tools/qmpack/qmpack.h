@@ -13,6 +13,11 @@ enum asset_type {
     ASSET_TYPE_DATA
 };
 
+enum data_type {
+    DATA_TYPE_BINARY,
+    DATA_TYPE_TEXT
+};
+
 #pragma pack(push, 1)
 struct qmpack_file_header {
     char name[50];
@@ -24,6 +29,7 @@ struct qmpack_file_header {
 struct qmpack_staging_data {
     qmpack_file_header fileHeader;
     char *filePath;
+    data_type dataType;
 };
 
 #endif

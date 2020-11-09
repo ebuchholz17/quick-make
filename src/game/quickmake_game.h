@@ -17,7 +17,8 @@
 
 //#include "sound_editor.cpp"
 //#include "test_game.cpp"
-#include "block_game.cpp"
+#include "test_3D_game.cpp"
+//#include "block_game.cpp"
 //#include "piano_game.cpp"
 //#include "skeletal_game.cpp"
 //#include "controller_test_game.cpp"
@@ -37,9 +38,10 @@ struct game_state {
     unsigned int loadedFileSize;
 
     float visualizationT;
+    test_3D_game test3DGame;
     //sound_editor soundEditor;
     //piano_game pianoGame;
-    block_game blockGame;
+    //block_game blockGame;
     //skeletal_game skeletalGame;
     //hitbox_editor hitboxEditor;
 

@@ -16,9 +16,13 @@ enum mesh_key {
 };
 
 struct mesh_asset {
-    mesh_key key;
+    unsigned int id;
     // maybe save a copy of vertices and things like that
 };
+
+typedef mesh_asset *mesh_asset_ptr;
+#define HASH_MAP_TYPE mesh_asset_ptr
+#include "hash_map.h"
 
 enum animated_mesh_key {
     ANIM_MESH_KEY_TUBE_SNAKE
@@ -29,44 +33,40 @@ struct animated_mesh_asset {
     // maybe save a copy of vertices and things like that
 };
 
-enum texture_key {
-    TEXTURE_KEY_FONT,
-    TEXTURE_KEY_GAME_ATLAS
-    //TEXTURE_KEY_HITBOX_EDITOR_ATLAS
-};
-
 struct texture_asset {
-    texture_key key;
+    unsigned int id;
     int width;
     int height;
     // maybe save pixels, but maybe don't need it after uploaded to GPU
 };
 
-enum atlas_key {
-    ATLAS_KEY_GAME
-    //ATLAS_KEY_HITBOX_EDITOR
-};
-
-enum sound_key {
-    SOUND_KEY_MENU_BUTTON
-};
+typedef texture_asset *texture_asset_ptr;
+#define HASH_MAP_TYPE texture_asset_ptr
+#include "hash_map.h"
 
 struct sound_asset {
-    sound_key key;
+    char *key;
     // info about file size, duration, etc?
     short *samples;
     int numSamples;
 };
+
+typedef sound_asset *sound_asset_ptr;
+#define HASH_MAP_TYPE sound_asset_ptr
+#include "hash_map.h"
 
 enum data_key {
     DATA_KEY_HITBOX_DATA
 };
 
 struct data_asset {
-    data_key key;
     void *data;
     unsigned int size;
 };
+
+typedef data_asset *data_asset_ptr;
+#define HASH_MAP_TYPE data_asset_ptr
+#include "hash_map.h"
 
 struct atlas_frame {
     // assumes unrotated
@@ -82,11 +82,14 @@ struct atlas_map {
 
 struct atlas_asset {
     atlas_map map;
-    atlas_key atlasKey;
-    texture_key textureKey;
+    int textureID;
     int width;
     int height;
 };
+
+typedef atlas_asset *atlas_asset_ptr;
+#define HASH_MAP_TYPE atlas_asset_ptr
+#include "hash_map.h"
 
 enum midi_key {
     MIDI_KEY_TEST
@@ -119,6 +122,10 @@ struct midi_asset {
     int numTracks;
     midi_track tracks[MAX_MIDI_TRACKS];
 };
+
+typedef midi_asset *midi_asset_ptr;
+#define HASH_MAP_TYPE midi_asset_ptr
+#include "hash_map.h"
 
 // TODO(ebuchholz): maybe pack just the transforms together separately?
 struct skeleton_bone {
@@ -229,11 +236,7 @@ struct bitmap_header {
 // TODO(ebuchholz): pick reasonable numbers, or make it more dynamic
 #define MAX_NUM_MESHES 100
 #define MAX_NUM_ANIMATED_MESHES 30
-#define MAX_NUM_TEXTURES 100
-#define MAX_NUM_SOUNDS 100
 #define MAX_NUM_MIDIS 10
-#define MAX_NUM_ATLASES 20
-#define MAX_NUM_DATA_ASSETS 100
 
 #define MAX_NUM_ANIMATION_DATA 10
 
@@ -241,30 +244,23 @@ struct bitmap_header {
 struct game_assets {
     memory_arena assetMemory;
 
-    // TODO(ebuchholz): remove pointer arrays, make them regular arrays, don't remember why they are pointers
-    mesh_asset *meshes[MAX_NUM_MESHES];
-    int numMeshes;
+    // TODO(ebuchholz): consider storing values in these hash maps instead of pointers
+    mesh_asset_ptr_hash_map meshes;
+    unsigned int numMeshes; // used to assign integer id's to meshes, which renderer can use
 
     animated_mesh_asset *animatedMeshes[MAX_NUM_ANIMATED_MESHES];
     int numAnimatedMeshes;
 
-    texture_asset *textures[MAX_NUM_TEXTURES];
-    int numTextures;
-    
-    sound_asset *sounds[MAX_NUM_SOUNDS];
-    int numSounds;
+    sound_asset_ptr_hash_map sounds;
+    midi_asset_ptr_hash_map midis;
+    atlas_asset_ptr_hash_map atlases;
+    data_asset_ptr_hash_map dataAssets;
 
-    midi_asset *midis[MAX_NUM_MIDIS];
-    int numMidis;
-
-    atlas_asset *atlases[MAX_NUM_ATLASES];
-    int numAtlases;
+    texture_asset_ptr_hash_map textures;
+    unsigned int numTextures; // used to assign integer id's to textures, which renderer can use
 
     animation_data *animationData[MAX_NUM_ANIMATION_DATA];
     int numAnimationData;
-
-    data_asset *dataAssets[MAX_NUM_DATA_ASSETS];
-    int numDataAssets;
 };
 
 #endif

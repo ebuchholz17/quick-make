@@ -191,7 +191,7 @@ inline float updateInstrument (synth_sound *sound, sound_instrument *instrument,
     }
 }
 
-void playSound (sound_key key, game_sounds *gameSounds) {
+void playSound (char *key, game_sounds *gameSounds, game_assets *assets) {
     // ignore sounds beyond the limit
     if(gameSounds->numPlayingSounds >= MAX_PLAYING_SOUNDS) { 
         return;
@@ -199,7 +199,8 @@ void playSound (sound_key key, game_sounds *gameSounds) {
     playing_sound *playingSound = &gameSounds->playingSounds[gameSounds->numPlayingSounds];
     ++gameSounds->numPlayingSounds;
 
-    playingSound->key = key;
+    sound_asset *soundAsset = getSound(assets, key);
+    playingSound->key = soundAsset->key; // use the pointer assigned to the sound asset, which is permanent
     playingSound->currentSample = 0;
 }
 
@@ -222,11 +223,11 @@ unsigned int getVariableLengthValue (char *data, int *length) {
     return result;
 }
 
-void playBGM (midi_key key, game_sounds *gameSounds, game_assets *assets) {
+void playBGM (char *key, game_sounds *gameSounds, game_assets *assets) {
     midi_playback *bgmState = &gameSounds->bgmState;
     bgmState->playing = true;
 
-    midi_asset *midiAsset = assets->midis[key];
+    midi_asset *midiAsset = getMidi(assets, key);
     bgmState->ticksPerQuarterNote = midiAsset->ticksPerQuarterNote;
     bgmState->tickDuration = midiAsset->tickDuration;
     bgmState->numTracks = midiAsset->numTracks;

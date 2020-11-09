@@ -47,12 +47,9 @@ int sizeof_line () {
 int sizeof_memory_arena () {
     return sizeof(memory_arena);
 }  
-int sizeof_asset_to_load () {
-    return sizeof(asset_to_load);
-}  
-int sizeof_asset_list () {
-    return sizeof(asset_list);
-}  
+int sizeof_asset_pack_data () {
+    return sizeof(asset_pack_data);
+}
 int sizeof_float_mesh_attribute () {
     return sizeof(float_mesh_attribute);
 }  
@@ -137,8 +134,7 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_triangle", &sizeof_triangle);
     function ("sizeof_line", &sizeof_line);
     function ("sizeof_memory_arena", &sizeof_memory_arena);
-    function ("sizeof_asset_to_load", &sizeof_asset_to_load);
-    function ("sizeof_asset_list", &sizeof_asset_list);
+    function ("sizeof_asset_pack_data", &sizeof_asset_pack_data);
     function ("sizeof_float_mesh_attribute", &sizeof_float_mesh_attribute);
     function ("sizeof_int_mesh_attribute", &sizeof_int_mesh_attribute);
     function ("sizeof_loaded_mesh_asset", &sizeof_loaded_mesh_asset);

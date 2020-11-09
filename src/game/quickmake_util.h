@@ -1,6 +1,7 @@
 #ifndef QUICKMAKE_UTIL_H
 #define QUICKMAKE_UTIL_H
 
+// TODO(ebuchholz): consider building in automatic alignment
 void *allocateMemorySize (memory_arena *memory, unsigned int size) {
     assert(memory->size + size < memory->capacity);
     void *result = (char *)memory->base + memory->size;

@@ -15,7 +15,7 @@ struct sprite {
     float rotation;
     float alpha;
     unsigned int tint;
-    texture_key textureKey;
+    unsigned int textureID;
 };
 
 #define MATRIX_STACK_CAPACITY 20

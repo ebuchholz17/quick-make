@@ -473,9 +473,10 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             asset_pack_data assetPackData = {};
             assetPackData.assetData = assetPackFileData;
             do {
+                workingAssetMemory.size = 0;
                 loadNextAssetFile(&assetPackData, &gameMemory, &workingAssetMemory, &options);
                 if (assetPackData.needPlatformLoad) {
-                    switch (assetToLoad.lastAssetType){
+                    switch (assetPackData.lastAssetType){
                         default: {
                             assert(0);
                         } break;
@@ -496,156 +497,6 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             } while (!assetPackData.complete);
             free(assetPackFileData);
-            free(workingAssetMemory.capacity);
-
-            asset_list assetList = {};
-            assetList.numAssetsToLoad = 0;
-            assetList.maxAssetsToLoad = 100;
-            assetList.assetsToLoad = 
-                (asset_to_load *)malloc(assetList.maxAssetsToLoad * sizeof(asset_to_load));
-
-            getGameAssetList(&assetList);
-
-            memory_arena workingAssetMemory = {};
-            workingAssetMemory.capacity = 30 * 1024 * 1024; // 30MB limit for working with asset files?
-            workingAssetMemory.base = malloc(workingAssetMemory.capacity);
-
-            for (int i = 0; i < assetList.numAssetsToLoad; ++i) {
-                asset_to_load *assetToLoad = assetList.assetsToLoad + i;
-                workingAssetMemory.size = 0;
-                switch (assetToLoad->type){
-                    // catch-all for text files? no work to be done on platform except reading the file
-                    case ASSET_TYPE_ANIMATION_DATA: {
-                        // TODO(ebuchholz): define real skeleton+animations file format define real skeleton+animations file format define real skeleton+animations file format define real skeleton+animations file format define real skeleton+animations file format
-                        char *fileData = 0;
-                        //char *fileData = readEntireTextFile(assetToLoad->path);
-                        parseGameAsset(fileData, 0, assetToLoad->type, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, 0);
-                        //free(fileData);
-                    } break;
-                    case ASSET_TYPE_OBJ: {
-                        unsigned int size;
-                        char *fileData = readEntireTextFile(assetToLoad->path, &size);
-                        parseGameAsset(fileData, 0, ASSET_TYPE_OBJ, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, 0);
-                        free(fileData);
-
-                        loadRendererMesh(&rendererMemory, (loaded_mesh_asset *)workingAssetMemory.base);
-                    } break;
-                    case ASSET_TYPE_QMM: {
-                        char *fileData = 0;
-                        //char *fileData = readEntireTextFile(assetToLoad->path);
-                        parseGameAsset(fileData, 0, ASSET_TYPE_QMM, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, 0);
-                        //free(fileData);
-
-                        loadRendererAnimatedMesh(&rendererMemory, (loaded_animated_mesh_asset *)workingAssetMemory.base);
-                    } break;
-                    case ASSET_TYPE_BMP: {
-                        FILE *bmpFile; 
-                        fopen_s(&bmpFile, assetToLoad->path, "rb");
-                        assert(bmpFile); // TODO(ebuchholz): better error check?
-
-                        fseek(bmpFile, 0, SEEK_END);
-                        int fileSize = ftell(bmpFile);
-                        fseek(bmpFile, 0, SEEK_SET);
-
-                        char *fileData = (char *)malloc(fileSize);
-                        fread(fileData, fileSize, 1, bmpFile);
-                        fclose(bmpFile);
-
-                        parseGameAsset(fileData, 0, ASSET_TYPE_BMP, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, 0);
-                        free(fileData);
-
-                        // load texture onto gpu
-                        loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
-                    } break;
-                    case ASSET_TYPE_WAV: {
-                        FILE *wavFile; 
-                        fopen_s(&wavFile, assetToLoad->path, "rb");
-                        assert(wavFile); // TODO(ebuchholz): better error check?
-
-                        fseek(wavFile, 0, SEEK_END);
-                        int fileSize = ftell(wavFile);
-                        fseek(wavFile, 0, SEEK_SET);
-
-                        char *fileData = (char *)malloc(fileSize);
-                        fread(fileData, fileSize, 1, wavFile);
-                        fclose(wavFile);
-
-                        parseGameAsset(fileData, 0, ASSET_TYPE_WAV, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, 0);
-                        free(fileData);
-                    } break;
-                    case ASSET_TYPE_MIDI: {
-                        FILE *midiFile; 
-                        fopen_s(&midiFile, assetToLoad->path, "rb");
-                        assert(midiFile); // TODO(ebuchholz): better error check?
-
-                        fseek(midiFile, 0, SEEK_END);
-                        int fileSize = ftell(midiFile);
-                        fseek(midiFile, 0, SEEK_SET);
-
-                        char *fileData = (char *)malloc(fileSize);
-                        fread(fileData, fileSize, 1, midiFile);
-                        fclose(midiFile);
-
-                        parseGameAsset(fileData, 0, ASSET_TYPE_MIDI, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, 0);
-                        free(fileData);
-                    } break;
-                    case ASSET_TYPE_DATA: {
-                        unsigned int size;
-                        char *fileData = readEntireTextFile(assetToLoad->path, &size);
-                        parseGameAsset(fileData, 0, ASSET_TYPE_DATA, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, size);
-                        free(fileData);
-                    } break;
-                    case ASSET_TYPE_ATLAS_DATA: {
-                        unsigned int size;
-                        char *atlasData = readEntireTextFile(assetToLoad->path, &size);
-                        char bitmapPath[MAX_PATH];
-                        int letterIndex = 0;
-                        for (; assetToLoad->path[letterIndex] != 0; ++letterIndex) {
-                            bitmapPath[letterIndex] = assetToLoad->path[letterIndex];
-                        }
-                        for (; letterIndex >= 0; --letterIndex) {
-                            if (bitmapPath[letterIndex] == '.') {
-                                ++letterIndex;
-                                bitmapPath[letterIndex] = 'b';
-                                ++letterIndex;
-                                bitmapPath[letterIndex] = 'm';
-                                ++letterIndex;
-                                bitmapPath[letterIndex] = 'p';
-                                ++letterIndex;
-                                bitmapPath[letterIndex] = 0;
-                                break;
-                            }
-                        }
-
-                        FILE *bmpFile; 
-                        fopen_s(&bmpFile, bitmapPath, "rb");
-                        assert(bmpFile); // TODO(ebuchholz): better error check?
-
-                        fseek(bmpFile, 0, SEEK_END);
-                        int fileSize = ftell(bmpFile);
-                        fseek(bmpFile, 0, SEEK_SET);
-
-                        char *bitmapData = (char *)malloc(fileSize);
-                        fread(bitmapData, fileSize, 1, bmpFile);
-                        fclose(bmpFile);
-
-                        parseGameAsset(atlasData, bitmapData, ASSET_TYPE_ATLAS_DATA, assetToLoad->key, assetToLoad->secondKey, 
-                                       &gameMemory, &workingAssetMemory, &options, 0);
-                        free(bitmapData);
-                        free(atlasData);
-
-                        loadRendererTexture(&rendererMemory, (loaded_texture_asset *)workingAssetMemory.base);
-                    } break;
-                }
-            }
-
             free(workingAssetMemory.base);
 
             render_command_list renderCommands = {};

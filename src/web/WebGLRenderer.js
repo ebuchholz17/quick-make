@@ -135,8 +135,8 @@ WebGLRenderer.prototype = {
         this.debugPositionBuffer = gl.createBuffer();
 
         // TODO(ebuchholz): use the right blend mode depending on what's being drawn, this is just for default 2d drawing
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //gl.enable(gl.BLEND);
+        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     },
 
     compileAndLinkShader: function (vertexShaderText, fragmentShaderText, type) {
@@ -175,7 +175,7 @@ WebGLRenderer.prototype = {
 
     loadMesh: function (game, loadedMesh) {
         var mesh = new WebGLMesh();
-        mesh.key = loadedMesh.key;
+        mesh.key = loadedMesh.id;
         this.meshes[mesh.key] = mesh;
 
         mesh.positionBuffer = gl.createBuffer();
@@ -261,7 +261,7 @@ WebGLRenderer.prototype = {
 
     loadTexture: function (game, loadedTexture) {
         var texture = new WebGLTexture();
-        texture.key = loadedTexture.key;
+        texture.key = loadedTexture.id;
         texture.width = loadedTexture.width;
         texture.height = loadedTexture.height;
         this.textures[texture.key] = texture;
@@ -339,7 +339,7 @@ WebGLRenderer.prototype = {
     },
 
     drawModel: function (game, modelCommand, program) {
-        var mesh = this.meshes[modelCommand.meshKey];
+        var mesh = this.meshes[modelCommand.meshID];
 
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
         var positionLocation = gl.getAttribLocation(program, "position");
@@ -377,7 +377,7 @@ WebGLRenderer.prototype = {
         var projMatrixLocation = gl.getUniformLocation(program, "projMatrix");
         gl.uniformMatrix4fv(projMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
-        var texture = this.textures[modelCommand.textureKey];
+        var texture = this.textures[modelCommand.textureID];
         var textureLocation = gl.getUniformLocation(program, "texture");
         gl.uniform1i(textureLocation, 0);
         gl.activeTexture(gl.TEXTURE0);
@@ -444,7 +444,7 @@ WebGLRenderer.prototype = {
         var boneMatrixLocation = gl.getUniformLocation(program, "boneTransforms");
         gl.uniformMatrix4fv(boneMatrixLocation, false, this.matrix4x4ArrayTranspose(floatBuffer, numBones));
 
-        var texture = this.textures[animatedModelCommand.textureKey];
+        var texture = this.textures[animatedModelCommand.textureID];
         var textureLocation = gl.getUniformLocation(program, "texture");
         gl.uniform1i(textureLocation, 0);
         gl.activeTexture(gl.TEXTURE0);
@@ -493,7 +493,7 @@ WebGLRenderer.prototype = {
         var screenHeightLocation = gl.getUniformLocation(program, "screenHeight");
         gl.uniform1f(screenHeightLocation, screenHeight);
 
-        var texture = this.textures[spriteCommand.textureKey];
+        var texture = this.textures[spriteCommand.textureID];
         var textureLocation = gl.getUniformLocation(program, "texture");
         gl.uniform1i(textureLocation, 0);
         gl.activeTexture(gl.TEXTURE0);
@@ -503,7 +503,7 @@ WebGLRenderer.prototype = {
     },
 
     // TODO(ebuchholz): use buffersubdata instead? and reserve enough for max batch size
-    flushSprites: function (game, program, numSpritesBatched, screenWidth, screenHeight, textureKey) {
+    flushSprites: function (game, program, numSpritesBatched, screenWidth, screenHeight, textureID) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.spritePositionBuffer);
         var floatBuffer = Float32Array.from(this.spriteVertexPositions);
         gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.DYNAMIC_DRAW);
@@ -530,7 +530,7 @@ WebGLRenderer.prototype = {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.spriteIndexBuffer);
 
-        var texture = this.textures[textureKey];
+        var texture = this.textures[textureID];
 
         var screenWidthLocation = gl.getUniformLocation(program, "screenWidth");
         gl.uniform1f(screenWidthLocation, screenWidth);
@@ -548,16 +548,16 @@ WebGLRenderer.prototype = {
     drawSpriteList: function (game, program, spriteListCommand, screenWidth, screenHeight) {
         if (spriteListCommand.numSprites > 0) {
             var spritesPointer = game.getPointer(spriteListCommand.sprites);
-            var currentTextureKey = game.wrapPointer(spritesPointer, game.render_sprite).textureKey;
+            var currentTextureID = game.wrapPointer(spritesPointer, game.render_sprite).textureID;
             var numSpritesBatched = 0;
 
             for (var i = 0; i < spriteListCommand.numSprites; ++i) {
                 var sprite = game.wrapPointer(spritesPointer + game.sizeof_render_sprite() * i, game.render_sprite);
 
-                if (sprite.textureKey !== currentTextureKey || numSpritesBatched >= WebGLRenderer.MAX_SPRITES_PER_BATCH) {
-                    this.flushSprites(game, program, numSpritesBatched, screenWidth, screenHeight, currentTextureKey);
+                if (sprite.textureID !== currentTextureID || numSpritesBatched >= WebGLRenderer.MAX_SPRITES_PER_BATCH) {
+                    this.flushSprites(game, program, numSpritesBatched, screenWidth, screenHeight, currentTextureID);
                     numSpritesBatched = 0;
-                    currentTextureKey = sprite.textureKey;
+                    currentTextureID = sprite.textureID;
                 }
 
                 var numFloats = numSpritesBatched * 8;
@@ -605,7 +605,7 @@ WebGLRenderer.prototype = {
                 ++numSpritesBatched;
             }
             if (numSpritesBatched > 0) {
-                this.flushSprites(game, program, numSpritesBatched, screenWidth, screenHeight, currentTextureKey);
+                this.flushSprites(game, program, numSpritesBatched, screenWidth, screenHeight, currentTextureID);
             }
         }
     },
@@ -657,7 +657,7 @@ WebGLRenderer.prototype = {
 
     renderFrame: function (game, renderCommands) {
         gl.viewport(0, 0, renderCommands.windowWidth, renderCommands.windowHeight);
-        //gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
         gl.clearColor(0.0, 0.7, 0.8, 0.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

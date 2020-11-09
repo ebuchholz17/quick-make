@@ -200,20 +200,6 @@ static void initSounds (game_sounds *gameSounds) {
 //
 //}
 
-
-// TODO(ebuchholz): Maybe pack everything into a single file and load that?
-extern "C" void getGameAssetList (asset_list *assetList) {
-    pushAsset(assetList, "assets/textures/font.bmp", ASSET_TYPE_BMP, TEXTURE_KEY_FONT);
-    pushAsset(assetList, "assets/atlas/atlas.txt", ASSET_TYPE_ATLAS_DATA, ATLAS_KEY_GAME, TEXTURE_KEY_GAME_ATLAS);
-    //pushAsset(assetList, "assets/atlas/hitbox_editor_atlas.txt", ASSET_TYPE_ATLAS, ATLAS_KEY_HITBOX_EDITOR, TEXTURE_KEY_HITBOX_EDITOR_ATLAS);
-
-    //pushAsset(assetList, "assets/sounds/menu_button.wav", ASSET_TYPE_WAV, SOUND_KEY_MENU_BUTTON);
-
-    //pushAsset(assetList, "assets/data/data.txt", ASSET_TYPE_DATA, DATA_KEY_HITBOX_DATA);
-
-    //pushAsset(assetList, "assets/midi/onestop.mid", ASSET_TYPE_MIDI, MIDI_KEY_TEST);
-}
-
 extern "C" void loadNextAssetFile (asset_pack_data *assetPackData, game_memory *gameMemory, memory_arena *workingMemory, 
                                    platform_options *options) 
 {
@@ -228,86 +214,68 @@ extern "C" void loadNextAssetFile (asset_pack_data *assetPackData, game_memory *
 
         gameState->assets = {};
         game_assets *assets = &gameState->assets;
-        assets->assetMemory = {};
-        assets->assetMemory.size = 0;
-        assets->assetMemory.capacity = 10 * 1024 * 1024; // 1MB of asset data???
-        assets->assetMemory.base = allocateMemorySize(&gameState->memory, assets->assetMemory.capacity); 
-        assets->numMeshes = 0;
+        initGameAssets(assets, &gameState->memory);
 
         gameState->sineT = 0.0f;
     } 
 
     // if asset pack tracking not initialized
     if (assetPackData->cursor == 0) {
-        assetPackData->cursor = assetPackData->assetData;
-        assetPackData->numFiles = (unsigned int)assetPackData->assetData;
-        assetPackData->cursor += sizeof(unsigned int);
-        if (assetPackData->numFiles == 0) {
-            assetPackData->complete = true;
-            return;
-        }
+        assetPackData->cursor = (char *)assetPackData->assetData;
+        assetPackData->numFiles = *((unsigned int *)assetPackData->assetData);
+        assetPackData->cursor = (char *)assetPackData->cursor + sizeof(unsigned int);
+    }
+
+    if (assetPackData->numFiles == assetPackData->currentIndex) {
+        assetPackData->complete = true;
+        return;
     }
 
     assetPackData->complete = false;
     assetPackData->needPlatformLoad = false;
-    qmpack_file_header fileHeader = (qmpack_file_header)assetPackData->cursor;
-}
+    qmpack_file_header *fileHeader = (qmpack_file_header *)assetPackData->cursor;
 
-extern "C" void parseGameAsset (void *assetData, void *secondAssetData, asset_type type, int key, int secondKey,
-                                game_memory *gameMemory, memory_arena *workingMemory, platform_options *options, unsigned int size) 
-{
-    game_state *gameState = (game_state *)gameMemory->memory;
-    if (!gameState->assetsInitialized) {
-        gameState->assetsInitialized = true;
+    assetPackData->lastAssetType = fileHeader->type;
+    assetPackData->cursor = (char *)assetPackData->cursor + sizeof(qmpack_file_header);
 
-        gameState->memory = {};
-        gameState->memory.size = 0;
-        gameState->memory.capacity = gameMemory->memoryCapacity - sizeof(game_state);
-        gameState->memory.base = (char *)gameMemory->memory + sizeof(game_state);
-
-        gameState->assets = {};
-        game_assets *assets = &gameState->assets;
-        assets->assetMemory = {};
-        assets->assetMemory.size = 0;
-        assets->assetMemory.capacity = 10 * 1024 * 1024; // 1MB of asset data???
-        assets->assetMemory.base = allocateMemorySize(&gameState->memory, assets->assetMemory.capacity); 
-        assets->numMeshes = 0;
-
-        gameState->sineT = 0.0f;
-    } 
-    // parse data
-    // create/copy stuff into game memory
-    // place whatever the platform needs at the beginning of working memory
-    switch (type) {
+    switch (fileHeader->type) {
     default:
         assert(false); // must provide a valid type
         break;
     case ASSET_TYPE_ANIMATION_DATA:
-        parseAnimationData(assetData, &gameState->assets, key, workingMemory);
+        //parseAnimationData(assetData, &gameState->assets, key, workingMemory);
         break;
     case ASSET_TYPE_OBJ:
-        parseOBJ(assetData, &gameState->assets, key, workingMemory);
+        parseOBJ(assetPackData->cursor, &gameState->assets, fileHeader->name, workingMemory);
+        assetPackData->needPlatformLoad = true;
         break;
+    // TODO(ebuchholz): make this a real file format, and parse it
     case ASSET_TYPE_QMM:
-        parseQMM(assetData, &gameState->assets, key, workingMemory);
+        //parseQMM(assetData, &gameState->assets, key, workingMemory);
         break;
     case ASSET_TYPE_BMP:
-        parseBitmap(assetData, &gameState->assets, key, workingMemory);
+        parseBitmap(assetPackData->cursor, &gameState->assets, fileHeader->name, workingMemory);
+        assetPackData->needPlatformLoad = true;
         break;
     case ASSET_TYPE_WAV:
-        parseWav(assetData, &gameState->assets, key, workingMemory, options);
+        parseWav(assetPackData->cursor, &gameState->assets, fileHeader->name, workingMemory, options);
         break;
     case ASSET_TYPE_MIDI:
-        parseMidi(assetData, &gameState->assets, key, workingMemory, options);
+        parseMidi(assetPackData->cursor, &gameState->assets, fileHeader->name, workingMemory, options);
         break;
     case ASSET_TYPE_ATLAS_DATA:
-        parseBitmap(secondAssetData, &gameState->assets, secondKey, workingMemory);
-        parseAtlas(assetData, &gameState->assets, key, secondKey, workingMemory);
+        parseAtlas(assetPackData->cursor, &gameState->assets, fileHeader->name, workingMemory);
+        break;
+    case ASSET_TYPE_ATLAS_TEXTURE:
+        parseBitmap(assetPackData->cursor, &gameState->assets, fileHeader->name, workingMemory);
+        assetPackData->needPlatformLoad = true;
         break;
     case ASSET_TYPE_DATA:
-        loadDataFile(assetData, &gameState->assets, key, workingMemory, size);
+        loadDataFile(assetPackData->cursor, &gameState->assets, fileHeader->name, workingMemory, fileHeader->size);
         break;
     }
+    assetPackData->cursor = (char *)assetPackData->cursor + fileHeader->size;
+    ++assetPackData->currentIndex;
 }
 
 // TODO(ebuchholz); better interface for interactively loading files at runtime
@@ -331,7 +299,8 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
         initLetterCoords();
 
-        initBlockGame(&gameState->memory, &gameState->blockGame);
+        gameState->test3DGame = {};
+        //initBlockGame(&gameState->memory, &gameState->blockGame);
         //initPianoGame(&gameState->pianoGame);
         //initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
         //initHitboxEditor(&gameState->memory, &gameState->assets, &gameState->hitboxEditor);
@@ -392,13 +361,14 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         gameState->fileJustLoaded = false;
     }
 
-    updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
-    //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList);
+    //updateBlockGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->blockGame, &spriteList);
+    //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList, &gameState->tempMemory);
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
     //updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
     //updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
     //updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->sounds);
     //updateSoundEditor(&gameState->memory, &gameState->tempMemory, &gameState->soundEditor, &gameState->assets, input, &spriteList, &gameState->sounds, renderCommands);
+    update3DGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->test3DGame, &spriteList, renderCommands);
     //if (gameState->hitboxEditor.requestFileLoad) {
     //    triggers->triggerFileWindow = true;
     //}
@@ -462,7 +432,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
         renderSprite->color[2] = color;
         renderSprite->color[3] = color;
 
-        renderSprite->textureKey = sprite->textureKey;
+        renderSprite->textureID = sprite->textureID;
     }
 }
 
@@ -494,7 +464,7 @@ extern "C" void getGameSoundSamples (game_memory *gameMemory, game_sound_output 
 
         for (int soundIndex = gameSounds->numPlayingSounds - 1; soundIndex >= 0; --soundIndex) {
             playing_sound *sound = gameSounds->playingSounds + soundIndex;
-            sound_asset *soundAsset = assets->sounds[sound->key];
+            sound_asset *soundAsset = getSound(assets, sound->key);
 
             short soundValue = soundAsset->samples[sound->currentSample];
             float floatValue = (float)soundValue / 32767;

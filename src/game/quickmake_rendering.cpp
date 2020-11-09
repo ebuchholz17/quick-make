@@ -81,28 +81,37 @@ static void addSprite (sprite newSprite, sprite_list *spriteList) {
 }
 #endif
 
-static void drawModel (mesh_key meshKey, texture_key textureKey, 
-                       matrix4x4 modelMatrix, render_command_list *renderCommands) {
+static void drawModel (char *meshKey, char *textureKey, matrix4x4 modelMatrix, 
+                       render_command_list *renderCommands, game_assets *assets) 
+{
+    texture_asset *texAsset = getTexture(assets, textureKey);
+    unsigned int textureID = texAsset->id;
+    mesh_asset *meshAsset = getMesh(assets, meshKey);
+    unsigned int meshID = meshAsset->id;
     render_command_model *modelCommand = 
         (render_command_model *)pushRenderCommand(renderCommands,
                                                  RENDER_COMMAND_MODEL,
                                                  sizeof(render_command_model));
-    modelCommand->meshKey = meshKey;
-    modelCommand->textureKey = textureKey;
+    modelCommand->meshID = meshID;
+    modelCommand->textureID = textureID;
     modelCommand->modelMatrix = modelMatrix;
 }
 
-static void drawAnimatedModel (animated_mesh_key meshKey, texture_key textureKey, 
+static void drawAnimatedModel (animated_mesh_key meshKey, char *textureKey, 
                                matrix4x4 modelMatrix, 
                                skeleton_bone *bones, matrix4x4 *inverseTransforms, int numBones, 
-                               render_command_list *renderCommands) 
+                               render_command_list *renderCommands, game_assets *assets) 
 {
     render_command_animated_model *animatedModelCommand = 
         (render_command_animated_model *)pushRenderCommand(renderCommands,
                                                  RENDER_COMMAND_ANIMATED_MODEL,
                                                  sizeof(render_command_animated_model));
+
+    texture_asset *texAsset = getTexture(assets, textureKey);
+    unsigned int textureID = texAsset->id;
+
     animatedModelCommand->animatedMeshKey = meshKey;
-    animatedModelCommand->textureKey = textureKey;
+    animatedModelCommand->textureID = textureID;
     animatedModelCommand->modelMatrix = modelMatrix;
 
     assert(renderCommands->memory.size + sizeof(matrix4x4) * numBones < renderCommands->memory.capacity);

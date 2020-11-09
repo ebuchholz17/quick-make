@@ -25,26 +25,13 @@ enum asset_type {
     ASSET_TYPE_DATA
 };
 
-struct asset_to_load {
-    char *path;
-    asset_type type;
-    int key;
-    int secondKey;
-};
-
-struct asset_list {
-    int numAssetsToLoad;
-    int maxAssetsToLoad;
-    asset_to_load *assetsToLoad;
-};
-
 struct asset_pack_data {
-    char *assetData;
+    void *assetData;
     int numFiles;
     int currentIndex;
 
-    char *cursor;
-    bool lastAssetType;
+    void *cursor;
+    asset_type lastAssetType;
     bool needPlatformLoad;
     bool complete;
 };
@@ -63,7 +50,7 @@ struct int_mesh_attribute {
 };
 
 struct loaded_mesh_asset {
-    int key;
+    unsigned int id;
     float_mesh_attribute positions;
     float_mesh_attribute texCoords;
     float_mesh_attribute normals;
@@ -82,7 +69,7 @@ struct loaded_animated_mesh_asset {
 };
 
 struct loaded_texture_asset {
-    int key;
+    unsigned int id;
     int width;
     int height;
     void *pixels; // unsigned int, but void for compatibility with webidl
@@ -111,8 +98,8 @@ struct render_command_header{
 };
 
 struct render_command_model {
-    int meshKey;
-    int textureKey;
+    unsigned int meshID;
+    unsigned int textureID;
     matrix4x4 modelMatrix;
 };
 
@@ -121,7 +108,7 @@ struct render_command_animated_model {
     matrix4x4 modelMatrix;
     matrix4x4 *boneMatrices;
     int animatedMeshKey;
-    int textureKey;
+    unsigned int textureID;
     int numBones;
 };
 
@@ -131,7 +118,7 @@ struct render_command_lines {
 };
 
 struct render_command_sprite {
-    int textureKey;
+    unsigned int textureID;
     float x;
     float y;
     float width;
@@ -142,7 +129,7 @@ struct render_sprite {
     vector2 pos[4];
     vector2 texCoord[4];
     vector4 color[4];
-    int textureKey;
+    unsigned int textureID;
 };
 
 struct render_command_sprite_list {

@@ -1,16 +1,38 @@
 #include "quickmake_assets.h"
 
-void parseOBJ (void *objData, game_assets *assets, int key, memory_arena *workingMemory) {
-    int numMeshes = assets->numMeshes;
-    assert(numMeshes < MAX_NUM_MESHES);
+data_asset *getTextData (game_assets *assets, char *name) {
+    return getHashMapValue(&assets->dataAssets, name);
+}
 
+texture_asset *getTexture (game_assets *assets, char *name) {
+    return getHashMapValue(&assets->textures, name);
+}
+
+atlas_asset *getAtlas (game_assets *assets, char *name) {
+    return getHashMapValue(&assets->atlases, name);
+}
+
+sound_asset *getSound (game_assets *assets, char *name) {
+    return getHashMapValue(&assets->sounds, name);
+}
+
+midi_asset *getMidi (game_assets *assets, char *name) {
+    return getHashMapValue(&assets->midis, name);
+}
+
+mesh_asset *getMesh (game_assets *assets, char *name) {
+    return getHashMapValue(&assets->meshes, name);
+}
+
+void parseOBJ (void *objData, game_assets *assets, char *name, memory_arena *workingMemory) {
     mesh_asset *meshAsset = (mesh_asset *)allocateMemorySize(&assets->assetMemory, sizeof(mesh_asset));
-    assets->meshes[key] = meshAsset;
-    assets->numMeshes++;
-    meshAsset->key = (mesh_key)key;
+    char *key = allocateString(name, &assets->assetMemory);
+    storeHashMapValue(&assets->meshes, meshAsset, key);
+
+    meshAsset->id = assets->numMeshes++;
 
     loaded_mesh_asset *loadedMesh = (loaded_mesh_asset *)allocateMemorySize(workingMemory, sizeof(loaded_mesh_asset));
-    loadedMesh->key = key;
+    loadedMesh->id = meshAsset->id;
 
     char *start, *end;
     start = (char *)objData;
@@ -325,19 +347,17 @@ void parseQMM (void *fileData, game_assets *assets, int key, memory_arena *worki
     }
 }
 
-void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *workingMemory) {
-    int numTextures = assets->numTextures;
-    assert(numTextures < MAX_NUM_TEXTURES);
-
+void parseBitmap (void *assetData, game_assets *assets, char *name, memory_arena *workingMemory) {
     texture_asset *textureAsset = (texture_asset *)allocateMemorySize(&assets->assetMemory, sizeof(texture_asset)); 
-    assets->textures[key] = textureAsset;
-    assets->numTextures++;
+    char *key = allocateString(name, &assets->assetMemory);
+    storeHashMapValue(&assets->textures, textureAsset, key);
+    textureAsset->id = assets->numTextures++;
 
     loaded_texture_asset *loadedBitmap = (loaded_texture_asset *)allocateMemorySize(workingMemory, sizeof(loaded_texture_asset));
-    loadedBitmap->key = key;
+    loadedBitmap->id = textureAsset->id;
 
-    bitmap_header *header = (bitmap_header *)fileData;    
-    unsigned int *pixels = (unsigned int *)((char *)fileData + header->bitmapOffset);
+    bitmap_header *header = (bitmap_header *)assetData;    
+    unsigned int *pixels = (unsigned int *)((char *)assetData + header->bitmapOffset);
 
     int width = header->width;
     int height = header->height;
@@ -380,13 +400,12 @@ void parseBitmap (void *fileData, game_assets *assets, int key, memory_arena *wo
     }
 }
 
-void parseWav (void *fileData, game_assets *assets, int key, memory_arena *workingMemory, platform_options *options) {
-    int numSounds = assets->numSounds;
-    assert(numSounds < MAX_NUM_SOUNDS);
-
+void parseWav (void *fileData, game_assets *assets, char *name, memory_arena *workingMemory, platform_options *options) {
     sound_asset *soundAsset = (sound_asset *)allocateMemorySize(&assets->assetMemory, sizeof(sound_asset)); 
-    assets->sounds[key] = soundAsset;
-    assets->numSounds++;
+    char *key = allocateString(name, &assets->assetMemory);
+    storeHashMapValue(&assets->sounds, soundAsset, key);
+
+    soundAsset->key = key;
 
     wav_header *header = (wav_header *)fileData;    
     // NOTE(ebuchholz): supporting only a very specific format: 1 channel, 16-bit samples, 
@@ -442,13 +461,10 @@ void parseWav (void *fileData, game_assets *assets, int key, memory_arena *worki
     }
 }
 
-void parseMidi (void *fileData, game_assets *assets, int key, memory_arena *workingMemory, platform_options *options) {
-    int numMidis = assets->numMidis;
-    assert(numMidis < MAX_NUM_MIDIS);
-
+void parseMidi (void *fileData, game_assets *assets, char *name, memory_arena *workingMemory, platform_options *options) {
     midi_asset *midiAsset = (midi_asset *)allocateMemorySize(&assets->assetMemory, sizeof(midi_asset)); 
-    assets->midis[key] = midiAsset;
-    assets->numMidis++;
+    char *key = allocateString(name, &assets->assetMemory);
+    storeHashMapValue(&assets->midis, midiAsset, key);
 
     char *fileCursor = (char *)fileData;
 
@@ -1488,15 +1504,13 @@ unsigned int hashString (char *string) {
     return hash;
 }
 
-void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int textureKey, memory_arena *workingMemory) {
-    int numAtlases = assets->numAtlases;
-    assert(numAtlases < MAX_NUM_ATLASES);
-
+void parseAtlas (void *atlasData, game_assets *assets, char *name, memory_arena *workingMemory) {
     atlas_asset *atlasAsset = (atlas_asset *)allocateMemorySize(&assets->assetMemory, sizeof(atlas_asset)); 
-    assets->atlases[atlasKey] = atlasAsset;
-    assets->numAtlases++;
-    atlasAsset->atlasKey = (atlas_key)atlasKey;
-    atlasAsset->textureKey = (texture_key)textureKey;
+    char *key = allocateString(name, &assets->assetMemory);
+    storeHashMapValue(&assets->atlases, atlasAsset, key);
+
+    texture_asset *texAsset = getTexture(assets, name);
+    atlasAsset->textureID = texAsset->id;
 
     // texture packer libgdx format
     char *start, *end, *nextLineStart;
@@ -1620,11 +1634,9 @@ void parseAtlas (void *atlasData, game_assets *assets, int atlasKey, int texture
     }
 }
 
-atlas_frame *getAtlasFrame (game_assets *assets, int atlasKey, char *frameName) {
+atlas_frame *getAtlasFrame (game_assets *assets, char *atlasKey, char *frameName) {
     atlas_frame *result;
-
-    atlas_asset *textureAtlas = assets->atlases[atlasKey];
-    assert(textureAtlas);
+    atlas_asset *textureAtlas = getAtlas(assets, atlasKey);
 
     unsigned int hash = hashString(frameName);
     unsigned int mapIndex = hash % 500;
@@ -1643,11 +1655,10 @@ atlas_frame *getAtlasFrame (game_assets *assets, int atlasKey, char *frameName) 
     return result;
 }
 
-unsigned int getAtlasFrameIndex (game_assets *assets, int atlasKey, char *frameName) {
+unsigned int getAtlasFrameIndex (game_assets *assets, char *atlasKey, char *frameName) {
     atlas_frame *result;
 
-    atlas_asset *textureAtlas = assets->atlases[atlasKey];
-    assert(textureAtlas);
+    atlas_asset *textureAtlas = getAtlas(assets, atlasKey);
 
     unsigned int hash = hashString(frameName);
     unsigned int mapIndex = hash % 500;
@@ -1666,15 +1677,10 @@ unsigned int getAtlasFrameIndex (game_assets *assets, int atlasKey, char *frameN
     return mapIndex;
 }
 
-void loadDataFile (void *assetData, game_assets *assets, int dataKey, memory_arena *workingMemory, unsigned int size) {
-    int numDataAssets = assets->numDataAssets;
-    assert(numDataAssets < MAX_NUM_DATA_ASSETS);
+void loadDataFile (void *assetData, game_assets *assets, char *name, memory_arena *workingMemory, unsigned int size) {
+    data_asset *dataAsset = (data_asset *)allocateMemorySize(&assets->assetMemory, sizeof(data_asset)); 
+    char *key = allocateString(name, &assets->assetMemory);
 
-    data_asset *dataAsset = 
-        (data_asset *)allocateMemorySize(&assets->assetMemory, sizeof(data_asset)); 
-    assets->dataAssets[dataKey] = dataAsset;
-    assets->numDataAssets++;
-    dataAsset->key = (data_key)dataKey;
     void *copiedData = allocateMemorySize(&assets->assetMemory, size); 
     char *filePointer = (char *)assetData;
     char *dataPointer = (char *)copiedData;
@@ -1684,26 +1690,23 @@ void loadDataFile (void *assetData, game_assets *assets, int dataKey, memory_are
 
     dataAsset->data = copiedData;
     dataAsset->size = size;
+
+    storeHashMapValue(&assets->dataAssets, dataAsset, key);
 }
 
 // get from atlas map function: calc hash, get item from array, check key, if conflict, get next and check key again
 
-void pushAsset (asset_list *assetList, char *path, asset_type type, int key) {
-    assert(assetList->numAssetsToLoad < assetList->maxAssetsToLoad);
-    asset_to_load *assetToLoad = assetList->assetsToLoad + assetList->numAssetsToLoad;
-    assetList->numAssetsToLoad++;
-    assetToLoad->path = path;
-    assetToLoad->type = type;
-    assetToLoad->key = key;
-    assetToLoad->secondKey = -1;
-}
+void initGameAssets (game_assets *assets, memory_arena *memory) {
+    assets->assetMemory = {};
+    assets->assetMemory.size = 0;
+    assets->assetMemory.capacity = 10 * 1024 * 1024; // 1MB of asset data???
+    assets->assetMemory.base = allocateMemorySize(memory, assets->assetMemory.capacity); 
+    assets->numMeshes = 0;
 
-void pushAsset (asset_list *assetList, char *path, asset_type type, int key, int secondKey) {
-    assert(assetList->numAssetsToLoad < assetList->maxAssetsToLoad);
-    asset_to_load *assetToLoad = assetList->assetsToLoad + assetList->numAssetsToLoad;
-    assetList->numAssetsToLoad++;
-    assetToLoad->path = path;
-    assetToLoad->type = type;
-    assetToLoad->key = key;
-    assetToLoad->secondKey = secondKey;
+    assets->textures = texture_asset_ptrHashMapInit(&assets->assetMemory, 200);
+    assets->dataAssets = data_asset_ptrHashMapInit(&assets->assetMemory, 200);
+    assets->atlases = atlas_asset_ptrHashMapInit(&assets->assetMemory, 40);
+    assets->sounds = sound_asset_ptrHashMapInit(&assets->assetMemory, 200);
+    assets->midis = midi_asset_ptrHashMapInit(&assets->assetMemory, 200);
+    assets->meshes = mesh_asset_ptrHashMapInit(&assets->assetMemory, 200);
 }

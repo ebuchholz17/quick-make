@@ -103,7 +103,7 @@ struct status_text_pos {
 };
 
 void showFloatValue (status_text_pos *currentPos, char *text, float value, float offset, game_assets *assets, sprite_list *spriteList, memory_arena *stringMemory) {
-    addText(currentPos->x, currentPos->y, text, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x, currentPos->y, text, assets, "font", spriteList);
 
     bool negative = false;
     if (value < 0) {
@@ -134,20 +134,20 @@ void showFloatValue (status_text_pos *currentPos, char *text, float value, float
     if (negative) {
         number = appendString("-", number, stringMemory);
     }
-    addText(currentPos->x + offset, currentPos->y, number, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x + offset, currentPos->y, number, assets, "font", spriteList);
     currentPos->y += 24;
 }
 
 void showIntValue (status_text_pos *currentPos, char *text, int value, float offset, game_assets *assets, sprite_list *spriteList, memory_arena *stringMemory) {
-    addText(currentPos->x, currentPos->y, text, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x, currentPos->y, text, assets, "font", spriteList);
 
     char *number = numToString(value, stringMemory);
-    addText(currentPos->x + offset, currentPos->y, number, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x + offset, currentPos->y, number, assets, "font", spriteList);
     currentPos->y += 24;
 }
 
 void showWaveType (status_text_pos *currentPos, char *text, int value, float offset, game_assets *assets, sprite_list *spriteList, memory_arena *stringMemory) {
-    addText(currentPos->x, currentPos->y, text, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x, currentPos->y, text, assets, "font", spriteList);
 
     char *waveText;
     switch (value) {
@@ -168,12 +168,12 @@ void showWaveType (status_text_pos *currentPos, char *text, int value, float off
         waveText = "noise";
         break;
     }
-    addText(currentPos->x + offset, currentPos->y, waveText, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x + offset, currentPos->y, waveText, assets, "font", spriteList);
     currentPos->y += 24;
 }
 
 void showFilterType (status_text_pos *currentPos, char *text, int value, float offset, game_assets *assets, sprite_list *spriteList, memory_arena *stringMemory) {
-    addText(currentPos->x, currentPos->y, text, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x, currentPos->y, text, assets, "font", spriteList);
 
     char *waveText;
     switch (value) {
@@ -191,12 +191,12 @@ void showFilterType (status_text_pos *currentPos, char *text, int value, float o
         waveText = "band pass";
         break;
     }
-    addText(currentPos->x + offset, currentPos->y, waveText, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x + offset, currentPos->y, waveText, assets, "font", spriteList);
     currentPos->y += 24;
 }
 
 void showBoolValue (status_text_pos *currentPos, char *text, bool value, float offset, game_assets *assets, sprite_list *spriteList, memory_arena *stringMemory) {
-    addText(currentPos->x, currentPos->y, text, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x, currentPos->y, text, assets, "font", spriteList);
 
     char *trueFalse;
     if (value) {
@@ -205,12 +205,12 @@ void showBoolValue (status_text_pos *currentPos, char *text, bool value, float o
     else {
         trueFalse = "false";
     }
-    addText(currentPos->x + offset, currentPos->y, trueFalse, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(currentPos->x + offset, currentPos->y, trueFalse, assets, "font", spriteList);
     currentPos->y += 24;
 }
 
 bool doButton (float x, float y, float width, float height, bool pointerJustDown, float pointerX, float pointerY, 
-               game_assets *assets, atlas_key atlasKey, char *frame, sprite_list *spriteList) 
+               game_assets *assets, char *atlasKey, char *frame, sprite_list *spriteList) 
 {
     bool inBox = false;
     if (pointerX >= x && pointerX < x + width && pointerY >= y && pointerY < y + height) {
@@ -235,13 +235,13 @@ bool doButton (float x, float y, float width, float height, bool pointerJustDown
 
 void doEditArrows (status_text_pos *currentPos, float *value, float inc, bool pointerJustDown, float pointerX, float pointerY, game_assets *assets, sprite_list *spriteList) {
     if (doButton(currentPos->x, currentPos->y, 16, 16, pointerJustDown, pointerX, pointerY,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_left_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_left_button", spriteList)) 
     {
         *value = *value - inc;
     }
     currentPos->x += 24;
     if (doButton(currentPos->x, currentPos->y, 16, 16, pointerJustDown, pointerX, pointerY,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_right_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_right_button", spriteList)) 
     {
         *value = *value + inc;
     }
@@ -250,13 +250,13 @@ void doEditArrows (status_text_pos *currentPos, float *value, float inc, bool po
 
 void doIntArrows (status_text_pos *currentPos, int *value, bool pointerJustDown, float pointerX, float pointerY, game_assets *assets, sprite_list *spriteList) {
     if (doButton(currentPos->x, currentPos->y, 16, 16, pointerJustDown, pointerX, pointerY,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_left_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_left_button", spriteList)) 
     {
         *value = *value - 1;
     }
     currentPos->x += 24;
     if (doButton(currentPos->x, currentPos->y, 16, 16, pointerJustDown, pointerX, pointerY,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_right_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_right_button", spriteList)) 
     {
         *value = *value + 1;
     }
@@ -265,7 +265,7 @@ void doIntArrows (status_text_pos *currentPos, int *value, bool pointerJustDown,
 
 void doBoolButton (status_text_pos *currentPos, bool *value, bool pointerJustDown, float pointerX, float pointerY, game_assets *assets, sprite_list *spriteList) {
     if (doButton(currentPos->x, currentPos->y, 16, 16, pointerJustDown, pointerX, pointerY,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_down_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_down_button", spriteList)) 
     {
         *value = !*value;
     }
@@ -368,7 +368,7 @@ void updateSoundEditor (memory_arena *memory, memory_arena *tempMemory, sound_ed
         for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
             *(soundEditor->notes + i) = {};
         }
-        playBGM(MIDI_KEY_TEST, gameSounds, assets);
+        playBGM("onestop", gameSounds, assets);
     }
     for (int i = 0; i < SOUND_NOTE_COUNT; ++i) {
         sound_editor_note *note = soundEditor->notes + i;
