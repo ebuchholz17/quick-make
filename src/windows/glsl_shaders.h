@@ -12,14 +12,18 @@ char *defaultVertexShaderSource = R"shader(
 
     varying vec2 vTexCoord;
     varying float vLighting;
+    varying float vFogAmount;
 
     void main() {
-        gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); 
+        vec4 cameraPos = viewMatrix * modelMatrix * vec4(position, 1.0); 
+        gl_Position = projMatrix * cameraPos;
         vTexCoord = texCoord;
         vec4 newNormal = normalize(modelMatrix * vec4(normal, 0.0));
-        vec3 lightDir = normalize(vec3(0.0, 0.5, 0.9));
+        vec3 lightDir = normalize(vec3(0.2, 0.5, 0.9));
         float lighting = dot(newNormal, vec4(lightDir, 0.0));
         vLighting = lighting;
+
+        vFogAmount = saturate((-100.0 - cameraPos.z) / (-100.0 - (-50.0)));
     }
 )shader";
 
@@ -60,6 +64,7 @@ char *animatedModelVertexShaderSource = R"shader(
 char *defaultFragmentShaderSource = R"shader(
     varying vec2 vTexCoord;
     varying float vLighting;
+    varying float vFogAmount;
 
     uniform sampler2D texture;
 
@@ -71,7 +76,10 @@ char *defaultFragmentShaderSource = R"shader(
 
         vec3 ambientLighting = vec3(0.3, 0.6, 1.0) * 0.15;
         vec3 directLighting = vec3(1.0, 0.9, 0.6) * vLighting * textureColor;
-        gl_FragColor = clamp(vec4(ambientLighting + directLighting, 1.0), vec4(0.0, 0.0, 0.0, 0.0), vec4(1.0, 1.0, 1.0, 1.0));
+        vec3 litColor = clamp(vec3(ambientLighting + directLighting), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
+        vec3 fogColor = vec3(0.0, 0.7, 0.8);
+        vec3 foggedColor = vFogAmount * litColor + (1.0 - vFogAmount) * fogColor;
+        gl_FragColor = vec4(foggedColor, 1.0);
     }
 )shader";
 

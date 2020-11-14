@@ -85,6 +85,8 @@ struct loaded_atlas_asset {
 
 enum render_command_type {
     RENDER_COMMAND_MODEL,
+    RENDER_COMMAND_GENERATE_MESH,
+    RENDER_COMMAND_DYNAMIC_MODEL,
     RENDER_COMMAND_ANIMATED_MODEL,
     RENDER_COMMAND_LINES,
     RENDER_COMMAND_SPRITE,
@@ -103,6 +105,12 @@ struct render_command_model {
     matrix4x4 modelMatrix;
 };
 
+struct render_command_dynamic_model {
+    unsigned int meshID;
+    unsigned int textureID;
+    matrix4x4 modelMatrix;
+};
+
 // TODO(ebuchholz): bone matrices
 struct render_command_animated_model {
     matrix4x4 modelMatrix;
@@ -110,6 +118,15 @@ struct render_command_animated_model {
     int animatedMeshKey;
     unsigned int textureID;
     int numBones;
+};
+
+// TODO(ebuchholz): merge with loaded_mesh_asset?
+struct render_command_generate_mesh {
+    unsigned int id;
+    float_mesh_attribute positions;
+    float_mesh_attribute texCoords;
+    float_mesh_attribute normals;
+    int_mesh_attribute indices;
 };
 
 struct render_command_lines {

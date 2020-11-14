@@ -197,6 +197,7 @@ struct openGL_mesh {
     GLuint normalBuffer;
     GLuint indexBuffer;
     int numIndices;
+    bool generatedOnGPU; // flag for whether genBuffer was called
 };
 
 // TODO(ebuchholz): unify animated and regular meshes?
@@ -219,6 +220,7 @@ struct openGL_texture {
 };
 
 #define MAX_OPENGL_MESHES 100
+#define MAX_OPENGL_DYNAMIC_MESHES 500
 #define MAX_OPENGL_ANIMATED_MESHES 100
 #define MAX_OPENGL_TEXTURES 100
 #define MAX_SPRITES_PER_BATCH 1000
@@ -232,6 +234,8 @@ struct openGL_renderer {
 
     int numMeshes;
     openGL_mesh meshes[MAX_OPENGL_MESHES];
+    int numDynamicMeshes;
+    openGL_mesh dynamicMeshes[MAX_OPENGL_DYNAMIC_MESHES];
     int numAnimatedMeshes;
     openGL_animated_mesh animatedMeshes[MAX_OPENGL_ANIMATED_MESHES];
     int numTextures;

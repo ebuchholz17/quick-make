@@ -12,8 +12,8 @@
 
 static bool programRunning = false;
 
-static int gameWidth = 768;
-static int gameHeight = 432;
+static int gameWidth = 1280;
+static int gameHeight = 720;
 static float targetMSPerFrame = 1000.0f / 60.0f;
 
 // xinput functions
@@ -424,15 +424,14 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
 
             // Game memory (game state, etc.)
             game_memory gameMemory = {};
-            gameMemory.memoryCapacity = 50 * 1024 * 1024; // 50MB arbitrarily decided
+            gameMemory.memoryCapacity = 300 * 1024 * 1024; // 300MB arbitrarily decided
             gameMemory.memory = malloc(gameMemory.memoryCapacity);
-            gameMemory.tempMemoryCapacity = 10 * 1024 * 1024; // another 10MB arbitrarily decided
+            gameMemory.tempMemoryCapacity = 50 * 1024 * 1024; // another 50MB arbitrarily decided
             gameMemory.tempMemory = malloc(gameMemory.tempMemoryCapacity);
 
             for (unsigned int i = 0; i < gameMemory.memoryCapacity; ++i) {
                 *((char *)gameMemory.memory + i) = 0;
             }
-
 
             // init sound
             win_sound_output soundOutput = {};
@@ -500,7 +499,7 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLin
             free(workingAssetMemory.base);
 
             render_command_list renderCommands = {};
-            int memoryCapacity = 1 * 1024 * 1024;
+            int memoryCapacity = 32 * 1024 * 1024;
             renderCommands.windowWidth = gameWidth;
             renderCommands.windowHeight = gameHeight;
             renderCommands.memory.base = malloc(memoryCapacity);

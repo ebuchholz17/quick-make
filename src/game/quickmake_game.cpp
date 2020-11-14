@@ -387,7 +387,6 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     spriteListCommand->numSprites = spriteList.numSprites;
     spriteListCommand->sprites = (render_sprite *)allocateMemorySize(&renderCommands->memory, 
                                                                      sizeof(render_sprite) * spriteListCommand->numSprites);
-
     matrix3x3 spriteTransform;
     for (int i = 0; i < spriteList.numSprites; ++i) {
         sprite *sprite = &spriteList.sprites[i];

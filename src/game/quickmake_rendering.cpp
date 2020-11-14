@@ -97,6 +97,42 @@ static void drawModel (char *meshKey, char *textureKey, matrix4x4 modelMatrix,
     modelCommand->modelMatrix = modelMatrix;
 }
 
+static void drawDynamicModel (unsigned int meshID, char *textureKey, matrix4x4 modelMatrix, 
+                              render_command_list *renderCommands, game_assets *assets) 
+{
+    texture_asset *texAsset = getTexture(assets, textureKey);
+    unsigned int textureID = texAsset->id;
+
+    // TODO(ebuchholz): maybe use a flag to indicate the mesh is one of the dynamic ones, rather than
+    // create a new render command for it
+    render_command_dynamic_model *modelCommand = 
+        (render_command_dynamic_model *)pushRenderCommand(renderCommands,
+                                                 RENDER_COMMAND_DYNAMIC_MODEL,
+                                                 sizeof(render_command_dynamic_model));
+    modelCommand->meshID = meshID;
+    modelCommand->textureID = textureID;
+    modelCommand->modelMatrix = modelMatrix;
+}
+
+static void generateDynamicModel (unsigned int meshID, 
+                                  float_mesh_attribute positions, 
+                                  float_mesh_attribute texCoords,
+                                  float_mesh_attribute normals,
+                                  int_mesh_attribute indices, render_command_list *renderCommands) 
+{
+    render_command_generate_mesh *generateMeshCommand = 
+        (render_command_generate_mesh *)pushRenderCommand(renderCommands,
+                                                 RENDER_COMMAND_GENERATE_MESH,
+                                                 sizeof(render_command_generate_mesh));
+    // TODO(ebuchholz): determine if all the data should be allocated from "render" memory or if
+    // temp memory is fine
+    generateMeshCommand->id = meshID;
+    generateMeshCommand->positions = positions;
+    generateMeshCommand->texCoords = texCoords;
+    generateMeshCommand->normals = normals;
+    generateMeshCommand->indices = indices;
+}
+
 static void drawAnimatedModel (animated_mesh_key meshKey, char *textureKey, 
                                matrix4x4 modelMatrix, 
                                skeleton_bone *bones, matrix4x4 *inverseTransforms, int numBones, 

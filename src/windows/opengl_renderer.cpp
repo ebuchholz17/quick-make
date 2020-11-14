@@ -97,6 +97,7 @@ void loadRendererMesh (renderer_memory *memory, loaded_mesh_asset *loadedMesh) {
     assert(renderer->numMeshes < MAX_OPENGL_MESHES);
     // TODO(ebuchholz): triple check that the keys will line up this way
     openGL_mesh *mesh = &renderer->meshes[loadedMesh->id];
+    mesh->generatedOnGPU = true; // always true for static meshes loaded at the start
     renderer->numMeshes++;
 
     glGenBuffers(1, &mesh->positionBuffer);
@@ -116,6 +117,35 @@ void loadRendererMesh (renderer_memory *memory, loaded_mesh_asset *loadedMesh) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, loadedMesh->indices.count * sizeof(int), loadedMesh->indices.values, GL_STATIC_DRAW);
 
     mesh->numIndices = loadedMesh->indices.count;
+}
+
+void generateRendererDynamicMesh (openGL_renderer *renderer, render_command_generate_mesh *generateMeshCommand) {
+    // TODO(ebuchholz): triple check that the keys will line up this way
+    openGL_mesh *mesh = &renderer->dynamicMeshes[generateMeshCommand->id];
+
+    if (!mesh->generatedOnGPU) {
+        assert(renderer->numDynamicMeshes < MAX_OPENGL_DYNAMIC_MESHES);
+        glGenBuffers(1, &mesh->positionBuffer);
+        glGenBuffers(1, &mesh->texCoordBuffer);
+        glGenBuffers(1, &mesh->normalBuffer);
+        glGenBuffers(1, &mesh->indexBuffer);
+        mesh->generatedOnGPU = true;
+        renderer->numDynamicMeshes++;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->positionBuffer);
+    glBufferData(GL_ARRAY_BUFFER, generateMeshCommand->positions.count * sizeof(float), generateMeshCommand->positions.values, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->texCoordBuffer);
+    glBufferData(GL_ARRAY_BUFFER, generateMeshCommand->texCoords.count * sizeof(float), generateMeshCommand->texCoords.values, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->normalBuffer);
+    glBufferData(GL_ARRAY_BUFFER, generateMeshCommand->normals.count * sizeof(float), generateMeshCommand->normals.values, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, generateMeshCommand->indices.count * sizeof(int), generateMeshCommand->indices.values, GL_STATIC_DRAW);
+
+    mesh->numIndices = generateMeshCommand->indices.count;
 }
 
 void loadRendererAnimatedMesh (renderer_memory *memory, loaded_animated_mesh_asset *loadedMesh) {
@@ -165,11 +195,11 @@ void loadRendererTexture (renderer_memory *memory, loaded_texture_asset *loadedT
     glBindTexture(GL_TEXTURE_2D, texture->textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, loadedTexture->width, loadedTexture->height, 
                  0, GL_RGBA, GL_UNSIGNED_BYTE, loadedTexture->pixels);
-    //glGenerateMipmap(GL_TEXTURE_2D);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 }
@@ -319,9 +349,7 @@ void setCamera (openGL_renderer *renderer, render_command_set_camera *setCameraC
     renderer->projMatrix = setCameraCommand->projMatrix;
 }
 
-void drawModel (openGL_renderer *renderer, GLuint program, render_command_model *modelCommand) {
-    openGL_mesh *mesh = &renderer->meshes[modelCommand->meshID];
-
+void drawRendererModel (openGL_renderer *renderer, GLuint program, matrix4x4 *modelMatrix, unsigned int textureID, openGL_mesh *mesh) {
     // TODO(ebuchholz): have a way to avoid finding and settings attributes/uniforms for each
     // time we draw a mesh
     glBindBuffer(GL_ARRAY_BUFFER, mesh->positionBuffer);
@@ -353,7 +381,7 @@ void drawModel (openGL_renderer *renderer, GLuint program, render_command_model 
     // opengl shaders, matrices are multiplied like column major matrices (proj * view * model)
     // TODO(ebuchholz): better to multiply these ahead of time
     GLint modelMatrixLocation = glGetUniformLocation(program, "modelMatrix");
-    glUniformMatrix4fv(modelMatrixLocation, 1, true, modelCommand->modelMatrix.m);
+    glUniformMatrix4fv(modelMatrixLocation, 1, true, modelMatrix->m);
 
     GLint viewMatrixLocation = glGetUniformLocation(program, "viewMatrix");
     glUniformMatrix4fv(viewMatrixLocation, 1, true, renderer->viewMatrix.m);
@@ -361,7 +389,7 @@ void drawModel (openGL_renderer *renderer, GLuint program, render_command_model 
     GLint projMatrixLocation = glGetUniformLocation(program, "projMatrix");
     glUniformMatrix4fv(projMatrixLocation, 1, true, renderer->projMatrix.m);
 
-    openGL_texture *texture = &renderer->textures[modelCommand->textureID];
+    openGL_texture *texture = &renderer->textures[textureID];
 
     glActiveTexture(GL_TEXTURE0);
     GLuint textureLocation = glGetUniformLocation(program, "texture");
@@ -369,6 +397,18 @@ void drawModel (openGL_renderer *renderer, GLuint program, render_command_model 
     glBindTexture(GL_TEXTURE_2D, texture->textureID);
 
     glDrawElements(GL_TRIANGLES, mesh->numIndices, GL_UNSIGNED_INT, 0);
+}
+
+void drawLoadedModel (openGL_renderer *renderer, GLuint program, render_command_model *modelCommand) {
+    openGL_mesh *mesh = &renderer->meshes[modelCommand->meshID];
+
+    drawRendererModel(renderer, program, &modelCommand->modelMatrix, modelCommand->textureID, mesh);
+}
+
+void drawDynamicModel (openGL_renderer *renderer, GLuint program, render_command_dynamic_model *modelCommand) {
+    openGL_mesh *mesh = &renderer->dynamicMeshes[modelCommand->meshID];
+
+    drawRendererModel(renderer, program, &modelCommand->modelMatrix, modelCommand->textureID, mesh);
 }
 
 void drawAnimatedModel (openGL_renderer *renderer, GLuint program, render_command_animated_model *modelCommand) {
@@ -690,6 +730,18 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
                 renderCommandOffset += sizeof(render_command_sprite_list);
                 renderCommandOffset += spriteListCommand->numSprites * sizeof(render_sprite);
             } break;
+            case RENDER_COMMAND_GENERATE_MESH: 
+            {
+                // TODO(ebuchholz): have a way to not have to set the program for command
+                //    GLuint program = renderer->shaders[SHADER_TYPE_SPRITE].program;
+                //    glUseProgram(program);
+
+                render_command_generate_mesh *generateDynamicMeshCommand = 
+                    (render_command_generate_mesh *)((char *)renderCommands->memory.base + 
+                                            renderCommandOffset);
+                generateRendererDynamicMesh(renderer, generateDynamicMeshCommand);
+                renderCommandOffset += sizeof(render_command_generate_mesh);
+            } break;
             case RENDER_COMMAND_MODEL: 
             {
                 // TODO(ebuchholz): have a way to not have to set the program for command
@@ -699,8 +751,20 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
                 render_command_model *modelCommand = 
                     (render_command_model *)((char *)renderCommands->memory.base + 
                                             renderCommandOffset);
-                drawModel(renderer, program, modelCommand);
+                drawLoadedModel(renderer, program, modelCommand);
                 renderCommandOffset += sizeof(render_command_model);
+            } break;
+            case RENDER_COMMAND_DYNAMIC_MODEL:
+            {
+                // TODO(ebuchholz): have a way to not have to set the program for command
+                GLuint program = renderer->shaders[SHADER_TYPE_DEFAULT].program;
+                glUseProgram(program);
+
+                render_command_dynamic_model *modelCommand = 
+                    (render_command_dynamic_model *)((char *)renderCommands->memory.base + 
+                                            renderCommandOffset);
+                drawDynamicModel(renderer, program, modelCommand);
+                renderCommandOffset += sizeof(render_command_dynamic_model);
             } break;
             case RENDER_COMMAND_ANIMATED_MODEL: 
             {
