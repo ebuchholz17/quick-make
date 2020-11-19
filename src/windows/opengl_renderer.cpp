@@ -732,10 +732,6 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
             } break;
             case RENDER_COMMAND_GENERATE_MESH: 
             {
-                // TODO(ebuchholz): have a way to not have to set the program for command
-                //    GLuint program = renderer->shaders[SHADER_TYPE_SPRITE].program;
-                //    glUseProgram(program);
-
                 render_command_generate_mesh *generateDynamicMeshCommand = 
                     (render_command_generate_mesh *)((char *)renderCommands->memory.base + 
                                             renderCommandOffset);

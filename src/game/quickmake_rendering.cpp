@@ -181,6 +181,41 @@ static void drawLine (float ax, float ay, float az, float bx, float by, float bz
     line->b.z = bz;
 }
 
+static void drawViewFrustum (vector3 camPos, quaternion camRotation, float nearDist, float farDist, 
+                             float fov, float viewRatio, render_command_list *renderCommands) 
+{
+    render_command_lines *lineCommand = startLines(renderCommands);
+
+    frustum_corners corners = FrustumCorners(camPos, camRotation, nearDist, farDist, fov, viewRatio);
+
+    drawLine(corners.nearUpperLeft.x, corners.nearUpperLeft.y, corners.nearUpperLeft.z, 
+             corners.nearUpperRight.x, corners.nearUpperRight.y, corners.nearUpperRight.z, renderCommands, lineCommand);
+    drawLine(corners.nearUpperRight.x, corners.nearUpperRight.y, corners.nearUpperRight.z, 
+             corners.nearLowerRight.x, corners.nearLowerRight.y, corners.nearLowerRight.z, renderCommands, lineCommand);
+    drawLine(corners.nearLowerRight.x, corners.nearLowerRight.y, corners.nearLowerRight.z, 
+             corners.nearLowerLeft.x, corners.nearLowerLeft.y, corners.nearLowerLeft.z, renderCommands, lineCommand);
+    drawLine(corners.nearLowerLeft.x, corners.nearLowerLeft.y, corners.nearLowerLeft.z, 
+             corners.nearUpperLeft.x, corners.nearUpperLeft.y, corners.nearUpperLeft.z, renderCommands, lineCommand);
+
+    drawLine(corners.farUpperLeft.x, corners.farUpperLeft.y, corners.farUpperLeft.z, 
+             corners.farUpperRight.x, corners.farUpperRight.y, corners.farUpperRight.z, renderCommands, lineCommand);
+    drawLine(corners.farUpperRight.x, corners.farUpperRight.y, corners.farUpperRight.z, 
+             corners.farLowerRight.x, corners.farLowerRight.y, corners.farLowerRight.z, renderCommands, lineCommand);
+    drawLine(corners.farLowerRight.x, corners.farLowerRight.y, corners.farLowerRight.z, 
+             corners.farLowerLeft.x, corners.farLowerLeft.y, corners.farLowerLeft.z, renderCommands, lineCommand);
+    drawLine(corners.farLowerLeft.x, corners.farLowerLeft.y, corners.farLowerLeft.z, 
+             corners.farUpperLeft.x, corners.farUpperLeft.y, corners.farUpperLeft.z, renderCommands, lineCommand);
+
+    drawLine(corners.nearUpperLeft.x, corners.nearUpperLeft.y, corners.nearUpperLeft.z, 
+             corners.farUpperLeft.x, corners.farUpperLeft.y, corners.farUpperLeft.z, renderCommands, lineCommand);
+    drawLine(corners.nearUpperRight.x, corners.nearUpperRight.y, corners.nearUpperRight.z, 
+             corners.farUpperRight.x, corners.farUpperRight.y, corners.farUpperRight.z, renderCommands, lineCommand);
+    drawLine(corners.nearLowerRight.x, corners.nearLowerRight.y, corners.nearLowerRight.z, 
+             corners.farLowerRight.x, corners.farLowerRight.y, corners.farLowerRight.z, renderCommands, lineCommand);
+    drawLine(corners.nearLowerLeft.x, corners.nearLowerLeft.y, corners.nearLowerLeft.z, 
+             corners.farLowerLeft.x, corners.farLowerLeft.y, corners.farLowerLeft.z, renderCommands, lineCommand);
+}
+
 #if 0
 // same as drawTriangle but without making a new render command
 //static void drawMeshTriangle (triangle *t, render_command_list *renderCommands, render_command_lines *lineCommand) {

@@ -1108,10 +1108,55 @@ inline sphere Sphere (vector3 pos, float radius) {
 }
 
 inline plane Plane (vector3 normal, float distance) {
-    plane result;
+    plane result = {};
 
     result.normal = normal;
     result.distance = distance;
 
     return result;
+}
+
+inline bool pointIsInFrontOfPlane (vector3 point, plane p) {
+    vector3 pointOnPlane = p.normal * p.distance;
+    vector3 planeToPoint = point - pointOnPlane;
+    return dotProduct(p.normal, planeToPoint) > 0;
+}
+
+inline frustum_corners FrustumCorners (frustum f) {
+    frustum_corners result = {};
+
+    float fovy = 2.0f * atanf(tanf(f.fov * (PI / 180.0f) / 2.0f) * (1.0f / f.ratio));
+
+    float nearHalfHeight = f.nearPlane * tanf(fovy / 2.0f);
+    float nearHalfWidth = nearHalfHeight * f.ratio;
+    float farHalfHeight = f.farPlane * tanf(fovy / 2.0f);
+    float farHalfWidth = farHalfHeight * f.ratio;
+
+    vector3 camDir = rotateVectorByQuaternion(Vector3(0.0f, 0.0f, -1.0f), f.orientation);
+    vector3 up = rotateVectorByQuaternion(Vector3(0.0f, 1.0f, 0.0f), f.orientation);
+    vector3 camRight = crossProduct(camDir, up);
+
+    result.nearUpperLeft = f.origin + camDir * f.nearPlane + nearHalfHeight * up - nearHalfWidth * camRight;
+    result.nearUpperRight = f.origin + camDir * f.nearPlane + nearHalfHeight * up + nearHalfWidth * camRight;
+    result.nearLowerLeft = f.origin + camDir * f.nearPlane - nearHalfHeight * up - nearHalfWidth * camRight;
+    result.nearLowerRight = f.origin + camDir * f.nearPlane - nearHalfHeight * up + nearHalfWidth * camRight;
+    result.farUpperLeft = f.origin + camDir * f.farPlane + farHalfHeight * up - farHalfWidth * camRight;
+    result.farUpperRight = f.origin + camDir * f.farPlane + farHalfHeight * up + farHalfWidth * camRight;
+    result.farLowerLeft = f.origin + camDir * f.farPlane - farHalfHeight * up - farHalfWidth * camRight;
+    result.farLowerRight = f.origin + camDir * f.farPlane - farHalfHeight * up + farHalfWidth * camRight;
+
+    return result;
+}
+
+inline frustum_corners FrustumCorners (vector3 origin, quaternion orientation, 
+                                       float nearPlane, float farPlane, float fov, float ratio) 
+{
+    frustum f;
+    f.origin = origin;
+    f.orientation = orientation;
+    f.nearPlane = nearPlane;
+    f.farPlane = farPlane;
+    f.fov = fov;
+    f.ratio = ratio;
+    return FrustumCorners(f);
 }

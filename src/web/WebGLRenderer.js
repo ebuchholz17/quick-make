@@ -56,6 +56,19 @@ var ShaderTypes = {
 var WebGLRenderer = function () {
     this.shaders = [];
     this.meshes = [];
+    this.dynamicMeshes = [];
+    for (var i = 0; i < 500; ++i) {
+        var mesh = new WebGLMesh();
+        mesh.key = -1;
+        mesh.positionBuffer = -1;
+        mesh.texCoordBuffer = -1;
+        mesh.normalBuffer = -1;
+        mesh.indexBuffer = -1;
+        mesh.numIndices = 0;
+        mesh.generatedOnGPU = false;
+        this.dynamicMeshes[i] = mesh;
+    }
+    this.numDynamicMeshes = 0;
     this.animatedMeshes = [];
     this.textures = [];
 
@@ -209,6 +222,48 @@ WebGLRenderer.prototype = {
         mesh.numIndices = loadedMesh.indices.count;
     },
 
+    generateDynamicMesh: function (game, generateMeshCommand) {
+        var mesh = this.dynamicMeshes[generateMeshCommand.id];
+        if (!mesh.generatedOnGPU) {
+            if (this.numDynamicMeshes >= 500) {
+                console.log("too many dynamic meshes");
+            }
+            mesh.key = generateMeshCommand.id;
+            mesh.positionBuffer = gl.createBuffer();
+            mesh.texCoordBuffer = gl.createBuffer();
+            mesh.normalBuffer = gl.createBuffer();
+            mesh.indexBuffer = gl.createBuffer();
+            mesh.generatedOnGPU = true;
+            mesh.numDynamicMeshes++;
+        }
+
+        var floatBuffer = new Float32Array(game.HEAPU8.buffer,
+                                           generateMeshCommand.positions.values.ptr, 
+                                           generateMeshCommand.positions.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
+                                       generateMeshCommand.texCoords.values.ptr, 
+                                       generateMeshCommand.texCoords.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.texCoordBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        floatBuffer = new Float32Array(game.HEAPU8.buffer,
+                                       generateMeshCommand.normals.values.ptr, 
+                                       generateMeshCommand.normals.count);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, floatBuffer, gl.STATIC_DRAW);
+
+        var uintBuffer = new Uint32Array(game.HEAPU8.buffer,
+                                         generateMeshCommand.indices.values.ptr, 
+                                         generateMeshCommand.indices.count);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, uintBuffer, gl.STATIC_DRAW);
+
+        mesh.numIndices = generateMeshCommand.indices.count;
+    },
+
     loadAnimatedMesh: function (game, loadedAnimatedMesh) {
         var animatedMesh = new WebGLAnimatedMesh();
         animatedMesh.key = loadedAnimatedMesh.key;
@@ -338,9 +393,7 @@ WebGLRenderer.prototype = {
         return floatBuffer;
     },
 
-    drawModel: function (game, modelCommand, program) {
-        var mesh = this.meshes[modelCommand.meshID];
-
+    drawModel: function (game, program, modelMatrix, textureID, mesh) {
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.positionBuffer);
         var positionLocation = gl.getAttribLocation(program, "position");
         gl.enableVertexAttribArray(positionLocation);
@@ -360,7 +413,7 @@ WebGLRenderer.prototype = {
 
         // TODO(ebuchholz): figure out how to do this without making new array buffer view every frame
         var floatBuffer = new Float32Array(game.HEAPU8.buffer,
-                                           modelCommand.modelMatrix.ptr,
+                                           modelMatrix.ptr,
                                            16); //4x4 matrix
         var modelMatrixLocation = gl.getUniformLocation(program, "modelMatrix");
         gl.uniformMatrix4fv(modelMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
@@ -377,13 +430,25 @@ WebGLRenderer.prototype = {
         var projMatrixLocation = gl.getUniformLocation(program, "projMatrix");
         gl.uniformMatrix4fv(projMatrixLocation, false, this.matrix4x4transpose(floatBuffer));
 
-        var texture = this.textures[modelCommand.textureID];
+        var texture = this.textures[textureID];
         var textureLocation = gl.getUniformLocation(program, "texture");
         gl.uniform1i(textureLocation, 0);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture.textureID);
 
         gl.drawElements(gl.TRIANGLES, mesh.numIndices, gl.UNSIGNED_INT, 0);
+    },
+
+    drawLoadedModel: function (game, modelCommand, program) {
+        var mesh = this.meshes[modelCommand.meshID];
+
+        this.drawModel(game, program, modelCommand.modelMatrix, modelCommand.textureID, mesh);
+    },
+
+    drawDynamicModel: function (game, modelCommand, program) {
+        var mesh = this.dynamicMeshes[modelCommand.meshID];
+
+        this.drawModel(game, program, modelCommand.modelMatrix, modelCommand.textureID, mesh);
     },
 
     drawAnimatedModel: function (game, animatedModelCommand, program) {
@@ -695,6 +760,13 @@ WebGLRenderer.prototype = {
                     renderCommandOffset += spriteListCommand.numSprites * game.sizeof_render_sprite();
                     this.drawSpriteList(game, program, spriteListCommand, renderCommands.windowWidth, renderCommands.windowHeight);
                 } break;
+                case game.RENDER_COMMAND_GENERATE_MESH: 
+                {
+                    var generateMeshCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
+                                                             game.render_command_generate_mesh);
+                    renderCommandOffset += game.sizeof_render_command_generate_mesh();
+                    this.generateDynamicMesh(game, generateMeshCommand);
+                } break;
                 case game.RENDER_COMMAND_MODEL:
                 {
                     var program = this.shaders[ShaderTypes.DEFAULT].program;
@@ -703,7 +775,17 @@ WebGLRenderer.prototype = {
                     var modelCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
                                                         game.render_command_model);
                     renderCommandOffset += game.sizeof_render_command_model();
-                    this.drawModel(game, modelCommand, program);
+                    this.drawLoadedModel(game, modelCommand, program);
+                } break;
+                case game.RENDER_COMMAND_DYNAMIC_MODEL:
+                {
+                    var program = this.shaders[ShaderTypes.DEFAULT].program;
+                    gl.useProgram(program);
+
+                    var modelCommand = game.wrapPointer(renderMemoryPointer + renderCommandOffset, 
+                                                        game.render_command_dynamic_model);
+                    renderCommandOffset += game.sizeof_render_command_dynamic_model();
+                    this.drawDynamicModel(game, modelCommand, program);
                 } break;
                 case game.RENDER_COMMAND_ANIMATED_MODEL:
                 {

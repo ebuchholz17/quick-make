@@ -92,9 +92,9 @@ WebPlatform.prototype = {
 
         this.gameMemory = this.game.wrapPointer(this.game._malloc(this.game.sizeof_game_memory()), 
                                                 this.game.game_memory);
-        this.gameMemory.memoryCapacity = 50 * 1024 * 1024;
+        this.gameMemory.memoryCapacity = 300 * 1024 * 1024;
         this.gameMemory.memory = this.game._malloc(this.gameMemory.memoryCapacity);
-        this.gameMemory.tempMemoryCapacity = 10 * 1024 * 1024;
+        this.gameMemory.tempMemoryCapacity = 50 * 1024 * 1024;
         this.gameMemory.tempMemory = this.game._malloc(this.gameMemory.tempMemoryCapacity);
 
         // sounds
@@ -205,7 +205,7 @@ WebPlatform.prototype = {
     onAssetsLoaded: function () {
         this.renderCommands = this.game.wrapPointer(this.game._malloc(this.game.sizeof_render_command_list()),          
                                                     this.game.render_command_list);
-        var renderCommandMemory = 1 * 1024 * 1024;
+        var renderCommandMemory = 32 * 1024 * 1024;
         this.renderCommands.memory.base = this.game._malloc(renderCommandMemory);
         this.renderCommands.memory.size = 0;
         this.renderCommands.memory.capacity = renderCommandMemory;

@@ -69,6 +69,26 @@ interface line {
     [Value] attribute vector3 b;
 };
 
+interface frustum {
+    [Value] attribute vector3 origin;
+    [Value] attribute quaternion orientation;
+    attribute float nearPlane;
+    attribute float farPlane;
+    attribute float fov;
+    attribute float ratio;
+};
+
+interface frustum_corners {
+    [Value] attribute vector3 nearUpperLeft;
+    [Value] attribute vector3 nearUpperRight;
+    [Value] attribute vector3 nearLowerLeft;
+    [Value] attribute vector3 nearLowerRight;
+    [Value] attribute vector3 farUpperLeft;
+    [Value] attribute vector3 farUpperRight;
+    [Value] attribute vector3 farLowerLeft;
+    [Value] attribute vector3 farLowerRight;
+};
+
 interface memory_arena {
     attribute VoidPtr base;
     attribute unsigned long size;
@@ -142,6 +162,8 @@ interface loaded_atlas_asset {
 
 enum render_command_type {
     "RENDER_COMMAND_MODEL",
+    "RENDER_COMMAND_GENERATE_MESH",
+    "RENDER_COMMAND_DYNAMIC_MODEL",
     "RENDER_COMMAND_ANIMATED_MODEL",
     "RENDER_COMMAND_LINES",
     "RENDER_COMMAND_SPRITE",
@@ -155,6 +177,20 @@ interface render_command_header{
 };
 
 interface render_command_model {
+    attribute long meshID;
+    attribute long textureID;
+    [Value] attribute matrix4x4 modelMatrix;
+};
+
+interface render_command_generate_mesh {
+    attribute unsigned long id;
+    [Value] attribute float_mesh_attribute positions;
+    [Value] attribute float_mesh_attribute texCoords;
+    [Value] attribute float_mesh_attribute normals;
+    [Value] attribute int_mesh_attribute indices;
+};
+
+interface render_command_dynamic_model {
     attribute long meshID;
     attribute long textureID;
     [Value] attribute matrix4x4 modelMatrix;

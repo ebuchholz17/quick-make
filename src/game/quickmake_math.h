@@ -104,4 +104,24 @@ struct line {
     vector3 b;
 };
 
+struct frustum {
+    vector3 origin;
+    quaternion orientation;
+    float nearPlane;
+    float farPlane;
+    float fov;
+    float ratio;
+};
+
+struct frustum_corners {
+    vector3 nearUpperLeft;
+    vector3 nearUpperRight;
+    vector3 nearLowerLeft;
+    vector3 nearLowerRight;
+    vector3 farUpperLeft;
+    vector3 farUpperRight;
+    vector3 farLowerLeft;
+    vector3 farLowerRight;
+};
+
 #endif

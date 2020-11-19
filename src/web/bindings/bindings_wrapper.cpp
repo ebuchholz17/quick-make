@@ -42,6 +42,12 @@ int sizeof_triangle () {
 int sizeof_line () {
     return sizeof(line);
 }  
+int sizeof_frustum () {
+    return sizeof(frustum);
+}  
+int sizeof_frustum_corners () {
+    return sizeof(frustum_corners);
+}  
 
 // platform.h
 int sizeof_memory_arena () {
@@ -73,6 +79,12 @@ int sizeof_render_command_header () {
 }  
 int sizeof_render_command_model () {
     return sizeof(render_command_model);
+}  
+int sizeof_render_command_dynamic_model () {
+    return sizeof(render_command_dynamic_model);
+}  
+int sizeof_render_command_generate_mesh () {
+    return sizeof(render_command_generate_mesh);
 }  
 int sizeof_render_command_animated_model () {
     return sizeof(render_command_animated_model);
@@ -133,6 +145,8 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_plane", &sizeof_plane);
     function ("sizeof_triangle", &sizeof_triangle);
     function ("sizeof_line", &sizeof_line);
+    function ("sizeof_frustum", &sizeof_frustum);
+    function ("sizeof_frustum_corners", &sizeof_frustum_corners);
     function ("sizeof_memory_arena", &sizeof_memory_arena);
     function ("sizeof_asset_pack_data", &sizeof_asset_pack_data);
     function ("sizeof_float_mesh_attribute", &sizeof_float_mesh_attribute);
@@ -143,6 +157,8 @@ EMSCRIPTEN_BINDINGS(bindings) {
     function ("sizeof_loaded_atlas_asset", &sizeof_loaded_atlas_asset);
     function ("sizeof_render_command_header", &sizeof_render_command_header);
     function ("sizeof_render_command_model", &sizeof_render_command_model);
+    function ("sizeof_render_command_dynamic_model", &sizeof_render_command_dynamic_model);
+    function ("sizeof_render_command_generate_mesh", &sizeof_render_command_generate_mesh);
     function ("sizeof_render_command_animated_model", &sizeof_render_command_animated_model);
     function ("sizeof_render_command_lines", &sizeof_render_command_lines);
     function ("sizeof_render_command_sprite", &sizeof_render_command_sprite);

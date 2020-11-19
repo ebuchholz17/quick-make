@@ -62,6 +62,8 @@ struct test_3D_game {
     unsigned int playerChunkY;
     unsigned int playerChunkZ;
     vector3 playerPos;
+
+    bool showTestCamera;
 };
 
 #endif
