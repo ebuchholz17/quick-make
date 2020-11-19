@@ -1,0 +1,159 @@
+atlas.png
+size: 256, 512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+black_key
+  rotate: false
+  xy: 184, 70
+  size: 24, 129
+  orig: 24, 129
+  offset: 0, 0
+  index: -1
+black_key_pressed
+  rotate: false
+  xy: 210, 70
+  size: 24, 129
+  orig: 24, 129
+  offset: 0, 0
+  index: -1
+block_blink
+  rotate: false
+  xy: 2, 2
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+blue_tile
+  rotate: false
+  xy: 172, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+boss
+  rotate: false
+  xy: 70, 70
+  size: 112, 78
+  orig: 112, 78
+  offset: 0, 0
+  index: -1
+cyan_tile
+  rotate: false
+  xy: 138, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+golfman
+  rotate: false
+  xy: 206, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+golfman_appear_0
+  rotate: false
+  xy: 36, 70
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+golfman_appear_1
+  rotate: false
+  xy: 2, 70
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+golfman_appear_2
+  rotate: false
+  xy: 104, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+golfman_punch
+  rotate: false
+  xy: 158, 2
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+golfman_run_0
+  rotate: false
+  xy: 36, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+golfman_run_1
+  rotate: false
+  xy: 56, 2
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+green_tile
+  rotate: false
+  xy: 90, 2
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+magenta_tile
+  rotate: false
+  xy: 124, 2
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+player
+  rotate: false
+  xy: 20, 2
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+red_tile
+  rotate: false
+  xy: 192, 2
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+sheep
+  rotate: false
+  xy: 2, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+tile_backing
+  rotate: false
+  xy: 38, 2
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+white_key
+  rotate: false
+  xy: 52, 201
+  size: 48, 216
+  orig: 48, 216
+  offset: 0, 0
+  index: -1
+white_key_pressed
+  rotate: false
+  xy: 2, 201
+  size: 48, 216
+  orig: 48, 216
+  offset: 0, 0
+  index: -1
+yellow_tile
+  rotate: false
+  xy: 70, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
