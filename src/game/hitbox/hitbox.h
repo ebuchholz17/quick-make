@@ -6,8 +6,8 @@
 
 struct character_frame_data {
     char *frameKey;
-    int xOffset;
-    int yOffset;
+    int xOffset = -40;
+    int yOffset = 52;
     int duration;
     int numHitboxes;
     rectangle hitboxes[MAX_NUM_HITBOXES];

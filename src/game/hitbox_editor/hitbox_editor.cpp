@@ -1,15 +1,20 @@
 #include "hitbox_editor.h"
+#include "../quickmake_platform.h"
+#include "../quickmake_assets.h"
+#include "../quickmake_sprites.h"
+#include "../quickmake_util.h"
 
-void initHitboxEditor (memory_arena *memory, game_assets *assets, hitbox_editor* editor) {
+void initHitboxEditor (memory_arena *memory, game_assets *assets, hitbox_editor* editor, char *atlasKey) {
     *editor = {};
     editor->currentAtlasIndex = -1;
+    editor->atlasKey = atlasKey;
 
     for (int i = 0; i < 50; ++i) {
         editor->frameAtlasIndices[i] = -1;
     }
 
     // convert game atlas to list of frames
-    atlas_asset *gameAtlas = assets->atlases[ATLAS_KEY_GAME];
+    atlas_asset *gameAtlas = getAtlas(assets,atlasKey);
     for (int i = 0; i < 500; ++i) {
         atlas_frame *frame = &gameAtlas->map.entries[i];
         if (frame->key != 0) {
@@ -20,7 +25,7 @@ void initHitboxEditor (memory_arena *memory, game_assets *assets, hitbox_editor*
 }
 
 bool doButton (float x, float y, float width, float height, bool pointerJustDown, float pointerX, float pointerY, 
-               game_assets *assets, atlas_key atlasKey, char *frame, sprite_list *spriteList) 
+               game_assets *assets, char * atlasKey, char *frame, sprite_list *spriteList) 
 {
     bool inBox = false;
     if (pointerX >= x && pointerX < x + width && pointerY >= y && pointerY < y + height) {
@@ -44,12 +49,12 @@ bool doButton (float x, float y, float width, float height, bool pointerJustDown
 }
 
 bool doLabelButton (float x, float y, float width, float height, char *label, bool pointerJustDown, float pointerX, float pointerY, 
-                    game_assets *assets, atlas_key atlasKey, char *frame, sprite_list *spriteList) 
+                    game_assets *assets, char * atlasKey, char *fontTextureKey, char *frame, sprite_list *spriteList) 
 {
     bool result = doButton(x, y, width, height, pointerJustDown, pointerX, pointerY, 
                            assets, atlasKey,frame, spriteList);
 
-    addText(x, y + 4, label, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(x, y + 4, label, assets, fontTextureKey, spriteList);
     return result;
 }
 
@@ -63,7 +68,7 @@ static void drawBox (sprite_list *spriteList, float originX, float originY, rect
 
         pushSpriteMatrix(boxTransform, spriteList);
 
-        addSprite(0.0f, 0.0f, assets, ATLAS_KEY_HITBOX_EDITOR, boxKey, spriteList, 0.0f, 0.0f, 1.0f, 0.0f, 0.3f);
+        addSprite(0.0f, 0.0f, assets, "hitbox_editor_atlas", boxKey, spriteList, 0.0f, 0.0f, 1.0f, 0.0f, 0.3f);
 
         popSpriteMatrix(spriteList);
         popSpriteMatrix(spriteList);
@@ -71,7 +76,7 @@ static void drawBox (sprite_list *spriteList, float originX, float originY, rect
         popSpriteMatrix(spriteList);
 }
 
-void loadFileIntoHitboxEditor (hitbox_editor *editor, game_assets *assets, void *fileData, unsigned int fileSize) {
+void loadFileIntoHitboxEditor (hitbox_editor *editor, game_assets *assets, char *atlasKey, void *fileData, unsigned int fileSize) {
     char *start;
     char *end;
     char *nextLineStart;
@@ -97,9 +102,9 @@ void loadFileIntoHitboxEditor (hitbox_editor *editor, game_assets *assets, void 
         }
         frameName[numLettersInFrameName] = 0;
 
-        atlas_frame *frame = getAtlasFrame(assets, ATLAS_KEY_GAME, frameName);
+        atlas_frame *frame = getAtlasFrame(assets, atlasKey, frameName);
         frameData->frameKey = frame->key;
-        int mapIndex = (int)getAtlasFrameIndex(assets, ATLAS_KEY_GAME, frameName);
+        int mapIndex = (int)getAtlasFrameIndex(assets, atlasKey, frameName);
         for (int j = 0; j < 500; ++j) {
             if (editor->atlasIndices[j] == mapIndex) {
                 editor->frameAtlasIndices[i] = j;
@@ -302,7 +307,7 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
     bool buttonPressed = false;
     editor->requestFileLoad = false;
     if (doLabelButton(6, 3, 32, 16, "load", input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "editor_button_backing", spriteList)) 
+                 assets, "hitbox_editor_atlas", "font", "editor_button_backing", spriteList)) 
     {
         buttonPressed = true;
         // load handling
@@ -310,7 +315,7 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
     }
     editor->requestFileSave = false;
     if (doLabelButton(6, 22, 32, 16, "save", input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "editor_button_backing", spriteList)) 
+                 assets, "hitbox_editor_atlas", "font", "editor_button_backing", spriteList)) 
     {
         buttonPressed = true;
         // save handling
@@ -323,7 +328,7 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
         editor->fileToSaveSize = fileSize;
     }
     if (doButton(64, 3, 16, 16, input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_up_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_up_button", spriteList)) 
     {
         buttonPressed = true;
         if (editor->currentAtlasIndex >= 0) {
@@ -331,7 +336,7 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
         }
     }
     if (doButton(64, 22, 16, 16, input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_down_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_down_button", spriteList)) 
     {
         buttonPressed = true;
         if (editor->currentAtlasIndex < editor->numAtlasIndices - 1) {
@@ -340,25 +345,25 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
     }
 
     if (doButton(264, 3, 16, 16, input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_up_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_up_button", spriteList)) 
     {
         buttonPressed = true;
         editor->currentDuration++;
     }
     if (doButton(264, 22, 16, 16, input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_down_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_down_button", spriteList)) 
     {
         buttonPressed = true;
         if (editor->currentDuration > 0) {
             editor->currentDuration--;
         }
     }
-    addText(285, 16, appendString(numToString(editor->currentDuration, &stringMemory), " frames", &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
+    addText(285, 16, appendString(numToString(editor->currentDuration, &stringMemory), " frames", &stringMemory), assets, "font", spriteList);
 
     bool loadFrame = false;
     int nextFrame = 0;
     if (doButton(160, 187, 16, 16, input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_left_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_left_button", spriteList)) 
     {
         buttonPressed = true;
         if (editor->currentFrame > 0) {
@@ -369,7 +374,7 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
     }
 
     if (doButton(205, 187, 16, 16, input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "arrow_right_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "arrow_right_button", spriteList)) 
     {
         buttonPressed = true;
         // next frame handler
@@ -381,7 +386,7 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
 
     bool startPlayback = false;
     if (doButton(237, 187, 32, 16, input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "play_button", spriteList)) 
+                 assets, "hitbox_editor_atlas", "play_button", spriteList)) 
     {
         buttonPressed = true;
         startPlayback = true;
@@ -390,18 +395,18 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
         editor->loop = !editor->loop;
     }
     if (editor->loop) {
-        addText(239, 205, "loop", assets, TEXTURE_KEY_FONT, spriteList);
+        addText(239, 205, "loop", assets, "font", spriteList);
     }
     bool duplicate = false;
     if (doLabelButton(285, 187, 32, 16, "dup.", input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "editor_button_backing", spriteList)) 
+                 assets, "hitbox_editor_atlas", "font", "editor_button_backing", spriteList)) 
     {
         buttonPressed = true;
         duplicate = true;
     }
     bool remove = false;
     if (doLabelButton(333, 187, 32, 16, "rem.", input->pointerJustDown, localPointerPos.x, localPointerPos.y,
-                 assets, ATLAS_KEY_HITBOX_EDITOR, "editor_button_backing", spriteList)) 
+                 assets, "hitbox_editor_atlas", "font", "editor_button_backing", spriteList)) 
     {
         buttonPressed = true;
         remove = true;
@@ -498,10 +503,10 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
             int minY = otherCornerY <= editor->dragStartY ? otherCornerY : editor->dragStartY;
             int maxY = otherCornerY >= editor->dragStartY ? otherCornerY : editor->dragStartY;
 
-            addText(6, 100, appendString("minX: ", numToString(minX, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
-            addText(6, 110, appendString("minY: ", numToString(minY, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
-            addText(6, 120, appendString("maxX: ", numToString(maxX, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
-            addText(6, 130, appendString("maxY: ", numToString(maxY, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
+            addText(6, 100, appendString("minX: ", numToString(minX, &stringMemory), &stringMemory), assets, "font", spriteList);
+            addText(6, 110, appendString("minY: ", numToString(minY, &stringMemory), &stringMemory), assets, "font", spriteList);
+            addText(6, 120, appendString("maxX: ", numToString(maxX, &stringMemory), &stringMemory), assets, "font", spriteList);
+            addText(6, 130, appendString("maxY: ", numToString(maxY, &stringMemory), &stringMemory), assets, "font", spriteList);
 
             currentEditingBox.min = Vector2((float)minX, (float)minY);
             currentEditingBox.max = Vector2((float)maxX, (float)maxY);
@@ -528,24 +533,24 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
     }
 
     char *currentSpriteText;
-    atlas_asset *gameAtlas = assets->atlases[ATLAS_KEY_GAME];
+    atlas_asset *gameAtlas = getAtlas(assets,editor->atlasKey);
     atlas_frame *frame;
     if (editor->currentAtlasIndex >= 0) {
         frame = &gameAtlas->map.entries[editor->atlasIndices[editor->currentAtlasIndex]];
         currentSpriteText = frame->key;
-        addSprite(originX + offsetX, originY + offsetY, assets, ATLAS_KEY_GAME, frame->key, spriteList, 0.0f, 1.0f);
+        addSprite(originX + offsetX, originY + offsetY, assets, editor->atlasKey, frame->key, spriteList, 0.0f, 1.0f);
     }
     else {
         currentSpriteText = "none";
     }
-    addText(84, 16, currentSpriteText, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(84, 16, currentSpriteText, assets, "font", spriteList);
 
-    addText(6, 160, appendString("X: ", numToString((int)localPointerPos.x - (int)originX, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
-    addText(6, 170, appendString("Y: ", numToString((int)localPointerPos.y - (int)originY, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
-    addText(6, 180, appendString("offsetX: ", numToString(offsetX, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
-    addText(6, 190, appendString("offsetY: ", numToString(offsetY, &stringMemory), &stringMemory), assets, TEXTURE_KEY_FONT, spriteList);
+    addText(6, 160, appendString("X: ", numToString((int)localPointerPos.x - (int)originX, &stringMemory), &stringMemory), assets, "font", spriteList);
+    addText(6, 170, appendString("Y: ", numToString((int)localPointerPos.y - (int)originY, &stringMemory), &stringMemory), assets, "font", spriteList);
+    addText(6, 180, appendString("offsetX: ", numToString(offsetX, &stringMemory), &stringMemory), assets, "font", spriteList);
+    addText(6, 190, appendString("offsetY: ", numToString(offsetY, &stringMemory), &stringMemory), assets, "font", spriteList);
 
-    addSprite(originX - 4, originY - 4, assets, ATLAS_KEY_HITBOX_EDITOR, "origin_reticule", spriteList, 0.0f, 0.0f);
+    addSprite(originX - 4, originY - 4, assets, "hitbox_editor_atlas", "origin_reticule", spriteList, 0.0f, 0.0f);
 
 
     if (editor->state == HITBOX_EDITOR_STATE_DRAGGING_BOX) {
@@ -599,7 +604,7 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
     frameData->duration = editor->currentDuration;
 
     char *currentFrameIndexText = numToString(editor->currentFrame, &stringMemory);
-    addText(185, 190, currentFrameIndexText, assets, TEXTURE_KEY_FONT, spriteList);
+    addText(185, 190, currentFrameIndexText, assets, "font", spriteList);
 
     if (editor->playback) {
         editor->playbackFrame++;
@@ -657,7 +662,10 @@ void updateHitboxEditor (memory_arena *memory, memory_arena *tempMemory, game_as
         for (int i = 0; i < editor->numCurrentHurtboxes; ++i) {
             editor->hurtboxes[i] = newFrameData->hurtboxes[i];
         }
-        editor->currentAtlasIndex = editor->frameAtlasIndices[editor->currentFrame];
+        int loadedFrameIndex = editor->frameAtlasIndices[editor->currentFrame];
+        if (loadedFrameIndex != -1) {
+            editor->currentAtlasIndex = editor->frameAtlasIndices[editor->currentFrame];
+        }
         editor->currentDuration = newFrameData->duration;
     }
     //popSpriteMatrix(spriteList);

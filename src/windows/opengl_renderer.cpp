@@ -196,8 +196,8 @@ void loadRendererTexture (renderer_memory *memory, loaded_texture_asset *loadedT
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, loadedTexture->width, loadedTexture->height, 
                  0, GL_RGBA, GL_UNSIGNED_BYTE, loadedTexture->pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -339,8 +339,8 @@ int initOpenGL (HWND window, renderer_memory *memory) {
     glGenBuffers(1, &renderer->debugPositionBuffer);
 
     // TODO(ebuchholz): use the right blend mode depending on what's being drawn, this is just for default 2d drawing
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     return 0;
 }
 
@@ -690,7 +690,7 @@ void renderFrame (renderer_memory *memory, render_command_list *renderCommands) 
     openGL_renderer *renderer = (openGL_renderer *)memory->memory;
 
     glViewport(0, 0, renderCommands->windowWidth, renderCommands->windowHeight);
-    glEnable(GL_DEPTH_TEST); // off for 2d stuff
+    //glEnable(GL_DEPTH_TEST); // off for 2d stuff
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.7f, 0.8f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

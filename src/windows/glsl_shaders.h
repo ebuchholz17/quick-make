@@ -23,7 +23,7 @@ char *defaultVertexShaderSource = R"shader(
         float lighting = dot(newNormal, vec4(lightDir, 0.0));
         vLighting = lighting;
 
-        vFogAmount = saturate((-100.0 - cameraPos.z) / (-100.0 - (-50.0)));
+        vFogAmount = clamp((-100.0 - cameraPos.z) / (-100.0 - (-50.0)), 0.0, 1.0);
     }
 )shader";
 
@@ -42,6 +42,7 @@ char *animatedModelVertexShaderSource = R"shader(
 
     varying vec2 vTexCoord;
     varying float vLighting;
+    varying float vFogAmount;
 
     void main() {
         mat4 boneMatrix0 = boneTransforms[int(boneIndices[0])];
@@ -58,6 +59,7 @@ char *animatedModelVertexShaderSource = R"shader(
         vec3 lightDir = normalize(vec3(0.0, 1.0, 0.0));
         float lighting = dot(newNormal, vec4(lightDir, 0.0));
         vLighting = lighting;
+        vFogAmount = 0.0;
     }
 )shader";
 

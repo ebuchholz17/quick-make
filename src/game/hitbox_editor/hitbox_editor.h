@@ -1,6 +1,9 @@
 #ifndef HITBOX_EDITOR_H
 #define HITBOX_EDITOR_H
 
+#include "../quickmake_math.h"
+#include "../hitbox/hitbox.h"
+
 enum hitbox_editor_state {
     HITBOX_EDITOR_STATE_NORMAL,
     HITBOX_EDITOR_STATE_DRAGGING_SPRITE,
@@ -20,8 +23,8 @@ struct hitbox_editor {
 
     int dragStartX;
     int dragStartY;
-    int offsetX;
-    int offsetY;
+    int offsetX = -40;
+    int offsetY = 52;
 
     int currentDuration;
 
@@ -39,6 +42,8 @@ struct hitbox_editor {
     bool requestFileSave;
     void *fileToSaveData;
     unsigned int fileToSaveSize;
+
+    char *atlasKey;
 };
 
 #endif

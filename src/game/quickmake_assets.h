@@ -263,4 +263,7 @@ struct game_assets {
     int numAnimationData;
 };
 
+atlas_asset *getAtlas (game_assets *assets, char *name);
+atlas_frame *getAtlasFrame (game_assets *assets, char *atlasKey, char *frameName) ;
+
 #endif

@@ -299,11 +299,11 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
 
         initLetterCoords();
 
-        gameState->test3DGame = {};
+        //gameState->test3DGame = {};
         //initBlockGame(&gameState->memory, &gameState->blockGame);
         //initPianoGame(&gameState->pianoGame);
         //initSkeletalGame(&gameState->memory, &gameState->skeletalGame);
-        //initHitboxEditor(&gameState->memory, &gameState->assets, &gameState->hitboxEditor);
+        initHitboxEditor(&gameState->memory, &gameState->assets, &gameState->hitboxEditor, "sponge_atlas");
     }
     // general purpose temporary storage
     gameState->tempMemory = {};
@@ -357,7 +357,7 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     pushSpriteTransform(&spriteList, gameOrigin, gameScale);
 
     if (gameState->fileJustLoaded) {
-        //loadFileIntoHitboxEditor(&gameState->hitboxEditor, &gameState->assets, gameState->loadedFileData, gameState->loadedFileSize);
+        loadFileIntoHitboxEditor(&gameState->hitboxEditor, &gameState->assets, "sponge_atlas", gameState->loadedFileData, gameState->loadedFileSize);
         gameState->fileJustLoaded = false;
     }
 
@@ -365,18 +365,18 @@ extern "C" void updateGame (game_input *input, game_memory *gameMemory, render_c
     //updatePianoGame(&gameState->sounds, &gameState->assets, input, &gameState->pianoGame, &spriteList, &gameState->tempMemory);
     //updateSkeletalGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->skeletalGame, &spriteList, renderCommands);
     //updateControllerTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList);
-    //updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
+    updateHitboxEditor(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->hitboxEditor);
     //updateTestGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &spriteList, &gameState->sounds);
     //updateSoundEditor(&gameState->memory, &gameState->tempMemory, &gameState->soundEditor, &gameState->assets, input, &spriteList, &gameState->sounds, renderCommands);
-    update3DGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->test3DGame, &spriteList, renderCommands);
-    //if (gameState->hitboxEditor.requestFileLoad) {
-    //    triggers->triggerFileWindow = true;
-    //}
-    //if (gameState->hitboxEditor.requestFileSave) {
-    //    triggers->triggerFileSave = true;
-    //    triggers->fileToSaveData = gameState->hitboxEditor.fileToSaveData;
-    //    triggers->fileToSaveSize = gameState->hitboxEditor.fileToSaveSize;
-    //}
+    //update3DGame(&gameState->memory, &gameState->tempMemory, &gameState->assets, input, &gameState->test3DGame, &spriteList, renderCommands);
+    if (gameState->hitboxEditor.requestFileLoad) {
+        triggers->triggerFileWindow = true;
+    }
+    if (gameState->hitboxEditor.requestFileSave) {
+        triggers->triggerFileSave = true;
+        triggers->fileToSaveData = gameState->hitboxEditor.fileToSaveData;
+        triggers->fileToSaveSize = gameState->hitboxEditor.fileToSaveSize;
+    }
 
     popSpriteMatrix(&spriteList);
 
